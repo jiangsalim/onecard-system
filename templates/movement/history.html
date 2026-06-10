@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movement History - OneCard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; }
+        .navbar { background: #1a237e; color: white; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; height: 60px; }
+        .navbar .brand { font-size: 18px; font-weight: 600; }
+        .navbar a { color: white; text-decoration: none; }
+        .layout { display: flex; }
+        .sidebar { width: 240px; background: white; min-height: calc(100vh - 60px); border-right: 1px solid #e0e0e0; padding-top: 10px; }
+        .sidebar a { display: block; padding: 12px 24px; color: #333; text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
+        .sidebar a:hover { background: #f5f5ff; color: #1a237e; border-left-color: #1a237e; }
+        .sidebar .section-title { padding: 20px 24px 8px; font-size: 11px; text-transform: uppercase; color: #999; letter-spacing: 1.5px; font-weight: 600; }
+        .main-content { flex: 1; padding: 24px 32px; }
+        .card { background: white; border-radius: 8px; padding: 24px; border: 1px solid #e8e8e8; }
+        .card h2 { color: #1a237e; margin-bottom: 16px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 14px; }
+        th { background: #f5f5f5; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="brand"><a href="{% url 'dashboard' %}" style="color:white;">OneCard System</a></div>
+    </div>
+    <div class="layout">
+        <div class="sidebar">
+            <div class="section-title">Movement</div>
+            <a href="{% url 'movement_dashboard' %}">Dashboard</a>
+            <a href="{% url 'movement_history' %}" style="background:#f5f5ff; color:#1a237e; border-left-color:#1a237e;">History</a>
+        </div>
+        <div class="main-content">
+            <div class="card">
+                <h2>Movement History</h2>
+                <table>
+                    <thead><tr><th>Student</th><th>Date</th><th>Time Out</th><th>Time In</th><th>Reason</th><th>Authorized</th></tr></thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td><strong>{{ log.student.id }}</strong></td>
+                            <td>{{ log.exit_date }}</td>
+                            <td>{{ log.time_out }}</td>
+                            <td>{{ log.time_in|default:"Still Out" }}</td>
+                            <td>{{ log.get_reason_display }}</td>
+                            <td>{{ log.authorized_by }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

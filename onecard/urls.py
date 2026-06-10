@@ -6,4 +6,5 @@ urlpatterns = [
     path('', include('users.urls')),
     path('', include('core.urls')),
     path('cards/', include('cards.urls')),
+    path('movement/', include('movement.urls')),
 ]
