@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification Settings - OneCard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; }
+        .navbar { background: #1a237e; color: white; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; height: 60px; }
+        .navbar .brand { font-size: 18px; font-weight: 600; }
+        .navbar a { color: white; text-decoration: none; }
+        .layout { display: flex; }
+        .sidebar { width: 240px; background: white; min-height: calc(100vh - 60px); border-right: 1px solid #e0e0e0; padding-top: 10px; }
+        .sidebar a { display: block; padding: 12px 24px; color: #333; text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
+        .sidebar a:hover { background: #f5f5ff; color: #1a237e; border-left-color: #1a237e; }
+        .sidebar .section-title { padding: 20px 24px 8px; font-size: 11px; text-transform: uppercase; color: #999; letter-spacing: 1.5px; font-weight: 600; }
+        .main-content { flex: 1; padding: 24px 32px; }
+        .card { background: white; border-radius: 8px; padding: 24px; border: 1px solid #e8e8e8; max-width: 600px; }
+        .card h2 { color: #1a237e; margin-bottom: 20px; }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 5px; color: #333; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid #d0d0d0; border-radius: 4px; }
+        .checkbox-group { margin-bottom: 14px; }
+        .btn { padding: 10px 24px; background: #1a237e; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; }
+        .alert { padding: 12px 20px; border-radius: 6px; margin-bottom: 16px; }
+        .alert-success { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #4caf50; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="brand"><a href="{% url 'dashboard' %}" style="color:white;">OneCard System</a></div>
+    </div>
+    <div class="layout">
+        <div class="sidebar">
+            <div class="section-title">Notifications</div>
+            <a href="{% url 'notification_list' %}">All Notifications</a>
+            <a href="{% url 'notification_settings' %}" style="background:#f5f5ff; color:#1a237e; border-left-color:#1a237e;">Settings</a>
+        </div>
+        <div class="main-content">
+            {% if messages %}
+            {% for m in messages %}<div class="alert alert-success">{{ m }}</div>{% endfor %}
+            {% endif %}
+            <div class="card">
+                <h2>Notification Settings</h2>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label>Fee Balance Alert Threshold (UGX)</label>
+                        <input type="number" name="fee_balance_threshold" value="{{ settings.fee_balance_threshold }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Consecutive Days Absent Alert</label>
+                        <input type="number" name="attendance_consecutive_days" value="{{ settings.attendance_consecutive_days }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Student Outside Alert (Hours)</label>
+                        <input type="number" name="movement_hours_outside" value="{{ settings.movement_hours_outside }}">
+                    </div>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" name="show_in_dashboard" {% if settings.show_in_dashboard %}checked{% endif %}> Show alerts in dashboard</label>
+                    </div>
+                    <button type="submit" class="btn">Save Settings</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
