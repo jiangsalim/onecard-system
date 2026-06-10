@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import CardTemplate, ClassTemplateAssignment
 from core.models import Student
-
+from datetime import date
 
 @login_required
 def template_list(request):
@@ -136,3 +136,47 @@ def print_cards(request):
         })
     
     return render(request, 'cards/print_cards.html', {'classes': classes})
+
+@login_required
+def reprint_card(request):
+    """Reprint a lost or damaged card."""
+    if request.user.role not in ['super_admin', 'admin', 'bursar']:
+        messages.error(request, 'Access denied.')
+        return redirect('dashboard')
+    
+    student = None
+    reprints = []
+    
+    if request.method == 'POST':
+        student_id = request.POST.get('student_id')
+        reason = request.POST.get('reason', 'lost')
+        
+        if student_id:
+            try:
+                student = Student.objects.get(id=student_id)
+                reprints = CardReprint.objects.filter(student=student).order_by('-reprinted_at')
+                
+                if request.POST.get('confirm') == 'yes':
+                    # Create reprint record
+                    reprint_num = student.reprint_count + 1
+                    CardReprint.objects.create(
+                        student=student,
+                        reprint_number=reprint_num,
+                        reason=reason,
+                        reprinted_by=request.user.get_full_name() or request.user.username
+                    )
+                    student.reprint_count = reprint_num
+                    student.last_reprint_date = date.today()
+                    student.last_reprint_reason = reason
+                    student.save()
+                    
+                    messages.success(request, f'Reprint #{reprint_num} recorded. Old card deactivated.')
+                    return redirect('print_cards')
+                    
+            except Student.DoesNotExist:
+                messages.error(request, 'Student not found.')
+    
+    return render(request, 'cards/reprint.html', {
+        'student': student,
+        'reprints': reprints,
+    })

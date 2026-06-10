@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reprint Card - OneCard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; }
+        .navbar { background: #1a237e; color: white; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; height: 60px; }
+        .navbar .brand { font-size: 18px; font-weight: 600; }
+        .navbar a { color: white; text-decoration: none; }
+        .layout { display: flex; }
+        .sidebar { width: 240px; background: white; min-height: calc(100vh - 60px); border-right: 1px solid #e0e0e0; padding-top: 10px; }
+        .sidebar a { display: block; padding: 12px 24px; color: #333; text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
+        .sidebar a:hover { background: #f5f5ff; color: #1a237e; border-left-color: #1a237e; }
+        .sidebar .section-title { padding: 20px 24px 8px; font-size: 11px; text-transform: uppercase; color: #999; letter-spacing: 1.5px; font-weight: 600; }
+        .main-content { flex: 1; padding: 24px 32px; }
+        .card { background: white; border-radius: 8px; padding: 24px; border: 1px solid #e8e8e8; max-width: 600px; margin-bottom: 20px; }
+        .card h2 { color: #1a237e; margin-bottom: 16px; }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 5px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #d0d0d0; border-radius: 4px; }
+        .btn { padding: 10px 24px; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; font-size: 14px; }
+        .btn-primary { background: #1a237e; color: white; }
+        .btn-warning { background: #e65100; color: white; }
+        .btn-danger { background: #c62828; color: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        th, td { padding: 8px 12px; border-bottom: 1px solid #e0e0e0; font-size: 13px; }
+        th { background: #f5f5f5; }
+        .alert { padding: 12px 20px; border-radius: 6px; margin-bottom: 16px; }
+        .alert-success { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #4caf50; }
+        .alert-warning { background: #fff3e0; color: #e65100; border-left: 4px solid #ff9800; }
+        .alert-error { background: #ffebee; color: #c62828; border-left: 4px solid #f44336; }
+        .warning-box { background: #fff3e0; border: 1px solid #ffcc80; border-radius: 6px; padding: 14px; margin: 14px 0; font-size: 13px; color: #e65100; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="brand"><a href="{% url 'dashboard' %}" style="color:white;">OneCard System</a></div>
+    </div>
+    <div class="layout">
+        <div class="sidebar">
+            <div class="section-title">Cards</div>
+            <a href="{% url 'template_list' %}">Card Designs</a>
+            <a href="{% url 'assign_templates' %}">Assign to Classes</a>
+            <a href="{% url 'print_cards' %}">Print Cards</a>
+            <a href="{% url 'reprint_card' %}" style="background:#f5f5ff; color:#1a237e; border-left-color:#1a237e;">Reprint Card</a>
+        </div>
+        <div class="main-content">
+            {% if messages %}
+            {% for m in messages %}
+            <div class="alert alert-{{ m.tags }}">{{ m }}</div>
+            {% endfor %}
+            {% endif %}
+
+            <div class="card">
+                <h2>Reprint Student Card</h2>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label>Student ID (e.g. STU-001)</label>
+                        <input type="text" name="student_id" value="{{ student.id|default:'' }}" required placeholder="Enter STU-XXX">
+                    </div>
+                    <button type="submit" name="lookup" class="btn btn-primary">Lookup Student</button>
+                </form>
+            </div>
+
+            {% if student %}
+            <div class="card">
+                <h2>Student: {{ student.id }}</h2>
+                <p><strong>Admission:</strong> {{ student.admission_number }}</p>
+                <p><strong>Payment Code:</strong> {{ student.payment_code }}</p>
+                <p><strong>Current Reprints:</strong> {{ student.reprint_count }}</p>
+
+                {% if reprints %}
+                <h3 style="margin-top:16px; color:#333;">Reprint History</h3>
+                <table>
+                    <thead><tr><th>#</th><th>Date</th><th>Reason</th><th>By</th></tr></thead>
+                    <tbody>
+                        {% for r in reprints %}
+                        <tr>
+                            <td>{{ r.reprint_number }}</td>
+                            <td>{{ r.reprinted_at|date:"d M Y" }}</td>
+                            <td>{{ r.get_reason_display }}</td>
+                            <td>{{ r.reprinted_by }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% endif %}
+
+                <div class="warning-box">
+                    ⚠ <strong>Warning:</strong> Reprinting will deactivate the old card. 
+                    The student's QR code remains the same. The old card will no longer work.
+                </div>
+
+                <form method="post" style="margin-top:12px;">
+                    {% csrf_token %}
+                    <input type="hidden" name="student_id" value="{{ student.id }}">
+                    <input type="hidden" name="confirm" value="yes">
+                    <div class="form-group">
+                        <label>Reason for Reprint</label>
+                        <select name="reason">
+                            <option value="lost">Lost</option>
+                            <option value="damaged">Damaged</option>
+                            <option value="correction">Data Correction</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-warning">Confirm Reprint</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

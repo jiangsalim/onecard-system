@@ -8,4 +8,5 @@ urlpatterns = [
     path('templates/<int:template_id>/delete/', views.template_delete, name='template_delete'),
     path('assign-templates/', views.assign_templates, name='assign_templates'),
     path('print-cards/', views.print_cards, name='print_cards'),
+    path('reprint/', views.reprint_card, name='reprint_card'),
 ]

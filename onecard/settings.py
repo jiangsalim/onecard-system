@@ -86,3 +86,8 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'users.User'
+
+# Error handler views
+handler404 = 'core.views.error_404'
+handler500 = 'core.views.error_500'
+handler403 = 'core.views.error_403'

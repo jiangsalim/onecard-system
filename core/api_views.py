@@ -1,7 +1,6 @@
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.csrf import csrf_exempt
 from .models import Student
 from .services import get_student_info_from_existing_db, get_payment_balance
 from attendance.models import Attendance
@@ -31,6 +30,15 @@ def process_scan(request):
             student = Student.objects.select_related('template').get(id=student_id, status='active')
         except Student.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Student not found or inactive'})
+        
+        # Check if this is an old card (replaced by reprint)
+        if student.reprint_count > 0 and student.last_reprint_date:
+            return JsonResponse({
+                'success': False,
+                'error': f'CARD REPLACED — This card was replaced on {student.last_reprint_date}. Reprint #{student.reprint_count} is active.',
+                'error_code': 'CARD_REPLACED',
+                'reprint_count': student.reprint_count,
+            }, status=410)
         
         # Try to get info from existing DB, fall back to mock data
         info = get_student_info_from_existing_db(student.admission_number)
