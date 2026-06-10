@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assign Templates - OneCard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; }
+        .navbar { background: #1a237e; color: white; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; height: 60px; }
+        .navbar .brand { font-size: 18px; font-weight: 600; }
+        .navbar a { color: white; text-decoration: none; }
+        .navbar .user-info { display: flex; align-items: center; gap: 16px; font-size: 14px; }
+        .navbar .role-badge { background: #ff9800; color: #000; padding: 4px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .layout { display: flex; }
+        .sidebar { width: 240px; background: white; min-height: calc(100vh - 60px); border-right: 1px solid #e0e0e0; padding-top: 10px; }
+        .sidebar a { display: block; padding: 12px 24px; color: #333; text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
+        .sidebar a:hover { background: #f5f5ff; color: #1a237e; border-left-color: #1a237e; }
+        .sidebar .section-title { padding: 20px 24px 8px; font-size: 11px; text-transform: uppercase; color: #999; letter-spacing: 1.5px; font-weight: 600; }
+        .main-content { flex: 1; padding: 24px 32px; }
+        .card { background: white; border-radius: 8px; padding: 24px; border: 1px solid #e8e8e8; max-width: 600px; }
+        .card h2 { color: #1a237e; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px 14px; border-bottom: 1px solid #e0e0e0; font-size: 14px; }
+        th { background: #f5f5f5; font-weight: 600; }
+        select { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; }
+        .btn { padding: 10px 24px; background: #1a237e; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; }
+        .alert { padding: 12px 20px; border-radius: 6px; margin-bottom: 16px; font-size: 14px; }
+        .alert-success { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #4caf50; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="brand"><a href="{% url 'dashboard' %}" style="color:white;">OneCard System</a></div>
+        <div class="user-info">
+            <span class="role-badge">{{ user.get_role_display }}</span>
+            <span>{{ user.get_full_name|default:user.username }}</span>
+        </div>
+    </div>
+    <div class="layout">
+        <div class="sidebar">
+            <div class="section-title">Cards</div>
+            <a href="{% url 'template_list' %}">Card Designs</a>
+            <a href="{% url 'assign_templates' %}" style="background:#f5f5ff; color:#1a237e; border-left-color:#1a237e;">Assign to Classes</a>
+            <a href="{% url 'print_cards' %}">Print Cards</a>
+        </div>
+        <div class="main-content">
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+            {% endif %}
+
+            <div class="card">
+                <h2>Assign Templates to Classes</h2>
+                <form method="post">
+                    {% csrf_token %}
+                    <table>
+                        <thead>
+                            <tr><th>Class</th><th>Template</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for class_name in classes %}
+                            <tr>
+                                <td><strong>{{ class_name }}</strong></td>
+                                <td>
+                                    <select name="template_{{ class_name }}">
+                                        <option value="">-- Select --</option>
+                                        {% for t in templates %}
+                                        <option value="{{ t.id }}" {% if current.class_name == t.id %}selected{% endif %}>{{ t.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <br>
+                    <button type="submit" class="btn">Save Assignments</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

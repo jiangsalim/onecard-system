@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Print Preview - OneCard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #e0e0e0; padding: 20px; }
+        .card-preview {
+            width: 320px; background: white; border: 2px solid #1a237e; border-radius: 8px;
+            padding: 16px; margin: 10px; display: inline-block; vertical-align: top;
+        }
+        .card-preview .header { text-align: center; font-weight: bold; font-size: 12px; margin-bottom: 8px; }
+        .card-preview .qr { text-align: center; margin: 8px 0; }
+        .card-preview .qr img { width: 100px; height: 100px; }
+        .card-preview .info { font-size: 11px; line-height: 1.6; }
+        .btn-print { padding: 10px 30px; background: #1a237e; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin: 20px; }
+        @media print {
+            .btn-print { display: none; }
+            body { background: white; padding: 0; }
+            .card-preview { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <button class="btn-print" onclick="window.print()">Print All Cards</button>
+    
+    {% for student in students %}
+    <div class="card-preview">
+        <div class="header">ONECARD SYSTEM</div>
+        <div style="text-align:center; font-size:11px; color:#888;">Student ID Card</div>
+        <div class="qr">
+            {% if student.qr_code %}
+            <img src="{{ student.qr_code.url }}" alt="QR">
+            {% endif %}
+        </div>
+        <div class="info">
+            <strong>ID:</strong> {{ student.id }}<br>
+            <strong>Admission:</strong> {{ student.admission_number }}<br>
+            <strong>Payment Code:</strong> {{ student.payment_code }}<br>
+            <strong>Status:</strong> {{ student.get_status_display }}
+        </div>
+    </div>
+    {% endfor %}
+</body>
+</html>

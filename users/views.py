@@ -62,3 +62,8 @@ def gate_dashboard(request):
 @login_required
 def teacher_dashboard(request):
     return render(request, 'admin_dashboard/teacher.html')
+
+@login_required
+def scanner_view(request):
+    """Scanner page for gate staff and bursar."""
+    return render(request, 'admin_dashboard/scanner.html')

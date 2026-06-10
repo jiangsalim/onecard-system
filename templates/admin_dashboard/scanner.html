@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner - OneCard</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #1a1a2e; color: white; }
+        .scanner-container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; padding: 20px 0; }
+        .header h1 { font-size: 22px; color: #fff; }
+        .controls { display: flex; gap: 10px; margin-bottom: 16px; }
+        .controls select, .controls button { padding: 10px; border-radius: 6px; border: none; font-size: 14px; }
+        .controls select { flex: 1; background: #16213e; color: white; }
+        #reader { width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
+        .result-card { background: #16213e; border-radius: 12px; padding: 20px; display: none; }
+        .result-card.show { display: block; }
+        .result-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+        .result-icon { font-size: 40px; }
+        .result-name { font-size: 20px; font-weight: 600; }
+        .result-detail { font-size: 14px; color: #aab; }
+        .fees-box { background: #0f3460; border-radius: 8px; padding: 16px; margin: 12px 0; }
+        .fees-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; }
+        .fees-total { font-size: 20px; font-weight: 700; padding-top: 8px; border-top: 1px solid #333; }
+        .badge { display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+        .badge-success { background: #1b5e20; color: #a5d6a7; }
+        .badge-warning { background: #e65100; color: #ffcc80; }
+        .badge-error { background: #b71c1c; color: #ef9a9a; }
+        .badge-info { background: #0d47a1; color: #90caf9; }
+        .attendance-confirm { text-align: center; padding: 10px; background: #1b5e20; border-radius: 8px; margin-top: 10px; font-size: 14px; }
+        .manual-entry { margin-top: 20px; text-align: center; }
+        .manual-entry input { padding: 10px; border-radius: 6px; border: none; width: 60%; font-size: 14px; }
+        .manual-entry button { padding: 10px 20px; border-radius: 6px; border: none; background: #1a237e; color: white; cursor: pointer; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="scanner-container">
+        <div class="header">
+            <h1>OneCard Scanner</h1>
+        </div>
+
+        <div class="controls">
+            <select id="location">
+                <option value="Main Gate">Main Gate</option>
+                <option value="Side Gate">Side Gate</option>
+                <option value="Bursar Office">Bursar Office</option>
+            </select>
+            <select id="mode">
+                <option value="attendance_balance">Attendance + Balance</option>
+                <option value="balance_only">Balance Only</option>
+            </select>
+        </div>
+
+        <div id="reader"></div>
+
+        <div id="result" class="result-card">
+            <div class="result-header">
+                <div class="result-icon" id="resultIcon"></div>
+                <div>
+                    <div class="result-name" id="resultName"></div>
+                    <div class="result-detail" id="resultDetail"></div>
+                </div>
+            </div>
+            <div class="fees-box">
+                <div class="fees-row"><span>Total Fees</span><span id="feesTotal"></span></div>
+                <div class="fees-row"><span>Amount Paid</span><span id="feesPaid"></span></div>
+                <div class="fees-row fees-total"><span>Balance</span><span id="feesBalance"></span></div>
+            </div>
+            <div style="text-align:center;" id="feesStatus"></div>
+            <div id="attendanceConfirm" class="attendance-confirm"></div>
+        </div>
+
+        <div class="manual-entry">
+            <p style="color:#aab; margin-bottom:8px;">Manual Entry</p>
+            <input type="text" id="manualId" placeholder="Enter Student ID (e.g. STU-001)">
+            <button onclick="manualLookup()">Lookup</button>
+        </div>
+    </div>
+
+    <script>
+        let lastScanTime = 0;
+        const html5QrCode = new Html5Qrcode("reader");
+
+        function startScanner() {
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                onScanSuccess,
+                onScanFailure
+            ).catch(err => console.log("Camera error:", err));
+        }
+
+        function onScanSuccess(decodedText) {
+            const now = Date.now();
+            if (now - lastScanTime < 3000) return;
+            lastScanTime = now;
+            
+            html5QrCode.pause();
+            processScan(decodedText);
+        }
+
+        function onScanFailure(err) {}
+
+        function processScan(studentId) {
+            const location = document.getElementById('location').value;
+            const mode = document.getElementById('mode').value;
+
+            fetch('/api/scan/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ student_id: studentId, location: location, mode: mode })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showResult(data);
+                } else {
+                    showError(data.error);
+                }
+            })
+            .catch(() => showError('Connection error'))
+            .finally(() => {
+                setTimeout(() => {
+                    html5QrCode.resume();
+                    document.getElementById('result').classList.remove('show');
+                }, 5000);
+            });
+        }
+
+        function showResult(data) {
+            const s = data.student;
+            const f = data.fees;
+            document.getElementById('resultIcon').textContent = f.status === 'CLEARED' ? '✅' : '⚠️';
+            document.getElementById('resultName').textContent = s.name;
+            document.getElementById('resultDetail').textContent = `${s.class} ${s.stream} | ${s.admission}`;
+            document.getElementById('feesTotal').textContent = f.total.toLocaleString() + ' UGX';
+            document.getElementById('feesPaid').textContent = f.paid.toLocaleString() + ' UGX';
+            document.getElementById('feesBalance').textContent = f.balance.toLocaleString() + ' UGX';
+            
+            let badge = '';
+            if (f.status === 'CLEARED') badge = '<span class="badge badge-success">CLEARED</span>';
+            else if (f.status === 'OVERPAID') badge = '<span class="badge badge-info">OVERPAID</span>';
+            else if (f.status === 'NOT PAID') badge = '<span class="badge badge-error">NOT PAID</span>';
+            else badge = '<span class="badge badge-warning">NOT CLEARED</span>';
+            document.getElementById('feesStatus').innerHTML = badge;
+            
+            if (data.attendance.marked) {
+                document.getElementById('attendanceConfirm').textContent = '✅ Attendance Marked';
+                document.getElementById('attendanceConfirm').style.display = 'block';
+            } else if (data.attendance.already_marked) {
+                document.getElementById('attendanceConfirm').textContent = 'ℹ Already Marked Today';
+                document.getElementById('attendanceConfirm').style.display = 'block';
+            } else {
+                document.getElementById('attendanceConfirm').style.display = 'none';
+            }
+            
+            document.getElementById('result').classList.add('show');
+        }
+
+        function showError(msg) {
+            document.getElementById('resultIcon').textContent = '❌';
+            document.getElementById('resultName').textContent = 'Error';
+            document.getElementById('resultDetail').textContent = msg;
+            document.getElementById('feesTotal').textContent = '-';
+            document.getElementById('feesPaid').textContent = '-';
+            document.getElementById('feesBalance').textContent = '-';
+            document.getElementById('feesStatus').innerHTML = '';
+            document.getElementById('attendanceConfirm').style.display = 'none';
+            document.getElementById('result').classList.add('show');
+        }
+
+        function manualLookup() {
+            const id = document.getElementById('manualId').value.trim();
+            if (id) processScan(id);
+        }
+
+        function getCookie(name) {
+            let v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+            return v ? v[2] : null;
+        }
+
+        startScanner();
+    </script>
+</body>
+</html>
