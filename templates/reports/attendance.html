@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Report - OneCard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; }
+        .navbar { background: #1a237e; color: white; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; height: 60px; }
+        .navbar .brand { font-size: 18px; font-weight: 600; }
+        .navbar a { color: white; text-decoration: none; }
+        .navbar .user-info { display: flex; align-items: center; gap: 16px; font-size: 14px; }
+        .layout { display: flex; }
+        .sidebar { width: 240px; background: white; min-height: calc(100vh - 60px); border-right: 1px solid #e0e0e0; padding-top: 10px; }
+        .sidebar a { display: block; padding: 12px 24px; color: #333; text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
+        .sidebar a:hover { background: #f5f5ff; color: #1a237e; border-left-color: #1a237e; }
+        .sidebar .section-title { padding: 20px 24px 8px; font-size: 11px; text-transform: uppercase; color: #999; letter-spacing: 1.5px; font-weight: 600; }
+        .main-content { flex: 1; padding: 24px 32px; }
+        .card { background: white; border-radius: 8px; padding: 24px; border: 1px solid #e8e8e8; margin-bottom: 20px; }
+        .card h2 { color: #1a237e; margin-bottom: 16px; }
+        .chart-container { max-width: 700px; margin: 0 auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 14px; }
+        th { background: #f5f5f5; font-weight: 600; }
+        .badge { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .badge-success { background: #e8f5e9; color: #2e7d32; }
+        .badge-error { background: #ffebee; color: #c62828; }
+        .badge-warning { background: #fff3e0; color: #e65100; }
+        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: white; border-radius: 8px; padding: 20px; text-align: center; border: 1px solid #e8e8e8; }
+        .stat-card .stat-value { font-size: 28px; font-weight: 700; color: #1a237e; }
+        .stat-card .stat-label { font-size: 13px; color: #888; margin-top: 4px; }
+        .btn { padding: 8px 18px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500; background: #1a237e; color: white; text-decoration: none; }
+        .form-row { display: flex; gap: 12px; align-items: flex-end; margin-bottom: 16px; flex-wrap: wrap; }
+        .form-group label { display: block; font-size: 12px; font-weight: 600; color: #666; margin-bottom: 4px; }
+        .form-group input, .form-group select { padding: 8px 12px; border: 1px solid #d0d0d0; border-radius: 4px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="brand"><a href="{% url 'dashboard' %}" style="color:white;">OneCard System</a></div>
+        <div class="user-info"><span>{{ user.get_full_name|default:user.username }}</span></div>
+    </div>
+    <div class="layout">
+        <div class="sidebar">
+            <div class="section-title">Reports</div>
+            <a href="{% url 'attendance_report' %}" style="background:#f5f5ff; color:#1a237e; border-left-color:#1a237e;">Attendance</a>
+            <a href="{% url 'fee_report' %}">Fees</a>
+            <a href="{% url 'movement_history' %}">Movement</a>
+        </div>
+        <div class="main-content">
+            <h1 style="color:#1a237e; margin-bottom:20px;">Attendance Report</h1>
+
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-value">{{ stats.total|default:0 }}</div>
+                    <div class="stat-label">Total Students</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" style="color:#2e7d32;">{{ stats.present|default:0 }}</div>
+                    <div class="stat-label">Present Today</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" style="color:#c62828;">{{ stats.absent|default:0 }}</div>
+                    <div class="stat-label">Absent</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" style="color:#1a237e;">{{ stats.rate|default:0 }}%</div>
+                    <div class="stat-label">Attendance Rate</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Today's Attendance</h2>
+                <div class="chart-container">
+                    <canvas id="attendanceChart" height="200"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Today's Records</h2>
+                <table>
+                    <thead><tr><th>Student ID</th><th>Time In</th><th>Location</th><th>Marked By</th></tr></thead>
+                    <tbody>
+                        {% for a in attendance_list %}
+                        <tr>
+                            <td><strong>{{ a.student.id }}</strong></td>
+                            <td>{{ a.time_in }}</td>
+                            <td>{{ a.scan_location }}</td>
+                            <td>{{ a.marked_by }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" style="text-align:center; color:#999;">No attendance records today.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('attendanceChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Present', 'Absent', 'Late'],
+                datasets: [{
+                    label: 'Students',
+                    data: [{{ stats.present|default:0 }}, {{ stats.absent|default:0 }}, {{ stats.late|default:0 }}],
+                    backgroundColor: ['#2e7d32', '#c62828', '#e65100'],
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -98,3 +98,19 @@ def error_500(request):
 def error_403(request, exception=None):
     """Custom 403 page."""
     return render(request, 'errors/403.html', status=403)
+
+@login_required
+def backup_now(request):
+    """Trigger a manual backup."""
+    if request.user.role not in ['super_admin', 'admin']:
+        messages.error(request, 'Access denied.')
+        return redirect('dashboard')
+    
+    from django.core.management import call_command
+    try:
+        call_command('backup')
+        messages.success(request, 'Backup completed!')
+    except Exception as e:
+        messages.error(request, f'Backup failed: {e}')
+    
+    return redirect('dashboard')

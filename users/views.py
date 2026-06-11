@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from datetime import date
 
 
 def redirect_to_login(request):
@@ -37,16 +38,33 @@ def logout_view(request):
 
 @login_required
 def dashboard(request):
+    """Role-based dashboard routing with live stats."""
+    from core.models import Student
+    from attendance.models import Attendance
+    from movement.models import MovementLog
+
+    today = date.today()
+    total = Student.objects.filter(status='active').count()
+    present = Attendance.objects.filter(scan_date=today).count()
+
+    stats = {
+        'total': total,
+        'present': present,
+        'outside': MovementLog.objects.filter(exit_date=today, time_in__isnull=True).count(),
+        'absent': total - present if total > present else 0,
+        'not_cleared': 145,  # Will be dynamic when existing DB is connected
+    }
+
     role = request.user.role
     if role in ['super_admin', 'admin']:
-        return render(request, 'admin_dashboard/home.html')
+        return render(request, 'admin_dashboard/home.html', {'stats': stats})
     elif role == 'bursar':
         return redirect('bursar_dashboard')
     elif role == 'gate_staff':
         return redirect('gate_dashboard')
     elif role == 'class_teacher':
         return redirect('teacher_dashboard')
-    return render(request, 'admin_dashboard/home.html')
+    return render(request, 'admin_dashboard/home.html', {'stats': stats})
 
 
 @login_required
@@ -62,6 +80,7 @@ def gate_dashboard(request):
 @login_required
 def teacher_dashboard(request):
     return render(request, 'admin_dashboard/teacher.html')
+
 
 @login_required
 def scanner_view(request):
