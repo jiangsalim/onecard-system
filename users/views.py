@@ -3,6 +3,9 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from datetime import date
+import logging
+
+logger = logging.getLogger('onecard')
 
 
 def redirect_to_login(request):
@@ -38,7 +41,7 @@ def logout_view(request):
 
 @login_required
 def dashboard(request):
-    """Role-based dashboard routing with live stats."""
+    """Role-based dashboard routing with live stats and auto-alerts."""
     from core.models import Student
     from attendance.models import Attendance
     from movement.models import MovementLog
@@ -54,6 +57,15 @@ def dashboard(request):
         'absent': total - present if total > present else 0,
         'not_cleared': 145,  # Will be dynamic when existing DB is connected
     }
+
+    # Auto-generate alerts on dashboard visit
+    try:
+        from notifications.views import auto_check_alerts
+        alerts = auto_check_alerts()
+        if alerts > 0:
+            logger.info(f"Auto-generated {alerts} notification(s)")
+    except Exception as e:
+        logger.warning(f"Auto-check alerts failed: {e}")
 
     role = request.user.role
     if role in ['super_admin', 'admin']:

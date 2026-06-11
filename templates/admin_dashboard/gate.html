@@ -9,8 +9,9 @@
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; }
         .navbar { background: #1a237e; color: white; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; height: 60px; }
         .navbar .brand { font-size: 18px; font-weight: 600; }
+        .navbar a { color: white; text-decoration: none; }
         .navbar .user-info { display: flex; align-items: center; gap: 16px; font-size: 14px; }
-        .navbar .role-badge { background: #4caf50; color: white; padding: 4px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .navbar .role-badge { background: #4caf50; color: white; padding: 4px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
         .navbar button { background: #c62828; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
         .layout { display: flex; }
         .sidebar { width: 240px; background: white; min-height: calc(100vh - 60px); border-right: 1px solid #e0e0e0; padding-top: 10px; }
@@ -18,16 +19,23 @@
         .sidebar a:hover { background: #f5f5ff; color: #1a237e; border-left-color: #1a237e; }
         .sidebar .section-title { padding: 20px 24px 8px; font-size: 11px; text-transform: uppercase; color: #999; letter-spacing: 1.5px; font-weight: 600; }
         .main-content { flex: 1; padding: 24px 32px; }
+        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: white; border-radius: 8px; padding: 24px; text-align: center; border: 1px solid #e8e8e8; }
+        .stat-card .stat-value { font-size: 28px; font-weight: 700; color: #1a237e; }
+        .stat-card .stat-label { font-size: 13px; color: #888; margin-top: 4px; }
         .card { background: white; border-radius: 8px; padding: 24px; border: 1px solid #e8e8e8; margin-bottom: 20px; }
         .card h2 { color: #1a237e; margin-bottom: 12px; }
-        .btn { padding: 10px 22px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; margin-right: 10px; }
+        .btn { padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: 600; text-decoration: none; display: inline-block; }
         .btn-primary { background: #1a237e; color: white; }
-        .btn-outline { background: white; color: #1a237e; border: 1px solid #1a237e; }
+        .btn-outline { background: white; color: #1a237e; border: 2px solid #1a237e; }
+        .btn-success { background: #2e7d32; color: white; }
+        .btn-warning { background: #e65100; color: white; }
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     </style>
 </head>
 <body>
     <div class="navbar">
-        <div class="brand">OneCard System</div>
+        <div class="brand"><a href="{% url 'dashboard' %}" style="color:white;">OneCard System</a></div>
         <div class="user-info">
             <span class="role-badge">Gate Staff</span>
             <span>{{ user.get_full_name|default:user.username }}</span>
@@ -39,19 +47,48 @@
     <div class="layout">
         <div class="sidebar">
             <div class="section-title">Main</div>
-            <a href="{% url 'gate_dashboard' %}">Dashboard</a>
-            <div class="section-title">Actions</div>
-            <a href="#">Scan Card (Attendance)</a>
-            <a href="#">Pass Out / Exit</a>
-            <a href="#">Return</a>
+            <a href="{% url 'gate_dashboard' %}" style="background:#f5f5ff; color:#1a237e; border-left-color:#1a237e;">Dashboard</a>
+            <div class="section-title">Scanning</div>
+            <a href="{% url 'scanner' %}">Open Scanner</a>
+            <div class="section-title">Movement</div>
+            <a href="{% url 'movement_dashboard' %}">Movement Dashboard</a>
+            <a href="{% url 'movement_history' %}">Movement History</a>
+            <div class="section-title">Reports</div>
+            <a href="{% url 'attendance_report' %}">Attendance Report</a>
         </div>
         <div class="main-content">
-            <h1 style="color:#1a237e; margin-bottom:20px;">Gate Scanner</h1>
-            <div class="card">
-                <h2>Scanner Ready</h2>
-                <p style="color:#666; margin-bottom:16px;">Camera is active. Select mode to begin scanning student cards.</p>
-                <button class="btn btn-primary">Attendance Check-In</button>
-                <button class="btn btn-outline">Pass Out / Exit</button>
+            <h1 style="color:#1a237e; margin-bottom:20px;">Gate Operations</h1>
+
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-value">{{ stats.present|default:"792" }}</div>
+                    <div class="stat-label">Checked In Today</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" style="color:#e65100;">{{ stats.outside|default:"12" }}</div>
+                    <div class="stat-label">Currently Outside</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" style="color:#c62828;">{{ stats.absent|default:"45" }}</div>
+                    <div class="stat-label">Absent Today</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">--:--</div>
+                    <div class="stat-label">Last Scan</div>
+                </div>
+            </div>
+
+            <div class="action-grid">
+                <div class="card" style="text-align:center;">
+                    <h2>Attendance Check-In</h2>
+                    <p style="color:#666; margin-bottom:16px;">Scan student cards for morning check-in.</p>
+                    <a href="{% url 'scanner' %}" class="btn btn-success">Open Scanner</a>
+                </div>
+                <div class="card" style="text-align:center;">
+                    <h2>Movement Tracking</h2>
+                    <p style="color:#666; margin-bottom:16px;">View and manage student pass-outs.</p>
+                    <a href="{% url 'movement_dashboard' %}" class="btn btn-warning">View Movement</a>
+                </div>
             </div>
         </div>
     </div>

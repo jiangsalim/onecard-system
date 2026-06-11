@@ -36,22 +36,34 @@ def fee_management(request):
 
 @login_required
 def fee_report(request):
-    """View fee balances."""
+    """View fee balances with dynamic class fetching."""
     if request.user.role not in ['super_admin', 'admin', 'bursar']:
         messages.error(request, 'Access denied.')
         return redirect('dashboard')
     
     from core.models import Student
-    from core.services import get_payment_balance
+    from core.services import get_payment_balance, get_student_info_from_existing_db
     
     students = Student.objects.filter(status='active')
     student_data = []
     
-    for s in students[:50]:  # Limit to 50 for performance
+    for s in students[:50]:
+        # Get actual class from existing DB or fallback
+        info = get_student_info_from_existing_db(s.admission_number)
+        class_name = info['class'] if info else 'Senior 3'
+        
         paid = get_payment_balance(s.payment_code)
-        fee = FeeStructure.objects.filter(class_name='Senior 3').first()  # Simplified
+        fee = FeeStructure.objects.filter(class_name=class_name).first()
         total = float(fee.total_fees) if fee else 800000
         balance = total - float(paid)
+        
+        if balance <= 0 and float(paid) > 0:
+            status = 'CLEARED'
+        elif float(paid) == 0:
+            status = 'NOT PAID'
+        else:
+            status = 'NOT CLEARED'
+        
         student_data.append({
             'id': s.id,
             'admission': s.admission_number,
@@ -59,7 +71,7 @@ def fee_report(request):
             'total': total,
             'paid': float(paid),
             'balance': balance,
-            'status': 'CLEARED' if balance <= 0 else 'NOT CLEARED',
+            'status': status,
         })
     
     return render(request, 'fees/report.html', {'students': student_data})
