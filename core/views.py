@@ -1,7 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import JsonResponse
 from .models import Student
 from .services import generate_qr_for_student, get_next_student_id, fetch_students_from_existing_db
 import logging
@@ -16,18 +15,16 @@ def import_students(request):
         messages.error(request, 'Access denied.')
         return redirect('dashboard')
     
-    # For now, use mock data since existing DB may not be connected
     if request.method == 'POST':
         return handle_import(request)
     
-    # GET: Show preview page with mock data
-    mock_students = [
-        {'admission_number': 'ADM-2024-001', 'full_name': 'John Doe', 'payment_code': 'SCH-2024-001', 'current_class': 'Senior 3', 'stream': 'A'},
-        {'admission_number': 'ADM-2024-002', 'full_name': 'Jane Smith', 'payment_code': 'SCH-2024-002', 'current_class': 'Senior 3', 'stream': 'A'},
-        {'admission_number': 'ADM-2023-015', 'full_name': 'Peter Kato', 'payment_code': 'SCH-2023-015', 'current_class': 'Senior 4', 'stream': 'B'},
-    ]
+    # Fetch real students from existing DB
+    students = fetch_students_from_existing_db()
     
-    return render(request, 'admin_dashboard/import.html', {'students': mock_students})
+    if not students:
+        messages.info(request, 'No students found in school database, or database connection not configured.')
+    
+    return render(request, 'admin_dashboard/import.html', {'students': students})
 
 
 def handle_import(request):
@@ -46,15 +43,12 @@ def handle_import(request):
             if Student.objects.filter(admission_number=admission_number).exists():
                 continue
             
-            # Get student data from POST
             full_name = request.POST.get(f'name_{admission_number}', '')
             payment_code = request.POST.get(f'payment_{admission_number}', '')
             
-            # Generate ID and QR
             student_id = get_next_student_id()
             qr_file = generate_qr_for_student(student_id)
             
-            # Create student
             student = Student(
                 id=student_id,
                 admission_number=admission_number,
@@ -87,17 +81,21 @@ def view_students(request):
     students = Student.objects.select_related('template').all()
     return render(request, 'admin_dashboard/students.html', {'students': students})
 
+
 def error_404(request, exception=None):
     """Custom 404 page."""
     return render(request, 'errors/404.html', status=404)
+
 
 def error_500(request):
     """Custom 500 page."""
     return render(request, 'errors/500.html', status=500)
 
+
 def error_403(request, exception=None):
     """Custom 403 page."""
     return render(request, 'errors/403.html', status=403)
+
 
 @login_required
 def backup_now(request):
@@ -109,7 +107,7 @@ def backup_now(request):
     from django.core.management import call_command
     try:
         call_command('backup')
-        messages.success(request, 'Backup completed!')
+        messages.success(request, 'Backup completed successfully!')
     except Exception as e:
         messages.error(request, f'Backup failed: {e}')
     

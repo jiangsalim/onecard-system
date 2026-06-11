@@ -44,11 +44,14 @@ def get_student_info_from_existing_db(admission_number):
             row = cursor.fetchone()
             if row:
                 return {
-                    'name': row[0], 'class': row[1], 'stream': row[2],
-                    'photo': row[3], 'status': row[4]
+                    'name': row[0],
+                    'class': row[1],
+                    'stream': row[2],
+                    'photo': row[3],
+                    'status': row[4],
                 }
     except Exception as e:
-        logger.error(f"Failed to fetch student {admission_number}: {e}")
+        logger.warning(f"School DB unavailable for {admission_number}: {e}")
     return None
 
 
@@ -63,7 +66,7 @@ def get_payment_balance(payment_code):
             row = cursor.fetchone()
             return row[0] if row else 0
     except Exception as e:
-        logger.error(f"Failed to get balance for {payment_code}: {e}")
+        logger.warning(f"Payment lookup failed for {payment_code}: {e}")
         return 0
 
 
@@ -73,5 +76,8 @@ def get_next_student_id():
     last = Student.objects.order_by('-id').first()
     if not last:
         return 'STU-001'
-    num = int(last.id.replace('STU-', '')) + 1
+    try:
+        num = int(last.id.replace('STU-', '')) + 1
+    except (ValueError, AttributeError):
+        num = 1
     return f'STU-{num:03d}'

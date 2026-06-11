@@ -40,21 +40,27 @@ def process_scan(request):
                 'reprint_count': student.reprint_count,
             }, status=410)
         
-        # Try to get info from existing DB, fall back to mock data
+        # Get student info from existing school DB
         info = get_student_info_from_existing_db(student.admission_number)
         if not info:
-            info = {
-                'name': 'Student ' + student.admission_number,
-                'class': 'N/A',
-                'stream': 'N/A',
-                'photo': None,
-                'status': 'active'
-            }
+            return JsonResponse({
+                'success': False,
+                'error': 'Cannot fetch student data. School database may be unavailable.',
+                'error_code': 'DB_UNAVAILABLE',
+            }, status=503)
         
         # Get balance
         total_paid = get_payment_balance(student.payment_code)
         fee = FeeStructure.objects.filter(class_name=info['class']).first()
-        total_fees = float(fee.total_fees) if fee else 800000
+        
+        if not fee:
+            return JsonResponse({
+                'success': False,
+                'error': f'Fee structure not set for {info["class"]}. Contact admin.',
+                'error_code': 'NO_FEE_STRUCTURE',
+            }, status=400)
+        
+        total_fees = float(fee.total_fees)
         balance = total_fees - float(total_paid)
         
         if balance <= 0 and float(total_paid) > 0:

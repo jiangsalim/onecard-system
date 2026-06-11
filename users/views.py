@@ -45,17 +45,29 @@ def dashboard(request):
     from core.models import Student
     from attendance.models import Attendance
     from movement.models import MovementLog
+    from core.services import get_payment_balance
 
     today = date.today()
     total = Student.objects.filter(status='active').count()
     present = Attendance.objects.filter(scan_date=today).count()
+
+    # Calculate not-cleared count
+    not_cleared = 0
+    if total > 0:
+        for s in Student.objects.filter(status='active')[:200]:
+            try:
+                paid = get_payment_balance(s.payment_code)
+                if float(paid) < 800000:  # Will be dynamic when fees are set per class
+                    not_cleared += 1
+            except Exception:
+                pass
 
     stats = {
         'total': total,
         'present': present,
         'outside': MovementLog.objects.filter(exit_date=today, time_in__isnull=True).count(),
         'absent': total - present if total > present else 0,
-        'not_cleared': 145,  # Will be dynamic when existing DB is connected
+        'not_cleared': not_cleared,
     }
 
     # Auto-generate alerts on dashboard visit
@@ -77,8 +89,6 @@ def dashboard(request):
     elif role == 'class_teacher':
         return redirect('teacher_dashboard')
     return render(request, 'admin_dashboard/home.html', {'stats': stats})
-
-
 @login_required
 def bursar_dashboard(request):
     return render(request, 'admin_dashboard/bursar.html')
