@@ -12,6 +12,7 @@ class Student(models.Model):
     card_printed = models.BooleanField(default=False)
     card_printed_date = models.DateField(null=True, blank=True)
     reprint_count = models.IntegerField(default=0)
+    card_version = models.IntegerField(default=1)
     last_reprint_date = models.DateField(null=True, blank=True)
     last_reprint_reason = models.CharField(max_length=50, null=True, blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')

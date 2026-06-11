@@ -7,10 +7,11 @@ import logging
 logger = logging.getLogger('onecard')
 
 
-def generate_qr_for_student(student_id):
-    """Generate QR code image for a student."""
+def generate_qr_for_student(student_id, version=1):
+    """Generate QR code image for a student with version."""
     qr = qrcode.QRCode(version=1, box_size=10, border=4)
-    qr.add_data(student_id)
+    qr_data = f"{student_id}:v{version}"
+    qr.add_data(qr_data)
     qr.make(fit=True)
     img = qr.make_image(fill_color="black", back_color="white")
     buffer = BytesIO()
@@ -44,11 +45,8 @@ def get_student_info_from_existing_db(admission_number):
             row = cursor.fetchone()
             if row:
                 return {
-                    'name': row[0],
-                    'class': row[1],
-                    'stream': row[2],
-                    'photo': row[3],
-                    'status': row[4],
+                    'name': row[0], 'class': row[1], 'stream': row[2],
+                    'photo': row[3], 'status': row[4]
                 }
     except Exception as e:
         logger.warning(f"School DB unavailable for {admission_number}: {e}")

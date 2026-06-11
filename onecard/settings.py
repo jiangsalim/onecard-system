@@ -65,6 +65,18 @@ DATABASES = {
         'PORT': '3306',
         'OPTIONS': {'charset': 'utf8mb4'},
     },
+    'school_db': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'school_test_db',
+        'USER': 'onecard_readonly',
+        'PASSWORD': 'OneCard@2026',
+        'HOST': 'localhost',
+        'PORT': '3306',
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+            'init_command': "SET SESSION TRANSACTION READ ONLY",
+        },
+    },
 }
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -89,24 +101,15 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'users.User'
 
+# Data upload limits (for large imports)
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
+
+# Authentication URLs
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'
+LOGOUT_REDIRECT_URL = '/login/'
+
 # Error handler views
 handler404 = 'core.views.error_404'
 handler500 = 'core.views.error_500'
 handler403 = 'core.views.error_403'
-
-# ============================================
-# EXISTING SCHOOL DATABASE (READ-ONLY)
-# Uncomment and configure when ready
-# ============================================
-# DATABASES['school_db'] = {
-#     'ENGINE': 'django.db.backends.mysql',
-#     'NAME': 'school_database_name',
-#     'USER': 'onecard_readonly',
-#     'PASSWORD': 'readonly_password_here',
-#     'HOST': '192.168.1.10',
-#     'PORT': '3306',
-#     'OPTIONS': {
-#         'charset': 'utf8mb4',
-#         'init_command': "SET SESSION TRANSACTION READ ONLY",
-#     },
-# }
