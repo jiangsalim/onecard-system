@@ -10,4 +10,5 @@ urlpatterns = [
     path('print-cards/', views.print_cards, name='print_cards'),
     path('download-cards-pdf/', views.download_cards_pdf, name='download_cards_pdf'),
     path('reprint/', views.reprint_card, name='reprint_card'),
+    path('printed-cards/', views.printed_cards, name='printed_cards'),
 ]

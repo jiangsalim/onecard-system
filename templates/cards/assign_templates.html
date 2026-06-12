@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% load card_filters %}
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -65,11 +66,11 @@
                                 <td><strong>{{ class_name }}</strong></td>
                                 <td>
                                     <select name="template_{{ class_name }}">
-                                        <option value="">-- Select --</option>
-                                        {% for t in templates %}
-                                        <option value="{{ t.id }}" {% if current.class_name == t.id %}selected{% endif %}>{{ t.name }}</option>
-                                        {% endfor %}
-                                    </select>
+                                      <option value="">-- Select --</option>
+                                          {% for t in templates %}
+                                      <option value="{{ t.id }}" {% if current|get_item:class_name == t.id %}selected{% endif %}>{{ t.name }}</option>
+                                          {% endfor %}
+                                     </select>
                                 </td>
                             </tr>
                             {% endfor %}

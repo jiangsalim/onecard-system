@@ -319,3 +319,13 @@ def reprint_card(request):
             except Student.DoesNotExist:
                 messages.error(request, 'Student not found.')
     return render(request, 'cards/reprint.html', {'student': student, 'reprints': reprints})
+
+@login_required
+def printed_cards(request):
+    """View all printed cards."""
+    if request.user.role not in ['super_admin', 'admin', 'bursar']:
+        messages.error(request, 'Access denied.'); return redirect('dashboard')
+    
+    students = Student.objects.filter(card_printed=True, status='active').select_related('template').order_by('-card_printed_date')
+    
+    return render(request, 'cards/printed_cards.html', {'students': students})
