@@ -8,6 +8,7 @@ class Student(models.Model):
     admission_number = models.CharField(max_length=30, unique=True)
     payment_code = models.CharField(max_length=50, unique=True)
     qr_code = models.ImageField(upload_to='qrcodes/', null=True, blank=True)
+    photo = models.ImageField(upload_to='photos/', null=True, blank=True)
     template = models.ForeignKey('cards.CardTemplate', on_delete=models.SET_NULL, null=True, blank=True)
     card_printed = models.BooleanField(default=False)
     card_printed_date = models.DateField(null=True, blank=True)

@@ -1,9 +1,16 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.http import HttpResponse
 from datetime import date
 from .models import CardTemplate, ClassTemplateAssignment, CardReprint
 from core.models import Student
+from core.services import get_student_info_from_existing_db
+import barcode
+from barcode.writer import ImageWriter
+from io import BytesIO
+import base64
+from urllib.parse import quote
 
 
 @login_required
@@ -104,6 +111,187 @@ def print_cards(request):
 
 
 @login_required
+def download_cards_pdf(request):
+    """Open printable page for selected cards — front with badge/photo/QR, back with barcode."""
+    if request.user.role not in ['super_admin', 'admin']:
+        messages.error(request, 'Access denied.'); return redirect('dashboard')
+    
+    student_ids = request.GET.getlist('ids')
+    if not student_ids:
+        messages.error(request, 'No students selected.')
+        return redirect('print_cards')
+    
+    students = Student.objects.filter(id__in=student_ids, status='active')
+    
+    # Pre-fetch all student info from school DB
+    from core.services import fetch_students_from_existing_db
+    all_school = fetch_students_from_existing_db()
+    school_dict = {s['admission_number']: s for s in all_school}
+    
+    # Pre-generate barcodes
+    barcode_images = {}
+    for s in students:
+        try:
+            barcode_data = f"{s.id}|{s.payment_code}"
+            buffer = BytesIO()
+            code128 = barcode.get('code128', barcode_data, writer=ImageWriter())
+            code128.write(buffer)
+            barcode_images[s.id] = base64.b64encode(buffer.getvalue()).decode()
+        except Exception:
+            barcode_images[s.id] = ''
+    
+    # School badge URL
+    badge_url = request.build_absolute_uri('/media/badge.jpg')
+
+    html = """<!DOCTYPE html>
+    <html><head><meta charset="utf-8"><title>OneCard Print</title>
+    <style>
+        @page { size: 320px 220px; margin: 0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: white; }
+        
+        .no-print-btn { 
+            display: inline-block; background: #1a237e; color: white; padding: 10px 20px; 
+            border: none; border-radius: 4px; cursor: pointer; font-size: 13px; margin: 5px; 
+            text-decoration: none;
+        }
+        
+        .card, .card-back {
+            width: 300px; height: 200px; margin: 0 auto;
+            border: 3px solid #1a237e; border-radius: 6px;
+            background: white; page-break-after: always; 
+            page-break-inside: avoid; overflow: hidden;
+        }
+        
+        /* FRONT */
+        .card {
+            padding: 8px 10px;
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .card .top { 
+            display: flex; align-items: center; gap: 8px; 
+            border-bottom: 1px solid #1a237e; padding-bottom: 4px;
+        }
+        .card .top .badge img { width: 35px; height: 35px; border-radius: 4px; }
+        .card .top .school { font-weight: bold; font-size: 9px; color: #1a237e; }
+        .card .top .label { font-size: 7px; color: #888; }
+        .card .middle { 
+            display: flex; align-items: center; gap: 6px; flex: 1; margin: 4px 0; 
+        }
+        .card .middle .photo-box { width: 55px; height: 70px; flex-shrink: 0; border: 1px solid #ddd; }
+        .card .middle .photo-box img { width: 55px; height: 70px; object-fit: cover; }
+        .card .middle .qr { width: 65px; height: 65px; flex-shrink: 0; }
+        .card .middle .qr img { width: 65px; height: 65px; }
+        .card .middle .details { font-size: 8px; line-height: 1.3; flex: 1; }
+        .card .middle .details strong { color: #1a237e; }
+        .card .bottom { text-align: center; font-size: 6px; color: #888; border-top: 1px solid #ddd; padding-top: 2px; }
+        
+        /* BACK */
+        .card-back {
+            padding: 10px 14px; background: #f8f9ff;
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .card-back .school-name { font-size: 10px; font-weight: bold; color: #1a237e; text-align: center; border-bottom: 2px solid #1a237e; padding-bottom: 4px; margin-bottom: 4px; }
+        .card-back .info-section { font-size: 8px; line-height: 1.4; color: #333; }
+        .card-back .info-section .row { display: flex; justify-content: space-between; margin-bottom: 1px; }
+        .card-back .info-section strong { color: #1a237e; }
+        .card-back .barcode-box { text-align: center; margin: 4px 0; }
+        .card-back .barcode-box img { width: 250px; height: 40px; }
+        .card-back .barcode-text { text-align: center; font-size: 7px; color: #666; font-family: 'Courier New', monospace; }
+        .card-back .warning-box { background: #fff3e0; border: 1px solid #ffcc80; border-radius: 4px; padding: 4px 6px; font-size: 7px; color: #e65100; text-align: center; margin: 3px 0; }
+        .card-back .contact { font-size: 7px; color: #666; text-align: center; }
+        
+        @media print {
+            body { margin: 0; padding: 0; }
+            .no-print { display: none !important; }
+        }
+    </style></head><body>
+    <div style="text-align:center; padding:10px;" class="no-print">
+        <button class="no-print-btn" onclick="window.print()">Print / Save as PDF</button>
+        <button class="no-print-btn" onclick="window.close()" style="background:#c62828;">Close</button>
+        <p style="color:#666; font-size:11px; margin:8px 0;">Total: """ + str(len(students)) + """ cards (Front + Back)</p>
+    </div>
+    """
+    
+    # FRONT SIDES
+    for s in students:
+        qr_url = request.build_absolute_uri(s.qr_code.url) if s.qr_code else ''
+        school_info = school_dict.get(s.admission_number, {})
+        name_front = school_info.get('full_name', 'Student')
+        student_class = school_info.get('current_class', 'N/A')
+        student_stream = school_info.get('stream', '')
+        
+        # Photo URL — priority: 1) Admin uploaded  2) School DB photo_path  3) Generated avatar
+        photo_url = ''
+        if s.photo:
+            photo_url = request.build_absolute_uri(s.photo.url)
+        else:
+            # Check school DB for photo_path
+            school_photo = school_info.get('photo_path', '')
+            if school_photo:
+                photo_url = request.build_absolute_uri('/media/' + school_photo) if school_photo.startswith('/') else school_photo
+            else:
+                # Generate avatar from name
+                name_encoded = quote(name_front)
+                photo_url = f"https://ui-avatars.com/api/?name={name_encoded}&size=150&background=1a237e&color=fff"
+        
+        html += f"""
+        <div class="card">
+            <div class="top">
+               <div class="badge"><img src="{badge_url}" alt="Badge"></div>
+                <div>
+                    <div class="school">JINJA SENIOR SECONDARY SCHOOL</div>
+                    <div class="label">Student ID Card</div>
+                </div>
+            </div>
+            <div class="middle">
+                <div class="photo-box"><img src="{photo_url}" alt="Photo"></div>
+                <div class="qr"><img src="{qr_url}" alt="QR"></div>
+                <div class="details">
+                    <strong>ID:</strong> {s.id}<br>
+                    <strong>Name:</strong> {name_front}<br>
+                    <strong>Adm:</strong> {s.admission_number}<br>
+                    <strong>Class:</strong> {student_class} {student_stream}<br>
+                    <strong>Pay:</strong> {s.payment_code}<br>
+                    <strong>Ver:</strong> v{s.card_version}
+                </div>
+            </div>
+            <div class="bottom">Property of JINJA SSS. Return if found.</div>
+        </div>
+        """
+    
+    # BACK SIDES
+    for s in students:
+        school_info = school_dict.get(s.admission_number, {})
+        name = school_info.get('full_name', 'Student')
+        student_class = school_info.get('current_class', 'N/A')
+        student_stream = school_info.get('stream', '')
+        
+        barcode_img = barcode_images.get(s.id, '')
+        barcode_data = f"{s.id}|{s.payment_code}"
+        
+        html += f"""
+        <div class="card-back">
+            <div class="school-name">JINJA SENIOR SECONDARY SCHOOL</div>
+            <div class="info-section">
+                <div class="row"><strong>Name:</strong> <span>{name}</span></div>
+                <div class="row"><strong>Class:</strong> <span>{student_class} {student_stream}</span></div>
+                <div class="row"><strong>Adm No:</strong> <span>{s.admission_number}</span></div>
+                <div class="row"><strong>Card ID:</strong> <span>{s.id} (v{s.card_version})</span></div>
+                <div class="row"><strong>Pay Code:</strong> <span>{s.payment_code}</span></div>
+            </div>
+            <div class="barcode-box"><img src="data:image/png;base64,{barcode_img}" alt="Barcode"></div>
+            <div class="barcode-text">{barcode_data}</div>
+            <div class="warning-box">CARRY AT ALL TIMES &bull; REPORT LOSS IMMEDIATELY</div>
+            <div class="contact">P.O Box 255, Jinja | Tel: 0772404055</div>
+        </div>
+        """
+    
+    html += """</body></html>"""
+    return HttpResponse(html)
+
+
+@login_required
 def reprint_card(request):
     if request.user.role not in ['super_admin', 'admin', 'bursar']:
         messages.error(request, 'Access denied.'); return redirect('dashboard')
@@ -126,7 +314,7 @@ def reprint_card(request):
                     student.card_printed = False
                     student.qr_code.save(f'{student.id}_v{new_version}.png', new_qr, save=False)
                     student.save()
-                    messages.success(request, f'Reprint initiated! Card v{new_version} QR generated. Old card v{new_version - 1} is now invalid.')
+                    messages.success(request, f'Reprint initiated! Card v{new_version} QR generated. Old card v{new_version - 1} is now invalid. Print the new card.')
                     return redirect('print_cards')
             except Student.DoesNotExist:
                 messages.error(request, 'Student not found.')
