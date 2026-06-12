@@ -101,13 +101,22 @@ def error_403(request, exception=None):
 def backup_now(request):
     """Trigger a manual backup."""
     if request.user.role not in ['super_admin', 'admin']:
-        messages.error(request, 'Access denied.')
-        return redirect('dashboard')
+        messages.error(request, 'Access denied.'); return redirect('dashboard')
     
     from django.core.management import call_command
+    from io import StringIO
+    import sys
+    
     try:
+        out = StringIO()
+        sys.stdout = out
         call_command('backup')
-        messages.success(request, 'Backup completed successfully!')
+        sys.stdout = sys.__stdout__
+        output = out.getvalue()
+        if 'success' in output.lower() or 'saved' in output.lower():
+            messages.success(request, 'Backup completed! Check the backups folder.')
+        else:
+            messages.info(request, f'Backup result: {output[:200]}')
     except Exception as e:
         messages.error(request, f'Backup failed: {e}')
     

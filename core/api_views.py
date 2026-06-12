@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from .models import Student
 from .services import get_student_info_from_existing_db, get_payment_balance, fetch_students_from_existing_db, generate_qr_for_student, get_next_student_id
 from attendance.models import Attendance
+from movement.models import MovementLog
 from fees.models import FeeStructure
 from datetime import date, datetime
 import json
