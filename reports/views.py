@@ -48,7 +48,7 @@ def build_excel_response(filename, sheet_name, headers, data):
 @login_required
 def attendance_report(request):
     today = date.today()
-    attendance_list = Attendance.objects.filter(scan_date=today).select_related('student')[:50]
+    attendance_list = Attendance.objects.filter(scan_date=today).select_related('student')
     total = Student.objects.filter(status='active').count()
     present = Attendance.objects.filter(scan_date=today).count()
     absent = total - present
@@ -79,7 +79,7 @@ def export_attendance(request):
         return build_pdf_response(f'attendance_report_{today}.pdf', elements)
     else:
         headers = ['Student ID', 'Admission #', 'Date', 'Time In', 'Location', 'Marked By']
-        data = [[a.student.id, a.student.admission_number, str(a.scan_date), str(a.time_in), a.scan_location, a.marked_by] for a in Attendance.objects.select_related('student').all()[:500]]
+        data = [[a.student.id, a.student.admission_number, str(a.scan_date), str(a.time_in), a.scan_location, a.marked_by] for a in Attendance.objects.select_related('student').all()]
         return build_excel_response(f'attendance_report_{today}.xlsx', 'Attendance', headers, data)
 
 
@@ -87,7 +87,7 @@ def export_attendance(request):
 def export_fees(request):
     fmt = request.GET.get('format', 'xlsx')
     today = date.today()
-    students = Student.objects.filter(status='active')[:500]
+    students = Student.objects.filter(status='active')
     rows = []
     for s in students:
         paid = get_payment_balance(s.payment_code)
@@ -115,7 +115,7 @@ def export_fees(request):
 def export_movement(request):
     fmt = request.GET.get('format', 'xlsx')
     today = date.today()
-    logs = MovementLog.objects.select_related('student').all()[:500]
+    logs = MovementLog.objects.select_related('student').all()
     rows = []
     for m in logs:
         rows.append([m.student.id, str(m.exit_date), str(m.time_out), str(m.time_in or 'Still Out'), m.get_reason_display(), m.authorized_by])
