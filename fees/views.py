@@ -79,7 +79,7 @@ def fee_report(request):
         if class_filter and class_name != class_filter:
             continue
         
-        if search_query and search_query.lower() not in info.get('name', '').lower() and search_query.lower() not in s.admission_number.lower():
+        if search_query and search_query.lower() not in info.get('name', '').lower() and search_query.lower() not in s.admission_number.lower() and search_query.lower() not in s.id.lower():
             continue
         
         paid = get_payment_balance(s.payment_code)

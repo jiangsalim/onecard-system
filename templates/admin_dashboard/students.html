@@ -1,6 +1,7 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>View Students - OneCard</title>
@@ -55,7 +56,7 @@
 
             <div class="card">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                    <h2>All Students ({{ students.count }})</h2>
+                    <h2>All Students ({{ students|length }})</h2>
                     <div class="search-box">
                         <input type="text" id="searchInput" placeholder="Search by ID or Admission #..." onkeyup="filterTable()">
                     </div>
@@ -81,9 +82,9 @@
                             <td>{{ s.payment_code }}</td>
                             <td>
                                 {% if s.category == 'hostel' %}
-                                <span class="badge badge-hostel">🏠 Hostel</span>
+                                <span class="badge badge-hostel">ðŸ  Hostel</span>
                                 {% else %}
-                                <span class="badge badge-day">☀ Day</span>
+                                <span class="badge badge-day">â˜€ Day</span>
                                 {% endif %}
                             </td>
                             <td>

@@ -1,6 +1,7 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scanner - OneCard</title>
@@ -106,14 +107,14 @@
         
         function onModeChange() {
             const mode = document.getElementById('mode').value;
-            if (mode === 'pass_out') statusText.textContent = 'Pass Out Mode — Scan to exit or return';
-            else if (mode === 'meal_tracking') statusText.textContent = 'Meal Tracking Mode — Scan to serve meal';
+            if (mode === 'pass_out') statusText.textContent = 'Pass Out Mode â€” Scan to exit or return';
+            else if (mode === 'meal_tracking') statusText.textContent = 'Meal Tracking Mode â€” Scan to serve meal';
             else statusText.textContent = cameraActive ? 'Position QR code in front of camera' : 'Enter a Student ID and click Lookup';
         }
         
         function toggleCamera() {
             if (cameraActive) { html5QrCode.stop().then(() => { cameraActive = false; document.getElementById('reader').style.display = 'none'; statusText.textContent = 'Camera stopped.'; }).catch(()=>{}); }
-            else { document.getElementById('reader').style.display = 'block'; statusText.textContent = 'Starting camera...'; html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess, onScanFailure).then(() => { cameraActive = true; onModeChange(); }).catch(err => { document.getElementById('reader').style.display = 'none'; statusText.textContent = 'Camera unavailable — use manual entry'; }); }
+            else { document.getElementById('reader').style.display = 'block'; statusText.textContent = 'Starting camera...'; html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess, onScanFailure).then(() => { cameraActive = true; onModeChange(); }).catch(err => { document.getElementById('reader').style.display = 'none'; statusText.textContent = 'Camera unavailable â€” use manual entry'; }); }
         }
         function onScanSuccess(decodedText) { 
             const now = Date.now(); if (now - lastScanTime < 3000) return; lastScanTime = now;
@@ -175,7 +176,7 @@
             let badge = f.status === 'CLEARED' ? '<span class="badge badge-success">CLEARED</span>' : f.status === 'OVERPAID' ? '<span class="badge badge-info">OVERPAID</span>' : f.status === 'NOT PAID' ? '<span class="badge badge-error">NOT PAID</span>' : '<span class="badge badge-warning">NOT CLEARED</span>';
             document.getElementById('feesStatus').innerHTML = badge;
             const attEl = document.getElementById('attendanceConfirm');
-            if (data.attendance.marked) { attEl.textContent = 'Attendance Recorded — ' + new Date().toLocaleTimeString(); attEl.className = 'attendance-confirm marked'; }
+            if (data.attendance.marked) { attEl.textContent = 'Attendance Recorded â€” ' + new Date().toLocaleTimeString(); attEl.className = 'attendance-confirm marked'; }
             else if (data.attendance.already_marked) { attEl.textContent = 'Already Marked Present Today'; attEl.className = 'attendance-confirm duplicate'; }
             else { attEl.className = 'attendance-confirm'; }
         }
@@ -215,7 +216,7 @@
             if (!authorizedBy) { alert('Please enter who authorized this exit.'); return; }
             fetch('/movement/api/pass-out/', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') || '' }, body: JSON.stringify({ student_id: currentStudentData.student.id, reason: reason, authorized_by: authorizedBy, location: document.getElementById('location').value }) })
             .then(r => r.json()).then(data => {
-                if (data.success) { document.getElementById('passoutForm').innerHTML = '<p style="text-align:center; color:#ffcc80; padding:20px;">Exit Logged — Student may leave</p>'; setTimeout(closeResult, 3000); }
+                if (data.success) { document.getElementById('passoutForm').innerHTML = '<p style="text-align:center; color:#ffcc80; padding:20px;">Exit Logged â€” Student may leave</p>'; setTimeout(closeResult, 3000); }
                 else { alert(data.error || 'Failed to log exit'); }
             }).catch(() => alert('Connection error'));
         }
@@ -228,7 +229,7 @@
             setIcon('icon-success'); document.getElementById('resultName').textContent = s.name; document.getElementById('resultName').style.color = '#4caf50';
             document.getElementById('resultDetail').textContent = `${s.class} ${s.stream} | ${m.category.toUpperCase()}`;
             document.getElementById('mealContainer').innerHTML = `
-                <div class="meal-success-box">✅ ${m.type.toUpperCase()} SERVED<br><small>Time: ${m.time}</small><br><small>Category: ${m.category.toUpperCase()}</small></div>`;
+                <div class="meal-success-box">âœ… ${m.type.toUpperCase()} SERVED<br><small>Time: ${m.time}</small><br><small>Category: ${m.category.toUpperCase()}</small></div>`;
         }
 
         function showMealError(data) {

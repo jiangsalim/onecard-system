@@ -1,6 +1,7 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Import Students - OneCard</title>
@@ -216,7 +217,7 @@
                 alert(data.message);
                 if (data.success) {
                     selectedSet.clear();
-                    loadStudents(1);  // Reload — imported students will be gone
+                    loadStudents(1);  // Reload â€” imported students will be gone
                 }
             })
             .finally(() => { btn.disabled = false; btn.textContent = 'Import Selected'; });
@@ -246,7 +247,7 @@
                     alert(data.message);
                     if (data.success) {
                         selectedSet.clear();
-                        loadStudents(1);  // Reload — imported students will be gone
+                        loadStudents(1);  // Reload â€” imported students will be gone
                     }
                 })
                 .finally(() => { btn.disabled = false; btn.textContent = 'Import All Students'; });
