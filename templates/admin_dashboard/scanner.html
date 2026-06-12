@@ -50,6 +50,7 @@
         .btn-exit { background: #e65100; color: white; }
         .btn-return { background: #2e7d32; color: white; }
         .duration-box { background: #0d47a1; border-radius: 8px; padding: 12px; text-align: center; margin: 10px 0; font-size: 16px; font-weight: 600; }
+        .meal-success-box { background: #1b5e20; border-radius: 8px; padding: 12px; text-align: center; margin: 10px 0; font-size: 16px; font-weight: 600; color: #a5d6a7; }
     </style>
 </head>
 <body>
@@ -61,11 +62,12 @@
             </div>
         </div>
         <div class="controls">
-            <select id="location"><option value="Main Gate">Main Gate</option><option value="Side Gate">Side Gate</option><option value="Bursar Office">Bursar Office</option></select>
+            <select id="location"><option value="Main Gate">Main Gate</option><option value="Side Gate">Side Gate</option><option value="Dining Hall">Dining Hall</option><option value="Bursar Office">Bursar Office</option></select>
             <select id="mode" onchange="onModeChange()">
                 <option value="attendance_balance">Attendance + Balance</option>
                 <option value="balance_only">Balance Only</option>
                 <option value="pass_out">Pass Out / Exit</option>
+                <option value="meal_tracking">Meal Tracking</option>
             </select>
         </div>
         <div class="toggle-camera"><button onclick="toggleCamera()">Enable Camera Scanner</button></div>
@@ -79,10 +81,9 @@
                 <div class="fees-box"><div class="fees-row"><span>Total Fees</span><span id="feesTotal"></span></div><div class="fees-row"><span>Amount Paid</span><span id="feesPaid"></span></div><div class="fees-row fees-total"><span>Balance</span><span id="feesBalance"></span></div></div>
                 <div style="text-align:center;" id="feesStatus"></div>
             </div>
-            <div id="passoutContainer" style="display:none;">
-                <div class="passout-form" id="passoutForm"></div>
-            </div>
+            <div id="passoutContainer" style="display:none;"><div class="passout-form" id="passoutForm"></div></div>
             <div id="returnContainer" style="display:none;"></div>
+            <div id="mealContainer" style="display:none;"></div>
             <div id="attendanceConfirm" class="attendance-confirm"></div>
         </div>
 
@@ -105,30 +106,32 @@
         
         function onModeChange() {
             const mode = document.getElementById('mode').value;
-            if (mode === 'pass_out') {
-                document.getElementById('statusText').textContent = 'Pass Out Mode — Scan to exit or return';
-            } else {
-                document.getElementById('statusText').textContent = cameraActive ? 'Position QR code in front of camera' : 'Enter a Student ID and click Lookup';
-            }
+            if (mode === 'pass_out') statusText.textContent = 'Pass Out Mode — Scan to exit or return';
+            else if (mode === 'meal_tracking') statusText.textContent = 'Meal Tracking Mode — Scan to serve meal';
+            else statusText.textContent = cameraActive ? 'Position QR code in front of camera' : 'Enter a Student ID and click Lookup';
         }
         
         function toggleCamera() {
             if (cameraActive) { html5QrCode.stop().then(() => { cameraActive = false; document.getElementById('reader').style.display = 'none'; statusText.textContent = 'Camera stopped.'; }).catch(()=>{}); }
-            else { document.getElementById('reader').style.display = 'block'; statusText.textContent = 'Starting camera...'; html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess, onScanFailure).then(() => { cameraActive = true; const mode = document.getElementById('mode').value; statusText.textContent = mode === 'pass_out' ? 'Pass Out Mode — Scan to exit or return' : 'Position QR code in front of camera'; }).catch(err => { document.getElementById('reader').style.display = 'none'; statusText.textContent = 'Camera unavailable — use manual entry'; }); }
+            else { document.getElementById('reader').style.display = 'block'; statusText.textContent = 'Starting camera...'; html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess, onScanFailure).then(() => { cameraActive = true; onModeChange(); }).catch(err => { document.getElementById('reader').style.display = 'none'; statusText.textContent = 'Camera unavailable — use manual entry'; }); }
         }
         function onScanSuccess(decodedText) { 
-            const now = Date.now();
-            if (now - lastScanTime < 3000) return;
-            lastScanTime = now;
-            html5QrCode.pause(); showLoading(); 
-            const mode = document.getElementById('mode').value;
-            statusText.textContent = mode === 'pass_out' ? 'Processing pass-out...' : 'QR code detected — processing...';
-            processScan(decodedText); 
+            const now = Date.now(); if (now - lastScanTime < 3000) return; lastScanTime = now;
+            html5QrCode.pause(); showLoading(); processScan(decodedText); 
         }
         function onScanFailure(err) {}
         let lastScanTime = 0;
         
-        function showLoading() { setIcon('icon-loading'); document.getElementById('resultName').textContent = 'Processing...'; document.getElementById('resultName').style.color = '#90caf9'; document.getElementById('resultDetail').textContent = 'Fetching student data'; document.getElementById('feesContainer').style.display = 'none'; document.getElementById('passoutContainer').style.display = 'none'; document.getElementById('returnContainer').style.display = 'none'; document.getElementById('attendanceConfirm').className = 'attendance-confirm'; document.getElementById('result').classList.add('show'); }
+        function showLoading() { 
+            setIcon('icon-loading'); document.getElementById('resultName').textContent = 'Processing...'; document.getElementById('resultName').style.color = '#90caf9'; 
+            document.getElementById('resultDetail').textContent = 'Fetching student data'; 
+            document.getElementById('feesContainer').style.display = 'none'; 
+            document.getElementById('passoutContainer').style.display = 'none'; 
+            document.getElementById('returnContainer').style.display = 'none'; 
+            document.getElementById('mealContainer').style.display = 'none'; 
+            document.getElementById('attendanceConfirm').className = 'attendance-confirm'; 
+            document.getElementById('result').classList.add('show'); 
+        }
 
         function processScan(studentId) {
             const location = document.getElementById('location').value, mode = document.getElementById('mode').value;
@@ -137,19 +140,17 @@
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
-                    if (mode === 'pass_out') {
-                        if (data.movement) {
-                            if (data.movement.action === 'exit') {
-                                showPassOutForm(data);
-                            } else if (data.movement.action === 'return') {
-                                showReturnConfirmation(data);
-                            }
-                        }
+                    if (mode === 'pass_out' && data.movement) {
+                        if (data.movement.action === 'exit') showPassOutForm(data);
+                        else if (data.movement.action === 'return') showReturnConfirmation(data);
+                    } else if (mode === 'meal_tracking') {
+                        showMealResult(data);
                     } else {
                         showBalanceResult(data);
                     }
                 } else {
-                    showError(data.error, data.error_code);
+                    if (mode === 'meal_tracking') showMealError(data);
+                    else showError(data.error, data.error_code);
                 }
             })
             .catch(() => showError('Cannot reach server.', 'NETWORK_ERROR'))
@@ -161,21 +162,18 @@
             document.getElementById('feesContainer').style.display = 'block';
             document.getElementById('passoutContainer').style.display = 'none';
             document.getElementById('returnContainer').style.display = 'none';
-            
+            document.getElementById('mealContainer').style.display = 'none';
             if (f.status === 'CLEARED') { setIcon('icon-success'); document.getElementById('resultName').style.color = '#4caf50'; }
             else if (f.status === 'OVERPAID') { setIcon('icon-warning'); document.getElementById('resultName').style.color = '#2196f3'; }
             else if (f.status === 'NOT PAID') { setIcon('icon-error'); document.getElementById('resultName').style.color = '#f44336'; }
             else { setIcon('icon-warning'); document.getElementById('resultName').style.color = '#ff9800'; }
-            
             document.getElementById('resultName').textContent = s.name;
             document.getElementById('resultDetail').textContent = `${s.class} ${s.stream} | ${s.admission}`;
             document.getElementById('feesTotal').textContent = f.total.toLocaleString() + ' UGX';
             document.getElementById('feesPaid').textContent = f.paid.toLocaleString() + ' UGX';
             document.getElementById('feesBalance').textContent = f.balance.toLocaleString() + ' UGX';
-            
             let badge = f.status === 'CLEARED' ? '<span class="badge badge-success">CLEARED</span>' : f.status === 'OVERPAID' ? '<span class="badge badge-info">OVERPAID</span>' : f.status === 'NOT PAID' ? '<span class="badge badge-error">NOT PAID</span>' : '<span class="badge badge-warning">NOT CLEARED</span>';
             document.getElementById('feesStatus').innerHTML = badge;
-            
             const attEl = document.getElementById('attendanceConfirm');
             if (data.attendance.marked) { attEl.textContent = 'Attendance Recorded — ' + new Date().toLocaleTimeString(); attEl.className = 'attendance-confirm marked'; }
             else if (data.attendance.already_marked) { attEl.textContent = 'Already Marked Present Today'; attEl.className = 'attendance-confirm duplicate'; }
@@ -186,81 +184,70 @@
             const s = data.student;
             document.getElementById('feesContainer').style.display = 'none';
             document.getElementById('returnContainer').style.display = 'none';
+            document.getElementById('mealContainer').style.display = 'none';
             document.getElementById('passoutContainer').style.display = 'block';
             document.getElementById('attendanceConfirm').className = 'attendance-confirm';
-            
-            setIcon('icon-exit');
-            document.getElementById('resultName').textContent = s.name;
-            document.getElementById('resultName').style.color = '#ff9800';
+            setIcon('icon-exit'); document.getElementById('resultName').textContent = s.name; document.getElementById('resultName').style.color = '#ff9800';
             document.getElementById('resultDetail').textContent = `${s.class} ${s.stream} | ${s.admission}`;
-            
             currentStudentData = data;
-            
             document.getElementById('passoutForm').innerHTML = `
                 <label>Reason for leaving</label>
-                <select id="passReason">
-                    <option value="sick">Sick</option>
-                    <option value="home">Home</option>
-                    <option value="emergency">Emergency</option>
-                    <option value="other">Other</option>
-                </select>
-                <label>Authorized by</label>
-                <input type="text" id="passAuthorizedBy" placeholder="Name of authorizing staff">
-                <button class="btn-confirm btn-exit" onclick="confirmPassOut()">Confirm Exit</button>
-            `;
+                <select id="passReason"><option value="sick">Sick</option><option value="home">Home</option><option value="emergency">Emergency</option><option value="other">Other</option></select>
+                <label>Authorized by</label><input type="text" id="passAuthorizedBy" placeholder="Name of authorizing staff">
+                <button class="btn-confirm btn-exit" onclick="confirmPassOut()">Confirm Exit</button>`;
         }
 
         function showReturnConfirmation(data) {
             const m = data.movement;
-            document.getElementById('feesContainer').style.display = 'none';
-            document.getElementById('passoutContainer').style.display = 'none';
-            document.getElementById('returnContainer').style.display = 'block';
-            document.getElementById('attendanceConfirm').className = 'attendance-confirm';
-            
-            setIcon('icon-return');
-            document.getElementById('resultName').textContent = data.student.name;
-            document.getElementById('resultName').style.color = '#4caf50';
+            document.getElementById('feesContainer').style.display = 'none'; document.getElementById('passoutContainer').style.display = 'none';
+            document.getElementById('mealContainer').style.display = 'none';
+            document.getElementById('returnContainer').style.display = 'block'; document.getElementById('attendanceConfirm').className = 'attendance-confirm';
+            setIcon('icon-return'); document.getElementById('resultName').textContent = data.student.name; document.getElementById('resultName').style.color = '#4caf50';
             document.getElementById('resultDetail').textContent = 'Student has returned';
-            
             document.getElementById('returnContainer').innerHTML = `
-                <div class="duration-box">
-                    Time Out: ${m.time_out}<br>
-                    Time In: ${m.time_in}<br>
-                    Duration: ${m.duration}
-                </div>
-                <p style="text-align:center; color:#a5d6a7; margin-top:10px;">Return Logged Successfully</p>
-            `;
+                <div class="duration-box">Time Out: ${m.time_out}<br>Time In: ${m.time_in}<br>Duration: ${m.duration}</div>
+                <p style="text-align:center; color:#a5d6a7; margin-top:10px;">Return Logged Successfully</p>`;
         }
 
         function confirmPassOut() {
             const reason = document.getElementById('passReason').value;
             const authorizedBy = document.getElementById('passAuthorizedBy').value.trim();
             if (!authorizedBy) { alert('Please enter who authorized this exit.'); return; }
-            
-            const csrfToken = getCookie('csrftoken');
-            fetch('/movement/api/pass-out/', { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken || '' }, 
-                body: JSON.stringify({ student_id: currentStudentData.student.id, reason: reason, authorized_by: authorizedBy, location: document.getElementById('location').value }) 
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    document.getElementById('passoutForm').innerHTML = '<p style="text-align:center; color:#ffcc80; padding:20px;">Exit Logged — Student may leave</p>';
-                    setTimeout(closeResult, 3000);
-                } else {
-                    alert(data.error || 'Failed to log exit');
-                }
-            })
-            .catch(() => alert('Connection error'));
+            fetch('/movement/api/pass-out/', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') || '' }, body: JSON.stringify({ student_id: currentStudentData.student.id, reason: reason, authorized_by: authorizedBy, location: document.getElementById('location').value }) })
+            .then(r => r.json()).then(data => {
+                if (data.success) { document.getElementById('passoutForm').innerHTML = '<p style="text-align:center; color:#ffcc80; padding:20px;">Exit Logged — Student may leave</p>'; setTimeout(closeResult, 3000); }
+                else { alert(data.error || 'Failed to log exit'); }
+            }).catch(() => alert('Connection error'));
+        }
+
+        function showMealResult(data) {
+            const s = data.student, m = data.meal;
+            document.getElementById('feesContainer').style.display = 'none'; document.getElementById('passoutContainer').style.display = 'none';
+            document.getElementById('returnContainer').style.display = 'none'; document.getElementById('attendanceConfirm').className = 'attendance-confirm';
+            document.getElementById('mealContainer').style.display = 'block';
+            setIcon('icon-success'); document.getElementById('resultName').textContent = s.name; document.getElementById('resultName').style.color = '#4caf50';
+            document.getElementById('resultDetail').textContent = `${s.class} ${s.stream} | ${m.category.toUpperCase()}`;
+            document.getElementById('mealContainer').innerHTML = `
+                <div class="meal-success-box">✅ ${m.type.toUpperCase()} SERVED<br><small>Time: ${m.time}</small><br><small>Category: ${m.category.toUpperCase()}</small></div>`;
+        }
+
+        function showMealError(data) {
+            document.getElementById('feesContainer').style.display = 'none'; document.getElementById('passoutContainer').style.display = 'none';
+            document.getElementById('returnContainer').style.display = 'none'; document.getElementById('attendanceConfirm').className = 'attendance-confirm';
+            document.getElementById('mealContainer').style.display = 'block';
+            if (data.error_code === 'ALREADY_SERVED') { setIcon('icon-warning'); document.getElementById('resultName').style.color = '#ff9800'; }
+            else { setIcon('icon-error'); document.getElementById('resultName').style.color = '#f44336'; }
+            document.getElementById('resultName').textContent = data.error_code === 'ALREADY_SERVED' ? 'Already Served' : 'Access Denied';
+            document.getElementById('resultDetail').textContent = data.error;
+            document.getElementById('mealContainer').innerHTML = `<p style="text-align:center; color:#ffcc80; padding:20px;">${data.error}</p>`;
         }
 
         function showError(message, errorCode) {
             setIcon('icon-error'); document.getElementById('resultName').textContent = errorCode === 'CARD_REPLACED' ? 'Card Replaced' : 'Error'; document.getElementById('resultName').style.color = '#f44336'; document.getElementById('resultDetail').textContent = message;
-            document.getElementById('feesContainer').style.display = 'none'; document.getElementById('passoutContainer').style.display = 'none'; document.getElementById('returnContainer').style.display = 'none'; document.getElementById('attendanceConfirm').className = 'attendance-confirm';
+            document.getElementById('feesContainer').style.display = 'none'; document.getElementById('passoutContainer').style.display = 'none'; document.getElementById('returnContainer').style.display = 'none'; document.getElementById('mealContainer').style.display = 'none'; document.getElementById('attendanceConfirm').className = 'attendance-confirm';
             document.getElementById('result').classList.add('show');
         }
-        function closeResult() { document.getElementById('result').classList.remove('show'); statusText.textContent = cameraActive ? 'Position QR code in front of camera' : 'Enter a Student ID and click Lookup'; }
+        function closeResult() { document.getElementById('result').classList.remove('show'); onModeChange(); }
         function manualLookup() { const id = document.getElementById('manualId').value.trim(); if (!id) { alert('Enter a Student ID'); return; } showLoading(); processScan(id); document.getElementById('manualId').value = ''; document.getElementById('manualId').focus(); }
         function getCookie(name) { let v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)'); return v ? v[2] : null; }
         document.getElementById('manualId').addEventListener('keypress', function(e) { if (e.key === 'Enter') manualLookup(); });

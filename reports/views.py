@@ -4,7 +4,7 @@ from django.http import HttpResponse
 from django.utils import timezone
 from datetime import date
 from core.models import Student
-from attendance.models import Attendance
+from attendance.models import Attendance, MealLog
 from movement.models import MovementLog
 from fees.models import FeeStructure
 from core.services import get_payment_balance
@@ -17,7 +17,6 @@ from reportlab.lib.styles import getSampleStyleSheet
 
 
 def build_pdf_response(filename, elements):
-    """Helper to build PDF response."""
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4)
     doc.build(elements)
@@ -28,7 +27,6 @@ def build_pdf_response(filename, elements):
 
 
 def build_excel_response(filename, sheet_name, headers, data):
-    """Helper to build Excel response."""
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = sheet_name
@@ -49,7 +47,6 @@ def build_excel_response(filename, sheet_name, headers, data):
 
 @login_required
 def attendance_report(request):
-    """Attendance report with chart."""
     today = date.today()
     attendance_list = Attendance.objects.filter(scan_date=today).select_related('student')[:50]
     total = Student.objects.filter(status='active').count()
@@ -64,7 +61,6 @@ def attendance_report(request):
 
 @login_required
 def export_attendance(request):
-    """Export attendance — PDF or Excel."""
     fmt = request.GET.get('format', 'xlsx')
     today = date.today()
     records = Attendance.objects.filter(scan_date=today).select_related('student')
@@ -89,7 +85,6 @@ def export_attendance(request):
 
 @login_required
 def export_fees(request):
-    """Export fees — PDF or Excel."""
     fmt = request.GET.get('format', 'xlsx')
     today = date.today()
     students = Student.objects.filter(status='active')[:500]
@@ -118,7 +113,6 @@ def export_fees(request):
 
 @login_required
 def export_movement(request):
-    """Export movement — PDF or Excel."""
     fmt = request.GET.get('format', 'xlsx')
     today = date.today()
     logs = MovementLog.objects.select_related('student').all()[:500]
@@ -138,3 +132,23 @@ def export_movement(request):
         return build_pdf_response(f'movement_log_{today}.pdf', elements)
     else:
         return build_excel_response(f'movement_log_{today}.xlsx', 'Movement', ['Student ID', 'Date', 'Time Out', 'Time In', 'Reason', 'Authorized'], rows)
+
+
+@login_required
+def meal_report(request):
+    """Meal tracking report."""
+    today = date.today()
+    meal_type = request.GET.get('meal', 'lunch')
+
+    meals = MealLog.objects.filter(meal_date=today, meal_type=meal_type).select_related('student')
+
+    total = Student.objects.filter(status='active').count()
+    served = meals.count()
+
+    return render(request, 'reports/meals.html', {
+        'meals': meals,
+        'meal_type': meal_type,
+        'today': today,
+        'total': total,
+        'served': served,
+    })

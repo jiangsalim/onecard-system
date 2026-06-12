@@ -9,6 +9,7 @@ from fees.models import FeeStructure
 from datetime import date, datetime
 import json
 import logging
+from datetime import time
 
 logger = logging.getLogger('onecard')
 
@@ -98,6 +99,78 @@ def process_scan(request):
                         'action': 'exit',
                     }
                 })
+            
+                # ========== MEAL TRACKING MODE ==========
+        if mode == 'meal_tracking':
+            from attendance.models import MealLog
+            
+            # Determine meal type from current time
+            now = datetime.now().time()
+            if time(7, 0) <= now <= time(8, 30):
+                meal_type = 'breakfast'
+            elif time(12, 30) <= now <= time(14, 0):
+                meal_type = 'lunch'
+            elif time(18, 0) <= now <= time(19, 30):
+                meal_type = 'supper'
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Not meal time. Meals: Breakfast 7-8:30, Lunch 12:30-14:00, Supper 18:00-19:30',
+                    'error_code': 'NOT_MEAL_TIME'
+                })
+            
+            # Get student category
+            student_category = student.category if hasattr(student, 'category') else 'day'
+            
+            # Check meal eligibility
+            if student_category == 'day' and meal_type != 'lunch':
+                return JsonResponse({
+                    'success': False,
+                    'error': f'DAY SCHOLAR — {meal_type.title()} is not available for day students. Only Lunch.',
+                    'error_code': 'MEAL_NOT_ALLOWED',
+                    'category': student_category,
+                    'meal_type': meal_type
+                })
+            
+            # Check if already eaten this meal
+            today = date.today()
+            already_eaten = MealLog.objects.filter(
+                student=student, meal_date=today, meal_type=meal_type
+            ).first()
+            
+            if already_eaten:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'ALREADY SERVED — {meal_type.title()} at {already_eaten.time_scanned}',
+                    'error_code': 'ALREADY_SERVED',
+                    'meal_type': meal_type,
+                    'time_scanned': str(already_eaten.time_scanned)
+                })
+            
+            # Mark meal
+            MealLog.objects.create(
+                student=student,
+                meal_date=today,
+                meal_type=meal_type,
+                time_scanned=now,
+                location=location,
+                marked_by=request.user.get_full_name() or request.user.username
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'meal': {
+                    'type': meal_type,
+                    'category': student_category,
+                    'time': str(now),
+                },
+                'student': {
+                    'id': student.id,
+                    'name': info['name'],
+                    'class': info['class'],
+                    'stream': info['stream'],
+                }
+            })
         
         # ========== ATTENDANCE / BALANCE MODE ==========
         total_paid = get_payment_balance(student.payment_code)
@@ -193,9 +266,13 @@ def api_import_students(request):
                 qr_file = generate_qr_for_student(student_id, version=1)
                 
                 student = Student(
-                    id=student_id, admission_number=admission_number,
-                    payment_code=student_data['payment_code'], status='active', card_version=1
-                )
+                    id=student_id,
+                    admission_number=admission_number,
+                    payment_code=student_data['payment_code'],
+                    category=student_data.get('category', 'day'),
+                    status='active',
+                    card_version=1
+            )
                 student.qr_code.save(f'{student_id}.png', qr_file, save=False)
                 student.save()
                 imported += 1

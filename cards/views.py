@@ -112,7 +112,7 @@ def print_cards(request):
 
 @login_required
 def download_cards_pdf(request):
-    """Open printable page for selected cards — front with badge/photo/QR, back with barcode. Uses assigned template colors."""
+    """Open printable page for selected cards — front with badge/photo/QR, back with barcode. Uses assigned template colors and Day/Hostel category."""
     if request.user.role not in ['super_admin', 'admin']:
         messages.error(request, 'Access denied.'); return redirect('dashboard')
     
@@ -182,6 +182,7 @@ def download_cards_pdf(request):
         .card .top .school { font-weight: bold; font-size: 9px; color: #1a237e; }
         .card .top .label { font-size: 7px; color: #888; }
         .card .top .badge-text { font-size: 7px; padding: 2px 6px; border-radius: 3px; color: white; white-space: nowrap; }
+        .card .top .category-badge { font-size: 7px; padding: 2px 6px; border-radius: 3px; color: white; white-space: nowrap; margin-left: 2px; }
         .card .middle { 
             display: flex; align-items: center; gap: 6px; flex: 1; margin: 4px 0; 
         }
@@ -227,6 +228,7 @@ def download_cards_pdf(request):
         name_front = school_info.get('full_name', 'Student')
         student_class = school_info.get('current_class', 'N/A')
         student_stream = school_info.get('stream', '')
+        student_category = school_info.get('category', s.category if hasattr(s, 'category') else 'day')
         
         # Get assigned template colors
         tmpl = template_map.get(student_class)
@@ -235,6 +237,24 @@ def download_cards_pdf(request):
         badge_txt = tmpl.badge_text if tmpl else "STUDENT"
         badge_clr = tmpl.badge_color if tmpl else '#1a237e'
         color_name = tmpl.color_name if tmpl else ''
+        
+        # Category styling — if no template assigned, use category colors
+        if student_category == 'hostel':
+            cat_badge = 'HOSTEL'
+            cat_bg = '#FF8F00'
+            cat_text = '#FFF'
+            cat_icon = '🏠'
+            if not tmpl:
+                border_color = '#FF8F00'
+                bg_color = '#FFFDE7'
+        else:
+            cat_badge = 'DAY'
+            cat_bg = '#78909C'
+            cat_text = '#FFF'
+            cat_icon = '☀'
+            if not tmpl:
+                border_color = '#78909C'
+                bg_color = '#FAFAFA'
         
         # Photo URL — priority: 1) Admin uploaded  2) School DB photo_path  3) Generated avatar
         if s.photo:
@@ -256,6 +276,7 @@ def download_cards_pdf(request):
                     <div class="label">Student ID Card</div>
                 </div>
                 <div class="badge-text" style="background:{badge_clr};">{badge_txt} {color_name}</div>
+                <div class="category-badge" style="background:{cat_bg}; color:{cat_text};">{cat_icon} {cat_badge}</div>
             </div>
             <div class="middle">
                 <div class="photo-box"><img src="{photo_url}" alt="Photo"></div>
@@ -266,6 +287,7 @@ def download_cards_pdf(request):
                     <strong>Adm:</strong> {s.admission_number}<br>
                     <strong>Level:</strong> {badge_txt} {color_name}<br>
                     <strong>Stream:</strong> {student_stream}<br>
+                    <strong>Category:</strong> {cat_icon} {cat_badge}<br>
                     <strong>Pay:</strong> {s.payment_code}<br>
                     <strong>Ver:</strong> v{s.card_version}
                 </div>
@@ -280,6 +302,7 @@ def download_cards_pdf(request):
         name = school_info.get('full_name', 'Student')
         student_class = school_info.get('current_class', 'N/A')
         student_stream = school_info.get('stream', '')
+        student_category = school_info.get('category', s.category if hasattr(s, 'category') else 'day')
         
         # Get template colors
         tmpl = template_map.get(student_class)
@@ -288,6 +311,22 @@ def download_cards_pdf(request):
         badge_txt = tmpl.badge_text if tmpl else "STUDENT"
         badge_clr = tmpl.badge_color if tmpl else '#1a237e'
         color_name = tmpl.color_name if tmpl else ''
+        
+        # Category
+        if student_category == 'hostel':
+            cat_badge = 'HOSTEL'
+            cat_icon = '🏠'
+            cat_bg = '#FF8F00'
+            if not tmpl:
+                border_color = '#FF8F00'
+                bg_color = '#FFFDE7'
+        else:
+            cat_badge = 'DAY SCHOLAR'
+            cat_icon = '☀'
+            cat_bg = '#78909C'
+            if not tmpl:
+                border_color = '#78909C'
+                bg_color = '#FAFAFA'
         
         barcode_img = barcode_images.get(s.id, '')
         barcode_data = f"{s.id}|{s.payment_code}"
@@ -299,6 +338,7 @@ def download_cards_pdf(request):
                 <div class="row"><strong>Name:</strong> <span>{name}</span></div>
                 <div class="row"><strong>Level:</strong> <span>{badge_txt} {color_name}</span></div>
                 <div class="row"><strong>Stream:</strong> <span>{student_stream}</span></div>
+                <div class="row"><strong>Category:</strong> <span style="background:{cat_bg}; color:white; padding:1px 6px; border-radius:3px; font-size:7px;">{cat_icon} {cat_badge}</span></div>
                 <div class="row"><strong>Adm No:</strong> <span>{s.admission_number}</span></div>
                 <div class="row"><strong>Card ID:</strong> <span>{s.id} (v{s.card_version})</span></div>
                 <div class="row"><strong>Pay Code:</strong> <span>{s.payment_code}</span></div>
@@ -312,7 +352,6 @@ def download_cards_pdf(request):
     
     html += """</body></html>"""
     return HttpResponse(html)
-
 
 @login_required
 def reprint_card(request):

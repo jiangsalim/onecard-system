@@ -40,3 +40,31 @@ class Attendance(models.Model):
 
     def __str__(self):
         return f"{self.student_id} - {self.scan_date} - Present"
+    
+
+class MealLog(models.Model):
+    MEAL_CHOICES = [
+        ('breakfast', 'Breakfast'),
+        ('lunch', 'Lunch'),
+        ('supper', 'Supper'),
+    ]
+    
+    student = models.ForeignKey('core.Student', on_delete=models.CASCADE, related_name='meal_logs')
+    meal_date = models.DateField()
+    meal_type = models.CharField(max_length=10, choices=MEAL_CHOICES)
+    time_scanned = models.TimeField()
+    location = models.CharField(max_length=50, default='Dining Hall')
+    marked_by = models.CharField(max_length=50)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'meal_logs'
+        unique_together = ['student', 'meal_date', 'meal_type']
+        ordering = ['-meal_date', '-time_scanned']
+        indexes = [
+            models.Index(fields=['student', 'meal_date', 'meal_type'], name='idx_meal_student_date_type'),
+            models.Index(fields=['meal_date', 'meal_type'], name='idx_meal_date_type'),
+        ]
+    
+    def __str__(self):
+        return f"{self.student_id} - {self.meal_date} - {self.meal_type}"

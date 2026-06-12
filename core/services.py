@@ -24,7 +24,7 @@ def fetch_students_from_existing_db():
     try:
         with connections['school_db'].cursor() as cursor:
             cursor.execute("""
-                SELECT admission_number, full_name, payment_code, current_class, stream
+                SELECT admission_number, full_name, payment_code, current_class, stream, category
                 FROM students WHERE status = 'active'
             """)
             columns = [col[0] for col in cursor.description]
