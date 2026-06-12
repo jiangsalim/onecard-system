@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Student - OneCard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; }
+        .navbar { background: #1a237e; color: white; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; height: 60px; }
+        .navbar .brand { font-size: 18px; font-weight: 600; }
+        .navbar a { color: white; text-decoration: none; }
+        .layout { display: flex; }
+        .sidebar { width: 240px; background: white; min-height: calc(100vh - 60px); border-right: 1px solid #e0e0e0; padding-top: 10px; }
+        .sidebar a { display: block; padding: 12px 24px; color: #333; text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
+        .sidebar a:hover { background: #f5f5ff; color: #1a237e; border-left-color: #1a237e; }
+        .sidebar .section-title { padding: 20px 24px 8px; font-size: 11px; text-transform: uppercase; color: #999; letter-spacing: 1.5px; font-weight: 600; }
+        .main-content { flex: 1; padding: 24px 32px; }
+        .card { background: white; border-radius: 8px; padding: 24px; border: 1px solid #e8e8e8; max-width: 500px; }
+        .card h2 { color: #1a237e; margin-bottom: 20px; }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 5px; color: #333; }
+        .form-group select, .form-group input { width: 100%; padding: 10px; border: 1px solid #d0d0d0; border-radius: 4px; font-size: 14px; }
+        .btn { padding: 10px 24px; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; font-size: 14px; }
+        .btn-primary { background: #1a237e; color: white; }
+        .btn-secondary { background: #e0e0e0; color: #333; text-decoration: none; margin-left: 10px; }
+        .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+        .info-row strong { color: #1a237e; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="brand"><a href="{% url 'dashboard' %}" style="color:white;">OneCard System</a></div>
+    </div>
+    <div class="layout">
+        <div class="sidebar">
+            <div class="section-title">Students</div>
+            <a href="{% url 'view_students' %}" style="background:#f5f5ff; color:#1a237e; border-left-color:#1a237e;">View Students</a>
+            <a href="{% url 'import_students' %}">Import Students</a>
+        </div>
+        <div class="main-content">
+            <h1 style="color:#1a237e; margin-bottom:20px;">Edit Student</h1>
+
+            <div class="card">
+                <h2>{{ student.id }}</h2>
+                
+                <div style="margin-bottom:20px;">
+                    <div class="info-row"><strong>Admission:</strong> <span>{{ student.admission_number }}</span></div>
+                    <div class="info-row"><strong>Payment Code:</strong> <span>{{ student.payment_code }}</span></div>
+                    <div class="info-row"><strong>Card Version:</strong> <span>v{{ student.card_version }}</span></div>
+                    <div class="info-row"><strong>Reprints:</strong> <span>{{ student.reprint_count }}</span></div>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select name="category">
+                            <option value="day" {% if student.category == 'day' %}selected{% endif %}>☀ Day Scholar</option>
+                            <option value="hostel" {% if student.category == 'hostel' %}selected{% endif %}>🏠 Hostel Student</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select name="status">
+                            <option value="active" {% if student.status == 'active' %}selected{% endif %}>Active</option>
+                            <option value="inactive" {% if student.status == 'inactive' %}selected{% endif %}>Inactive</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <a href="{% url 'view_students' %}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

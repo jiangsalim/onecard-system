@@ -53,26 +53,25 @@ def dashboard(request):
     total = Student.objects.filter(status='active').count()
     present = Attendance.objects.filter(scan_date=today).count()
 
-    # Calculate not-cleared count properly
+    # Calculate not-cleared count with Day/Hostel fee structure
     not_cleared = 0
     fee_structures = {}
     for f in FeeStructure.objects.filter(term='Term 2', academic_year='2026'):
-        fee_structures[f.class_name] = float(f.total_fees)
+        key = f"{f.class_name}_{f.category}"
+        fee_structures[key] = float(f.total_fees)
     
     if total > 0:
         for s in Student.objects.filter(status='active'):
             try:
-                # Get student's class from school DB
                 info = get_student_info_from_existing_db(s.admission_number)
                 class_name = info['class'] if info else None
+                student_cat = getattr(s, 'category', 'day')
                 
-                # Get fee for that class
-                total_fee = fee_structures.get(class_name, 800000) if class_name else 800000
+                fee_key = f"{class_name}_{student_cat}" if class_name else None
+                total_fee = fee_structures.get(fee_key, 800000) if fee_key else 800000
                 
-                # Get payment
                 paid = get_payment_balance(s.payment_code)
                 
-                # Check if not cleared
                 if float(paid) < total_fee:
                     not_cleared += 1
             except Exception:
@@ -105,6 +104,8 @@ def dashboard(request):
     elif role == 'class_teacher':
         return redirect('teacher_dashboard')
     return render(request, 'admin_dashboard/home.html', {'stats': stats})
+
+
 @login_required
 def bursar_dashboard(request):
     return render(request, 'admin_dashboard/bursar.html')

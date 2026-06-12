@@ -10,8 +10,6 @@
         .navbar { background: #1a237e; color: white; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; height: 60px; }
         .navbar .brand { font-size: 18px; font-weight: 600; }
         .navbar a { color: white; text-decoration: none; }
-        .navbar .user-info { display: flex; align-items: center; gap: 16px; font-size: 14px; }
-        .navbar .role-badge { background: #ff9800; color: #000; padding: 4px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; }
         .layout { display: flex; }
         .sidebar { width: 240px; background: white; min-height: calc(100vh - 60px); border-right: 1px solid #e0e0e0; padding-top: 10px; }
         .sidebar a { display: block; padding: 12px 24px; color: #333; text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
@@ -21,49 +19,58 @@
         .card { background: white; border-radius: 8px; padding: 24px; border: 1px solid #e8e8e8; margin-bottom: 20px; }
         .card h2 { color: #1a237e; margin-bottom: 12px; }
         table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 14px; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 13px; }
         th { background: #f5f5f5; font-weight: 600; }
-        .badge { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .badge { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
         .badge-success { background: #e8f5e9; color: #2e7d32; }
         .badge-warning { background: #fff3e0; color: #e65100; }
-        .alert { padding: 12px 20px; border-radius: 6px; margin-bottom: 16px; font-size: 14px; }
-        .alert-success { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #4caf50; }
-        .alert-info { background: #e3f2fd; color: #1565c0; border-left: 4px solid #2196f3; }
+        .badge-info { background: #e3f2fd; color: #1565c0; }
+        .badge-error { background: #ffebee; color: #c62828; }
+        .badge-hostel { background: #FFF3E0; color: #E65100; }
+        .badge-day { background: #ECEFF1; color: #546E7A; }
+        .btn { padding: 5px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; text-decoration: none; display: inline-block; }
+        .btn-primary { background: #1a237e; color: white; }
+        .btn-outline { background: white; color: #1a237e; border: 1px solid #1a237e; }
+        .stats { margin-bottom: 16px; font-size: 14px; color: #666; }
+        .search-box { margin-bottom: 16px; }
+        .search-box input { padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; width: 300px; font-size: 14px; }
     </style>
 </head>
 <body>
     <div class="navbar">
         <div class="brand"><a href="{% url 'dashboard' %}" style="color:white;">OneCard System</a></div>
-        <div class="user-info">
-            <span class="role-badge">{{ user.get_role_display }}</span>
-            <span>{{ user.get_full_name|default:user.username }}</span>
-        </div>
     </div>
     <div class="layout">
         <div class="sidebar">
-            <div class="section-title">Main</div>
-            <a href="{% url 'dashboard' %}">Dashboard</a>
             <div class="section-title">Students</div>
             <a href="{% url 'view_students' %}" style="background:#f5f5ff; color:#1a237e; border-left-color:#1a237e;">View Students</a>
             <a href="{% url 'import_students' %}">Import Students</a>
         </div>
         <div class="main-content">
             {% if messages %}
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% for m in messages %}
+            <div style="padding:12px 20px; border-radius:6px; margin-bottom:16px; background:#e8f5e9; color:#2e7d32; border-left:4px solid #4caf50;">{{ m }}</div>
             {% endfor %}
             {% endif %}
 
             <div class="card">
-                <h2>All Students ({{ students.count }})</h2>
-                <table>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                    <h2>All Students ({{ students.count }})</h2>
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="Search by ID or Admission #..." onkeyup="filterTable()">
+                    </div>
+                </div>
+                <table id="studentTable">
                     <thead>
                         <tr>
                             <th>ID</th>
                             <th>Admission #</th>
                             <th>Payment Code</th>
+                            <th>Category</th>
                             <th>Card Printed</th>
+                            <th>Version</th>
                             <th>Status</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -73,21 +80,49 @@
                             <td>{{ s.admission_number }}</td>
                             <td>{{ s.payment_code }}</td>
                             <td>
+                                {% if s.category == 'hostel' %}
+                                <span class="badge badge-hostel">🏠 Hostel</span>
+                                {% else %}
+                                <span class="badge badge-day">☀ Day</span>
+                                {% endif %}
+                            </td>
+                            <td>
                                 {% if s.card_printed %}
                                 <span class="badge badge-success">Printed</span>
                                 {% else %}
                                 <span class="badge badge-warning">Not Printed</span>
                                 {% endif %}
                             </td>
-                            <td>{{ s.get_status_display }}</td>
+                            <td><span class="badge badge-info">v{{ s.card_version }}</span></td>
+                            <td>
+                                {% if s.status == 'active' %}
+                                <span class="badge badge-success">Active</span>
+                                {% else %}
+                                <span class="badge badge-error">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'edit_student' s.id %}" class="btn btn-primary">Edit</a>
+                            </td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="5" style="text-align:center; color:#999;">No students imported yet.</td></tr>
+                        <tr><td colspan="8" style="text-align:center; color:#999; padding:30px;">No students imported yet.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
+
+    <script>
+        function filterTable() {
+            const input = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.getElementById('studentTable').getElementsByTagName('tr');
+            for (let i = 1; i < rows.length; i++) {
+                const text = rows[i].textContent.toLowerCase();
+                rows[i].style.display = text.includes(input) ? '' : 'none';
+            }
+        }
+    </script>
 </body>
 </html>

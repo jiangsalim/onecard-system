@@ -18,8 +18,8 @@ class Student(models.Model):
     last_reprint_reason = models.CharField(max_length=50, null=True, blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
     category = models.CharField(max_length=10, choices=[('day', 'Day Scholar'), ('hostel', 'Hostel Student')], default='day')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
 
     class Meta:
         db_table = 'students'

@@ -178,7 +178,7 @@ def download_cards_pdf(request):
             display: flex; align-items: center; gap: 8px; 
             border-bottom: 1px solid #1a237e; padding-bottom: 4px;
         }
-        .card .top .badge img { width: 35px; height: 35px; border-radius: 4px; }
+        .card .top .badge img { width: 45px; height: auto; max-height: 40px; border-radius: 4px; object-fit: contain; }
         .card .top .school { font-weight: bold; font-size: 9px; color: #1a237e; }
         .card .top .label { font-size: 7px; color: #888; }
         .card .top .badge-text { font-size: 7px; padding: 2px 6px; border-radius: 3px; color: white; white-space: nowrap; }

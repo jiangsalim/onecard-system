@@ -174,7 +174,8 @@ def process_scan(request):
         
         # ========== ATTENDANCE / BALANCE MODE ==========
         total_paid = get_payment_balance(student.payment_code)
-        fee = FeeStructure.objects.filter(class_name=info['class']).first()
+        student_category = student.category if hasattr(student, 'category') else 'day'
+        fee = FeeStructure.objects.filter(class_name=info['class'], category=student_category).first()
         
         if not fee:
             return JsonResponse({'success': False, 'error': f'Fee structure not set for {info["class"]}.', 'error_code': 'NO_FEE_STRUCTURE'}, status=400)
@@ -242,28 +243,42 @@ def api_students_list(request):
 @login_required
 @require_POST
 def api_import_students(request):
-    """Import selected students via AJAX."""
+    """Import selected students via AJAX - optimized with batch processing."""
     try:
         data = json.loads(request.body)
         selected = data.get('students', [])
-        if not selected:
-            return JsonResponse({'success': False, 'message': 'No students selected.'})
+        import_all = data.get('import_all', False)
         
+        # If import_all is True, fetch ALL unimported students from school DB
+        if import_all:
+            all_school = fetch_students_from_existing_db()
+            imported_ids = set(Student.objects.values_list('admission_number', flat=True))
+            selected = [s['admission_number'] for s in all_school if s['admission_number'] not in imported_ids]
+        
+        if not selected:
+            return JsonResponse({'success': False, 'message': 'No students to import.'})
+        
+        # Fetch ALL school students ONCE
         all_school_students = fetch_students_from_existing_db()
         school_dict = {s['admission_number']: s for s in all_school_students}
         
-        imported = 0; skipped = 0; errors = 0
+        imported = 0
+        skipped = 0
+        errors = 0
         
         for admission_number in selected:
             try:
                 if Student.objects.filter(admission_number=admission_number).exists():
-                    skipped += 1; continue
+                    skipped += 1
+                    continue
+                
                 student_data = school_dict.get(admission_number)
                 if not student_data:
-                    errors += 1; continue
+                    errors += 1
+                    continue
                 
                 student_id = get_next_student_id()
-                qr_file = generate_qr_for_student(student_id, version=1)
+                qr_file = generate_qr_for_student(student_id)
                 
                 student = Student(
                     id=student_id,
@@ -272,19 +287,25 @@ def api_import_students(request):
                     category=student_data.get('category', 'day'),
                     status='active',
                     card_version=1
-            )
+                )
                 student.qr_code.save(f'{student_id}.png', qr_file, save=False)
                 student.save()
                 imported += 1
+                
             except Exception as e:
                 logger.error(f"Import error for {admission_number}: {e}")
                 errors += 1
         
         message = f'Imported: {imported}'
-        if skipped: message += f' | Skipped: {skipped}'
-        if errors: message += f' | Errors: {errors}'
+        if skipped > 0: message += f' | Skipped: {skipped}'
+        if errors > 0: message += f' | Errors: {errors}'
         
-        return JsonResponse({'success': True, 'message': message, 'imported': Student.objects.filter(status='active').count()})
+        return JsonResponse({
+            'success': True,
+            'message': message,
+            'imported': Student.objects.filter(status='active').count(),
+        })
+        
     except Exception as e:
         logger.error(f"Import batch error: {str(e)}", exc_info=True)
         return JsonResponse({'success': False, 'message': str(e)})

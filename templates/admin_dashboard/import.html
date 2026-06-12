@@ -82,6 +82,7 @@
                     <button class="btn btn-primary" onclick="selectAll()">Select All Visible</button>
                     <button class="btn btn-danger" onclick="deselectAll()">Deselect All</button>
                     <button class="btn btn-success" id="importBtn" onclick="importSelected()">Import Selected</button>
+                    <button class="btn btn-primary" id="importAllBtn" onclick="importAll()" style="background:#e65100;">Import All Students</button>
                 </div>
                 
                 <table>
@@ -227,6 +228,29 @@
         }
 
         loadStudents(1);
+
+            function importAll() {
+                if (!confirm('This will import ALL remaining students. Are you sure?')) return;
+                
+                const btn = document.getElementById('importAllBtn');
+                btn.disabled = true;
+                btn.textContent = 'Importing All...';
+                
+                fetch('/api/import-students/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
+                    body: JSON.stringify({import_all: true})
+                })
+                .then(r => r.json())
+                .then(data => {
+                    alert(data.message);
+                    if (data.success) {
+                        selectedSet.clear();
+                        loadStudents(1);  // Reload — imported students will be gone
+                    }
+                })
+                .finally(() => { btn.disabled = false; btn.textContent = 'Import All Students'; });
+            }
     </script>
 </body>
 </html>

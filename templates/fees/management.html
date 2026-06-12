@@ -1,4 +1,3 @@
-{% load card_filters %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -17,32 +16,28 @@
         .sidebar a:hover { background: #f5f5ff; color: #1a237e; border-left-color: #1a237e; }
         .sidebar .section-title { padding: 20px 24px 8px; font-size: 11px; text-transform: uppercase; color: #999; letter-spacing: 1.5px; font-weight: 600; }
         .main-content { flex: 1; padding: 24px 32px; }
-        .card { background: white; border-radius: 8px; padding: 24px; border: 1px solid #e8e8e8; max-width: 700px; }
+        .card { background: white; border-radius: 8px; padding: 24px; border: 1px solid #e8e8e8; max-width: 800px; }
         .card h2 { color: #1a237e; margin-bottom: 20px; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
         .form-group { margin-bottom: 14px; }
         .form-group label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 4px; }
         .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #d0d0d0; border-radius: 4px; }
         table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-        th, td { padding: 12px 14px; border-bottom: 1px solid #e0e0e0; font-size: 14px; }
+        th, td { padding: 12px 14px; border-bottom: 1px solid #e0e0e0; font-size: 14px; text-align: center; }
         th { background: #f5f5f5; font-weight: 600; color: #333; }
-        td { color: #555; }
-        .fee-value { font-weight: 600; color: #1a237e; }
-        .fee-value.editing { color: #2e7d32; }
-        .fee-input { width: 150px; padding: 8px 12px; border: 2px solid #2e7d32; border-radius: 4px; font-size: 14px; font-weight: 600; color: #1a237e; display: none; }
+        td:first-child { text-align: left; font-weight: 600; }
+        .fee-input { width: 130px; padding: 8px 12px; border: 2px solid #2e7d32; border-radius: 4px; font-size: 14px; font-weight: 600; color: #1a237e; display: none; text-align: center; }
         .fee-input.show { display: inline-block; }
-        .fee-display { display: inline; }
+        .fee-display { font-weight: 600; color: #1a237e; }
         .fee-display.hide { display: none; }
         .btn { padding: 10px 22px; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; font-size: 14px; }
         .btn-primary { background: #1a237e; color: white; }
         .btn-success { background: #2e7d32; color: white; }
-        .btn-outline { background: white; color: #1a237e; border: 1px solid #1a237e; padding: 4px 12px; font-size: 12px; }
-        .btn-sm { padding: 4px 12px; font-size: 12px; }
+        .btn-sm { padding: 4px 10px; font-size: 11px; border: 1px solid #1a237e; background: white; color: #1a237e; border-radius: 3px; cursor: pointer; }
         .alert { padding: 12px 20px; border-radius: 6px; margin-bottom: 16px; }
         .alert-success { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #4caf50; }
-        .alert-info { background: #e3f2fd; color: #1565c0; border-left: 4px solid #2196f3; }
-        .locked { color: #888; font-style: italic; font-size: 12px; }
-        .edit-hint { font-size: 12px; color: #888; margin-top: 8px; }
+        .th-day { background: #ECEFF1; color: #546E7A; }
+        .th-hostel { background: #FFF3E0; color: #E65100; }
     </style>
 </head>
 <body>
@@ -61,8 +56,8 @@
             {% endif %}
 
             <div class="card">
-                <h2>Set Fees Per Class</h2>
-                <p class="edit-hint">Fees are locked after saving. Click <strong>Edit</strong> to modify a class fee.</p>
+                <h2>Set Fees Per Class — Day & Hostel</h2>
+                <p style="color:#888; font-size:13px; margin-bottom:16px;">Day Scholars and Hostel Students have different fee structures.</p>
                 
                 <form method="post" id="feeForm">
                     {% csrf_token %}
@@ -84,70 +79,71 @@
                     
                     <table>
                         <thead>
-                            <tr><th>Class</th><th>Total Fees (UGX)</th><th>Status</th><th>Action</th></tr>
+                            <tr>
+                                <th>Class</th>
+                                <th class="th-day">☀ Day Scholar (UGX)</th>
+                                <th class="th-hostel">🏠 Hostel (UGX)</th>
+                            </tr>
                         </thead>
                         <tbody>
                             {% for class_name in classes %}
                             <tr>
-                                <td><strong>{{ class_name }}</strong></td>
+                                <td>{{ class_name }}</td>
                                 <td>
-                                    <span class="fee-display" id="display_{{ forloop.counter }}">
-                                        {% if class_name in existing_fees %}
-                                        <span class="fee-value">{{ existing_fees|get_item:class_name|floatformat:0|default:"—" }}</span>
+                                    {% with key=class_name|add:"_day" %}
+                                    <span class="fee-display" id="display_{{ class_name }}_day">
+                                        {% if key in existing_fees %}
+                                        <span class="fee-value">{{ existing_fees|get_item:key|floatformat:0 }}</span>
                                         {% else %}
                                         <span style="color:#999;">Not set</span>
                                         {% endif %}
                                     </span>
-                                    <input type="number" name="fees_{{ class_name }}" 
-                                           class="fee-input" id="input_{{ forloop.counter }}"
-                                           value="{{ existing_fees|get_item:class_name|default:'' }}"
-                                           placeholder="e.g. 800000">
+                                    <input type="number" name="fees_{{ class_name }}_day" 
+                                           class="fee-input" id="input_{{ class_name }}_day"
+                                           value="{{ existing_fees|get_item:key|default:'' }}"
+                                           placeholder="e.g. 500000">
+                                    <br><button type="button" class="btn-sm" onclick="toggleEdit('{{ class_name }}_day')">Edit</button>
+                                    {% endwith %}
                                 </td>
                                 <td>
-                                    {% if class_name in existing_fees %}
-                                    <span style="color:#2e7d32; font-size:12px;">&#128274; Set</span>
-                                    {% else %}
-                                    <span style="color:#e65100; font-size:12px;">&#9888; Not set</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <button type="button" class="btn btn-outline btn-sm" 
-                                            onclick="toggleEdit({{ forloop.counter }})">Edit</button>
+                                    {% with key=class_name|add:"_hostel" %}
+                                    <span class="fee-display" id="display_{{ class_name }}_hostel">
+                                        {% if key in existing_fees %}
+                                        <span class="fee-value">{{ existing_fees|get_item:key|floatformat:0 }}</span>
+                                        {% else %}
+                                        <span style="color:#999;">Not set</span>
+                                        {% endif %}
+                                    </span>
+                                    <input type="number" name="fees_{{ class_name }}_hostel" 
+                                           class="fee-input" id="input_{{ class_name }}_hostel"
+                                           value="{{ existing_fees|get_item:key|default:'' }}"
+                                           placeholder="e.g. 700000">
+                                    <br><button type="button" class="btn-sm" onclick="toggleEdit('{{ class_name }}_hostel')">Edit</button>
+                                    {% endwith %}
                                 </td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                     <br>
-                    <button type="submit" class="btn btn-success" id="saveBtn" style="display:none;">Save Changes</button>
+                    <button type="submit" class="btn btn-success" id="saveBtn">Save All Fees</button>
                 </form>
             </div>
         </div>
     </div>
 
     <script>
-        let editCount = 0;
-        
-        function toggleEdit(counter) {
-            const display = document.getElementById('display_' + counter);
-            const input = document.getElementById('input_' + counter);
-            const saveBtn = document.getElementById('saveBtn');
-            
+        function toggleEdit(key) {
+            const display = document.getElementById('display_' + key);
+            const input = document.getElementById('input_' + key);
             if (input.classList.contains('show')) {
-                // Hide input, show display
                 input.classList.remove('show');
                 display.classList.remove('hide');
-                editCount--;
             } else {
-                // Show input, hide display
                 input.classList.add('show');
                 display.classList.add('hide');
                 input.focus();
-                editCount++;
             }
-            
-            // Show save button if any field is being edited
-            saveBtn.style.display = editCount > 0 ? 'inline-block' : 'none';
         }
     </script>
 </body>

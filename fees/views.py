@@ -6,32 +6,36 @@ from .models import FeeStructure
 
 @login_required
 def fee_management(request):
-    """Manage fee structures — shows saved fees, edit to change."""
+    """Manage fee structures — Day and Hostel separately."""
     if request.user.role not in ['super_admin', 'admin']:
         messages.error(request, 'Access denied.'); return redirect('dashboard')
     
     term = request.POST.get('term', 'Term 2')
     year = request.POST.get('academic_year', '2026')
     classes = ['Senior 1', 'Senior 2', 'Senior 3', 'Senior 4', 'Senior 5', 'Senior 6']
+    categories = ['day', 'hostel']
     
     # Get existing fees
     existing_fees = {}
     for f in FeeStructure.objects.filter(term=term, academic_year=year):
-        existing_fees[f.class_name] = f.total_fees
+        key = f"{f.class_name}_{f.category}"
+        existing_fees[key] = f.total_fees
     
     if request.method == 'POST' and request.POST.get('action') == 'save':
         for class_name in classes:
-            amount = request.POST.get(f'fees_{class_name}')
-            if amount:
-                FeeStructure.objects.update_or_create(
-                    class_name=class_name, term=term, academic_year=year,
-                    defaults={'total_fees': amount}
-                )
-                existing_fees[class_name] = amount
+            for cat in categories:
+                amount = request.POST.get(f'fees_{class_name}_{cat}')
+                if amount:
+                    FeeStructure.objects.update_or_create(
+                        class_name=class_name, category=cat, term=term, academic_year=year,
+                        defaults={'total_fees': amount}
+                    )
+                    existing_fees[f"{class_name}_{cat}"] = amount
         messages.success(request, f'Fees updated for {term} {year}!')
     
     return render(request, 'fees/management.html', {
         'classes': classes,
+        'categories': categories,
         'term': term,
         'year': year,
         'existing_fees': existing_fees,
@@ -40,24 +44,24 @@ def fee_management(request):
 
 @login_required
 def fee_report(request):
-    """View fee balances with filters."""
+    """View fee balances with Day/Hostel fee structure."""
     if request.user.role not in ['super_admin', 'admin', 'bursar']:
         messages.error(request, 'Access denied.'); return redirect('dashboard')
     
     from core.models import Student
     from core.services import get_payment_balance, get_student_info_from_existing_db
     
-    # Get filter from URL
-    status_filter = request.GET.get('status', 'all')  # all, cleared, not_cleared, not_paid
+    status_filter = request.GET.get('status', 'all')
     class_filter = request.GET.get('class', '')
     search_query = request.GET.get('search', '').strip()
     
     students = Student.objects.filter(status='active')
     
-    # Pre-fetch fee structures
+    # Pre-fetch fee structures with category
     fee_map = {}
     for f in FeeStructure.objects.filter(term='Term 2', academic_year='2026'):
-        fee_map[f.class_name] = float(f.total_fees)
+        key = f"{f.class_name}_{f.category}"
+        fee_map[key] = float(f.total_fees)
     
     student_data = []
     cleared_count = 0
@@ -70,17 +74,17 @@ def fee_report(request):
             continue
         
         class_name = info.get('class', '')
+        student_category = s.category if hasattr(s, 'category') else 'day'
         
-        # Class filter
         if class_filter and class_name != class_filter:
             continue
         
-        # Search filter
         if search_query and search_query.lower() not in info.get('name', '').lower() and search_query.lower() not in s.admission_number.lower():
             continue
         
         paid = get_payment_balance(s.payment_code)
-        total_fee = fee_map.get(class_name, 800000)
+        fee_key = f"{class_name}_{student_category}"
+        total_fee = fee_map.get(fee_key, 800000)
         balance = total_fee - float(paid)
         
         if balance <= 0 and float(paid) > 0:
@@ -93,7 +97,6 @@ def fee_report(request):
             status = 'NOT CLEARED'
             not_cleared_count += 1
         
-                # Status filter — normalize: NOT PAID -> not_paid, NOT CLEARED -> not_cleared
         status_key = status.lower().replace(' ', '_')
         if status_filter != 'all' and status_key != status_filter:
             continue
@@ -105,6 +108,7 @@ def fee_report(request):
             'name': info.get('name', ''),
             'class': class_name,
             'stream': info.get('stream', ''),
+            'category': student_category,
             'total': total_fee,
             'paid': float(paid),
             'balance': balance,

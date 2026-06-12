@@ -69,13 +69,16 @@ def get_payment_balance(payment_code):
 
 
 def get_next_student_id():
-    """Generate next student ID (STU-001, STU-002, ...)."""
+    """Generate next student ID (STU-001, STU-002, ...) based on highest numeric value."""
     from core.models import Student
-    last = Student.objects.order_by('-id').first()
-    if not last:
-        return 'STU-001'
-    try:
-        num = int(last.id.replace('STU-', '')) + 1
-    except (ValueError, AttributeError):
-        num = 1
-    return f'STU-{num:03d}'
+    
+    max_num = 0
+    for s in Student.objects.all():
+        try:
+            num = int(s.id.replace('STU-', ''))
+            if num > max_num:
+                max_num = num
+        except (ValueError, AttributeError):
+            pass
+    
+    return f'STU-{max_num + 1:03d}'

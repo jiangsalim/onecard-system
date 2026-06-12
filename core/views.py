@@ -4,6 +4,7 @@ from django.contrib import messages
 from .models import Student
 from .services import generate_qr_for_student, get_next_student_id, fetch_students_from_existing_db
 import logging
+from django.shortcuts import render, redirect, get_object_or_404
 
 logger = logging.getLogger('onecard')
 
@@ -78,10 +79,18 @@ def view_students(request):
         messages.error(request, 'Access denied.')
         return redirect('dashboard')
     
-    students = Student.objects.select_related('template').all()
+    students = list(Student.objects.select_related('template').all())
+    
+    # Sort by numeric part of ID (STU-001 → 1)
+    def sort_key(s):
+        try:
+            return int(s.id.replace('STU-', ''))
+        except (ValueError, AttributeError):
+            return 0
+    
+    students.sort(key=sort_key)
+    
     return render(request, 'admin_dashboard/students.html', {'students': students})
-
-
 def error_404(request, exception=None):
     """Custom 404 page."""
     return render(request, 'errors/404.html', status=404)
@@ -121,3 +130,20 @@ def backup_now(request):
         messages.error(request, f'Backup failed: {e}')
     
     return redirect('dashboard')
+
+@login_required
+def edit_student(request, student_id):
+    """Edit student category and status."""
+    if request.user.role not in ['super_admin', 'admin']:
+        messages.error(request, 'Access denied.'); return redirect('dashboard')
+    
+    student = get_object_or_404(Student, id=student_id)
+    
+    if request.method == 'POST':
+        student.category = request.POST.get('category', student.category)
+        student.status = request.POST.get('status', student.status)
+        student.save()
+        messages.success(request, f'Student {student.id} updated!')
+        return redirect('view_students')
+    
+    return render(request, 'admin_dashboard/edit_student.html', {'student': student})
