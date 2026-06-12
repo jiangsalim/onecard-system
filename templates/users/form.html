@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
+    <title>{% if edit_mode %}Edit{% else %}Add{% endif %} User - OneCard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; }
+        .navbar { background: #1a237e; color: white; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; height: 60px; }
+        .navbar .brand { font-size: 18px; font-weight: 600; }
+        .navbar a { color: white; text-decoration: none; }
+        .layout { display: flex; }
+        .sidebar { width: 240px; background: white; min-height: calc(100vh - 60px); border-right: 1px solid #e0e0e0; padding-top: 10px; }
+        .sidebar a { display: block; padding: 12px 24px; color: #333; text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
+        .sidebar a:hover { background: #f5f5ff; color: #1a237e; border-left-color: #1a237e; }
+        .sidebar .section-title { padding: 20px 24px 8px; font-size: 11px; text-transform: uppercase; color: #999; letter-spacing: 1.5px; font-weight: 600; }
+        .main-content { flex: 1; padding: 24px 32px; }
+        .card { background: white; border-radius: 8px; padding: 24px; border: 1px solid #e8e8e8; max-width: 550px; }
+        .card h2 { color: #1a237e; margin-bottom: 20px; }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 5px; color: #333; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #d0d0d0; border-radius: 4px; font-size: 14px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .btn { padding: 10px 24px; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; font-size: 14px; }
+        .btn-primary { background: #1a237e; color: white; }
+        .btn-secondary { background: #e0e0e0; color: #333; text-decoration: none; margin-left: 10px; }
+        .extra-fields { display: none; margin-top: 12px; padding: 12px; background: #f5f5f5; border-radius: 6px; }
+        .extra-fields.show { display: block; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="brand"><a href="{% url 'dashboard' %}" style="color:white;">OneCard System</a></div>
+    </div>
+    <div class="layout">
+        <div class="sidebar">
+            <div class="section-title">Admin</div>
+            <a href="{% url 'user_management' %}" style="background:#f5f5ff; color:#1a237e; border-left-color:#1a237e;">Users</a>
+        </div>
+        <div class="main-content">
+            <h1 style="color:#1a237e; margin-bottom:20px;">{% if edit_mode %}Edit{% else %}Add New{% endif %} User</h1>
+
+            <div class="card">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>First Name</label>
+                            <input type="text" name="first_name" value="{{ target_user.first_name|default:'' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Last Name</label>
+                            <input type="text" name="last_name" value="{{ target_user.last_name|default:'' }}" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" name="username" value="{{ target_user.username|default:'' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" name="email" value="{{ target_user.email|default:'' }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Password {% if edit_mode %}(leave blank to keep current){% endif %}</label>
+                        <input type="password" name="password" {% if not edit_mode %}required{% endif %} placeholder="{% if edit_mode %}New password (optional){% else %}Enter password{% endif %}">
+                    </div>
+                    <div class="form-group">
+                        <label>Role</label>
+                        <select name="role" id="roleSelect" onchange="toggleExtraFields()">
+                            <option value="admin" {% if target_user.role == 'admin' %}selected{% endif %}>Admin</option>
+                            <option value="bursar" {% if target_user.role == 'bursar' %}selected{% endif %}>Bursar</option>
+                            <option value="gate_staff" {% if target_user.role == 'gate_staff' %}selected{% endif %}>Gate Staff</option>
+                            <option value="class_teacher" {% if target_user.role == 'class_teacher' %}selected{% endif %}>Class Teacher</option>
+                        </select>
+                    </div>
+
+                    <div class="extra-fields" id="gateFields">
+                        <div class="form-group">
+                            <label>Assigned Location</label>
+                            <select name="assigned_location">
+                                <option value="Main Gate" {% if target_user.assigned_location == 'Main Gate' %}selected{% endif %}>Main Gate</option>
+                                <option value="Side Gate" {% if target_user.assigned_location == 'Side Gate' %}selected{% endif %}>Side Gate</option>
+                                <option value="Dining Hall" {% if target_user.assigned_location == 'Dining Hall' %}selected{% endif %}>Dining Hall</option>
+                                <option value="Bursar Office" {% if target_user.assigned_location == 'Bursar Office' %}selected{% endif %}>Bursar Office</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="extra-fields" id="teacherFields">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Assigned Class</label>
+                                <select name="assigned_class">
+                                    <option value="">-- Select --</option>
+                                    <option value="Senior 1" {% if target_user.assigned_class == 'Senior 1' %}selected{% endif %}>Senior 1</option>
+                                    <option value="Senior 2" {% if target_user.assigned_class == 'Senior 2' %}selected{% endif %}>Senior 2</option>
+                                    <option value="Senior 3" {% if target_user.assigned_class == 'Senior 3' %}selected{% endif %}>Senior 3</option>
+                                    <option value="Senior 4" {% if target_user.assigned_class == 'Senior 4' %}selected{% endif %}>Senior 4</option>
+                                    <option value="Senior 5" {% if target_user.assigned_class == 'Senior 5' %}selected{% endif %}>Senior 5</option>
+                                    <option value="Senior 6" {% if target_user.assigned_class == 'Senior 6' %}selected{% endif %}>Senior 6</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Assigned Stream</label>
+                                <select name="assigned_stream">
+                                    <option value="">-- Select --</option>
+                                    <option value="A" {% if target_user.assigned_stream == 'A' %}selected{% endif %}>A</option>
+                                    <option value="B" {% if target_user.assigned_stream == 'B' %}selected{% endif %}>B</option>
+                                    <option value="C" {% if target_user.assigned_stream == 'C' %}selected{% endif %}>C</option>
+                                    <option value="D" {% if target_user.assigned_stream == 'D' %}selected{% endif %}>D</option>
+                                    <option value="E" {% if target_user.assigned_stream == 'E' %}selected{% endif %}>E</option>
+                                    <option value="F" {% if target_user.assigned_stream == 'F' %}selected{% endif %}>F</option>
+                                    <option value="G" {% if target_user.assigned_stream == 'G' %}selected{% endif %}>G</option>
+                                    <option value="H" {% if target_user.assigned_stream == 'H' %}selected{% endif %}>H</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">{% if edit_mode %}Save Changes{% else %}Create User{% endif %}</button>
+                    <a href="{% url 'user_management' %}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleExtraFields() {
+            const role = document.getElementById('roleSelect').value;
+            document.getElementById('gateFields').classList.toggle('show', role === 'gate_staff');
+            document.getElementById('teacherFields').classList.toggle('show', role === 'class_teacher');
+        }
+        // Run on load for edit mode
+        toggleExtraFields();
+    </script>
+</body>
+</html>

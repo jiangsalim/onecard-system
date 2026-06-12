@@ -10,4 +10,9 @@ urlpatterns = [
     path('gate-dashboard/', views.gate_dashboard, name='gate_dashboard'),
     path('teacher-dashboard/', views.teacher_dashboard, name='teacher_dashboard'),
     path('scanner/', views.scanner_view, name='scanner'),
+    # User management
+    path('users/', views.user_management, name='user_management'),
+    path('users/add/', views.add_user, name='add_user'),
+    path('users/<int:user_id>/edit/', views.edit_user, name='edit_user'),
+    path('users/<int:user_id>/delete/', views.delete_user, name='delete_user'),
 ]

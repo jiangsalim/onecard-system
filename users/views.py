@@ -3,6 +3,7 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from datetime import date
+from django.shortcuts import render, redirect, get_object_or_404
 import logging
 
 logger = logging.getLogger('onecard')
@@ -125,3 +126,113 @@ def teacher_dashboard(request):
 def scanner_view(request):
     """Scanner page for gate staff and bursar."""
     return render(request, 'admin_dashboard/scanner.html')
+
+@login_required
+def user_management(request):
+    """Super Admin: Manage all users."""
+    if request.user.role != 'super_admin':
+        messages.error(request, 'Access denied.'); return redirect('dashboard')
+    
+    users = User.objects.all().order_by('role', 'username')
+    return render(request, 'users/list.html', {'users': users})
+
+
+@login_required
+def add_user(request):
+    """Super Admin: Add new user."""
+    if request.user.role != 'super_admin':
+        messages.error(request, 'Access denied.'); return redirect('dashboard')
+    
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        email = request.POST.get('email', '')
+        first_name = request.POST.get('first_name', '')
+        last_name = request.POST.get('last_name', '')
+        role = request.POST.get('role')
+        assigned_location = request.POST.get('assigned_location', '')
+        assigned_class = request.POST.get('assigned_class', '')
+        assigned_stream = request.POST.get('assigned_stream', '')
+        
+        if User.objects.filter(username=username).exists():
+            messages.error(request, f'Username "{username}" already exists.')
+            return redirect('add_user')
+        
+        if not password:
+            messages.error(request, 'Password is required.')
+            return redirect('add_user')
+        
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+            role=role,
+            assigned_location=assigned_location,
+            assigned_class=assigned_class,
+            assigned_stream=assigned_stream,
+            is_active=True,
+            is_staff=True,
+        )
+        messages.success(request, f'User "{username}" created successfully!')
+        return redirect('user_management')
+    
+    return render(request, 'users/form.html', {'edit_mode': False})
+
+
+@login_required
+def edit_user(request, user_id):
+    """Super Admin: Edit existing user."""
+    if request.user.role != 'super_admin':
+        messages.error(request, 'Access denied.'); return redirect('dashboard')
+    
+    target_user = get_object_or_404(User, id=user_id)
+    
+    if request.method == 'POST':
+        target_user.username = request.POST.get('username', target_user.username)
+        target_user.email = request.POST.get('email', '')
+        target_user.first_name = request.POST.get('first_name', '')
+        target_user.last_name = request.POST.get('last_name', '')
+        target_user.role = request.POST.get('role', target_user.role)
+        target_user.assigned_location = request.POST.get('assigned_location', '')
+        target_user.assigned_class = request.POST.get('assigned_class', '')
+        target_user.assigned_stream = request.POST.get('assigned_stream', '')
+        
+        # Only update password if provided
+        new_password = request.POST.get('password')
+        if new_password:
+            target_user.set_password(new_password)
+        
+        target_user.save()
+        messages.success(request, f'User "{target_user.username}" updated!')
+        return redirect('user_management')
+    
+    return render(request, 'users/form.html', {'edit_mode': True, 'target_user': target_user})
+
+
+@login_required
+def delete_user(request, user_id):
+    """Super Admin: Delete a user."""
+    if request.user.role != 'super_admin':
+        messages.error(request, 'Access denied.'); return redirect('dashboard')
+    
+    target_user = get_object_or_404(User, id=user_id)
+    
+    # Prevent deleting yourself
+    if target_user == request.user:
+        messages.error(request, 'You cannot delete your own account.')
+        return redirect('user_management')
+    
+    # Prevent deleting the last super admin
+    if target_user.role == 'super_admin' and User.objects.filter(role='super_admin').count() <= 1:
+        messages.error(request, 'Cannot delete the last Super Admin.')
+        return redirect('user_management')
+    
+    if request.method == 'POST':
+        username = target_user.username
+        target_user.delete()
+        messages.success(request, f'User "{username}" deleted.')
+        return redirect('user_management')
+    
+    return render(request, 'users/delete_confirm.html', {'target_user': target_user})
