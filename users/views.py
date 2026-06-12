@@ -46,18 +46,34 @@ def dashboard(request):
     from attendance.models import Attendance
     from movement.models import MovementLog
     from core.services import get_payment_balance
+    from fees.models import FeeStructure
+    from core.services import get_student_info_from_existing_db
 
     today = date.today()
     total = Student.objects.filter(status='active').count()
     present = Attendance.objects.filter(scan_date=today).count()
 
-    # Calculate not-cleared count
+    # Calculate not-cleared count properly
     not_cleared = 0
+    fee_structures = {}
+    for f in FeeStructure.objects.filter(term='Term 2', academic_year='2026'):
+        fee_structures[f.class_name] = float(f.total_fees)
+    
     if total > 0:
-        for s in Student.objects.filter(status='active')[:200]:
+        for s in Student.objects.filter(status='active'):
             try:
+                # Get student's class from school DB
+                info = get_student_info_from_existing_db(s.admission_number)
+                class_name = info['class'] if info else None
+                
+                # Get fee for that class
+                total_fee = fee_structures.get(class_name, 800000) if class_name else 800000
+                
+                # Get payment
                 paid = get_payment_balance(s.payment_code)
-                if float(paid) < 800000:  # Will be dynamic when fees are set per class
+                
+                # Check if not cleared
+                if float(paid) < total_fee:
                     not_cleared += 1
             except Exception:
                 pass

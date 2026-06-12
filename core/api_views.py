@@ -15,7 +15,7 @@ logger = logging.getLogger('onecard')
 @login_required
 @require_POST
 def process_scan(request):
-    """Process a QR code scan with version checking."""
+    """Process a QR code scan — attendance, balance, or pass-out."""
     try:
         data = json.loads(request.body)
         student_id = data.get('student_id')
@@ -30,10 +30,8 @@ def process_scan(request):
         if ':v' in student_id:
             parts = student_id.split(':v')
             student_id = parts[0]
-            try:
-                qr_version = int(parts[1])
-            except (ValueError, IndexError):
-                qr_version = 1
+            try: qr_version = int(parts[1])
+            except (ValueError, IndexError): qr_version = 1
         
         # Get student from OneCard DB
         try:
@@ -41,82 +39,92 @@ def process_scan(request):
         except Student.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Student not found or inactive'})
         
-        # Check if this card version is still valid
+        # Check card version
         if qr_version < student.card_version:
             return JsonResponse({
                 'success': False,
                 'error': f'CARD REPLACED — This card (v{qr_version}) was replaced on {student.last_reprint_date}. Current card is v{student.card_version}.',
                 'error_code': 'CARD_REPLACED',
-                'current_version': student.card_version,
-                'scanned_version': qr_version,
             }, status=410)
         
-        # Get student info from existing school DB
+        # Get student info from school DB
         info = get_student_info_from_existing_db(student.admission_number)
         if not info:
-            return JsonResponse({
-                'success': False,
-                'error': 'Cannot fetch student data. School database may be unavailable.',
-                'error_code': 'DB_UNAVAILABLE',
-            }, status=503)
+            return JsonResponse({'success': False, 'error': 'Cannot fetch student data.', 'error_code': 'DB_UNAVAILABLE'}, status=503)
         
-        # Get balance
+        # ========== PASS OUT MODE ==========
+        if mode == 'pass_out':
+            today = date.today()
+            existing = MovementLog.objects.filter(student=student, exit_date=today, time_in__isnull=True).first()
+            
+            if existing:
+                # Student is returning
+                now_time = datetime.now().time()
+                existing.time_in = now_time
+                existing.save()
+                
+                # Calculate duration
+                out_dt = datetime.combine(today, existing.time_out)
+                in_dt = datetime.combine(today, now_time)
+                diff = in_dt - out_dt
+                hours = diff.seconds // 3600
+                minutes = (diff.seconds % 3600) // 60
+                
+                return JsonResponse({
+                    'success': True,
+                    'student': {
+                        'id': student.id, 'name': info['name'],
+                        'class': info['class'], 'stream': info['stream'],
+                        'admission': student.admission_number,
+                    },
+                    'movement': {
+                        'action': 'return',
+                        'time_out': str(existing.time_out),
+                        'time_in': str(now_time),
+                        'duration': f'{hours}h {minutes}m',
+                    }
+                })
+            else:
+                # Student is leaving — show exit form
+                return JsonResponse({
+                    'success': True,
+                    'student': {
+                        'id': student.id, 'name': info['name'],
+                        'class': info['class'], 'stream': info['stream'],
+                        'admission': student.admission_number,
+                    },
+                    'movement': {
+                        'action': 'exit',
+                    }
+                })
+        
+        # ========== ATTENDANCE / BALANCE MODE ==========
         total_paid = get_payment_balance(student.payment_code)
         fee = FeeStructure.objects.filter(class_name=info['class']).first()
         
         if not fee:
-            return JsonResponse({
-                'success': False,
-                'error': f'Fee structure not set for {info["class"]}. Contact admin.',
-                'error_code': 'NO_FEE_STRUCTURE',
-            }, status=400)
+            return JsonResponse({'success': False, 'error': f'Fee structure not set for {info["class"]}.', 'error_code': 'NO_FEE_STRUCTURE'}, status=400)
         
         total_fees = float(fee.total_fees)
         balance = total_fees - float(total_paid)
         
-        if balance <= 0 and float(total_paid) > 0:
-            status = 'CLEARED'
-        elif float(total_paid) > total_fees:
-            status = 'OVERPAID'
-        elif float(total_paid) == 0:
-            status = 'NOT PAID'
-        else:
-            status = 'NOT CLEARED'
+        if balance <= 0 and float(total_paid) > 0: status = 'CLEARED'
+        elif float(total_paid) > total_fees: status = 'OVERPAID'
+        elif float(total_paid) == 0: status = 'NOT PAID'
+        else: status = 'NOT CLEARED'
         
-        # Log attendance if in attendance mode
         already_marked = False
         if mode == 'attendance_balance':
             today = date.today()
             already_marked = Attendance.objects.filter(student=student, scan_date=today).exists()
             if not already_marked:
-                Attendance.objects.create(
-                    student=student,
-                    scan_date=today,
-                    time_in=datetime.now().time(),
-                    scan_location=location,
-                    marked_by=request.user.get_full_name() or request.user.username
-                )
+                Attendance.objects.create(student=student, scan_date=today, time_in=datetime.now().time(), scan_location=location, marked_by=request.user.get_full_name() or request.user.username)
         
         return JsonResponse({
             'success': True,
-            'student': {
-                'id': student.id,
-                'name': info['name'],
-                'class': info['class'],
-                'stream': info['stream'],
-                'admission': student.admission_number,
-                'payment_code': student.payment_code,
-            },
-            'fees': {
-                'total': total_fees,
-                'paid': float(total_paid),
-                'balance': balance,
-                'status': status,
-            },
-            'attendance': {
-                'marked': not already_marked,
-                'already_marked': already_marked,
-            }
+            'student': {'id': student.id, 'name': info['name'], 'class': info['class'], 'stream': info['stream'], 'admission': student.admission_number, 'payment_code': student.payment_code},
+            'fees': {'total': total_fees, 'paid': float(total_paid), 'balance': balance, 'status': status},
+            'attendance': {'marked': not already_marked, 'already_marked': already_marked}
         })
         
     except json.JSONDecodeError:
@@ -124,7 +132,6 @@ def process_scan(request):
     except Exception as e:
         logger.error(f"Scan error: {str(e)}", exc_info=True)
         return JsonResponse({'success': False, 'error': 'Internal server error'}, status=500)
-
 
 @login_required
 def api_students_list(request):

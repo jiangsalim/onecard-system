@@ -112,7 +112,7 @@ def print_cards(request):
 
 @login_required
 def download_cards_pdf(request):
-    """Open printable page for selected cards — front with badge/photo/QR, back with barcode."""
+    """Open printable page for selected cards — front with badge/photo/QR, back with barcode. Uses assigned template colors."""
     if request.user.role not in ['super_admin', 'admin']:
         messages.error(request, 'Access denied.'); return redirect('dashboard')
     
@@ -128,6 +128,12 @@ def download_cards_pdf(request):
     all_school = fetch_students_from_existing_db()
     school_dict = {s['admission_number']: s for s in all_school}
     
+    # Pre-fetch template assignments for colors
+    template_map = {}
+    for a in ClassTemplateAssignment.objects.filter(academic_year='2026').select_related('template'):
+        if a.template:
+            template_map[a.class_name] = a.template
+    
     # Pre-generate barcodes
     barcode_images = {}
     for s in students:
@@ -142,7 +148,7 @@ def download_cards_pdf(request):
     
     # School badge URL
     badge_url = request.build_absolute_uri('/media/badge.jpg')
-
+    
     html = """<!DOCTYPE html>
     <html><head><meta charset="utf-8"><title>OneCard Print</title>
     <style>
@@ -175,6 +181,7 @@ def download_cards_pdf(request):
         .card .top .badge img { width: 35px; height: 35px; border-radius: 4px; }
         .card .top .school { font-weight: bold; font-size: 9px; color: #1a237e; }
         .card .top .label { font-size: 7px; color: #888; }
+        .card .top .badge-text { font-size: 7px; padding: 2px 6px; border-radius: 3px; color: white; white-space: nowrap; }
         .card .middle { 
             display: flex; align-items: center; gap: 6px; flex: 1; margin: 4px 0; 
         }
@@ -188,10 +195,10 @@ def download_cards_pdf(request):
         
         /* BACK */
         .card-back {
-            padding: 10px 14px; background: #f8f9ff;
+            padding: 10px 14px;
             display: flex; flex-direction: column; justify-content: space-between;
         }
-        .card-back .school-name { font-size: 10px; font-weight: bold; color: #1a237e; text-align: center; border-bottom: 2px solid #1a237e; padding-bottom: 4px; margin-bottom: 4px; }
+        .card-back .school-name { font-size: 10px; font-weight: bold; text-align: center; border-bottom: 2px solid #1a237e; padding-bottom: 4px; margin-bottom: 4px; }
         .card-back .info-section { font-size: 8px; line-height: 1.4; color: #333; }
         .card-back .info-section .row { display: flex; justify-content: space-between; margin-bottom: 1px; }
         .card-back .info-section strong { color: #1a237e; }
@@ -221,28 +228,34 @@ def download_cards_pdf(request):
         student_class = school_info.get('current_class', 'N/A')
         student_stream = school_info.get('stream', '')
         
+        # Get assigned template colors
+        tmpl = template_map.get(student_class)
+        border_color = tmpl.border_color if tmpl else '#1a237e'
+        bg_color = tmpl.background_color if tmpl else '#FFFFFF'
+        badge_txt = tmpl.badge_text if tmpl else "STUDENT"
+        badge_clr = tmpl.badge_color if tmpl else '#1a237e'
+        color_name = tmpl.color_name if tmpl else ''
+        
         # Photo URL — priority: 1) Admin uploaded  2) School DB photo_path  3) Generated avatar
-        photo_url = ''
         if s.photo:
             photo_url = request.build_absolute_uri(s.photo.url)
         else:
-            # Check school DB for photo_path
             school_photo = school_info.get('photo_path', '')
             if school_photo:
                 photo_url = request.build_absolute_uri('/media/' + school_photo) if school_photo.startswith('/') else school_photo
             else:
-                # Generate avatar from name
                 name_encoded = quote(name_front)
                 photo_url = f"https://ui-avatars.com/api/?name={name_encoded}&size=150&background=1a237e&color=fff"
         
         html += f"""
-        <div class="card">
-            <div class="top">
-               <div class="badge"><img src="{badge_url}" alt="Badge"></div>
-                <div>
+        <div class="card" style="border-color: {border_color}; background: {bg_color};">
+            <div class="top" style="border-bottom-color: {border_color};">
+                <div class="badge"><img src="{badge_url}" alt="Badge"></div>
+                <div style="flex:1;">
                     <div class="school">JINJA SENIOR SECONDARY SCHOOL</div>
                     <div class="label">Student ID Card</div>
                 </div>
+                <div class="badge-text" style="background:{badge_clr};">{badge_txt} {color_name}</div>
             </div>
             <div class="middle">
                 <div class="photo-box"><img src="{photo_url}" alt="Photo"></div>
@@ -251,7 +264,8 @@ def download_cards_pdf(request):
                     <strong>ID:</strong> {s.id}<br>
                     <strong>Name:</strong> {name_front}<br>
                     <strong>Adm:</strong> {s.admission_number}<br>
-                    <strong>Class:</strong> {student_class} {student_stream}<br>
+                    <strong>Level:</strong> {badge_txt} {color_name}<br>
+                    <strong>Stream:</strong> {student_stream}<br>
                     <strong>Pay:</strong> {s.payment_code}<br>
                     <strong>Ver:</strong> v{s.card_version}
                 </div>
@@ -267,15 +281,24 @@ def download_cards_pdf(request):
         student_class = school_info.get('current_class', 'N/A')
         student_stream = school_info.get('stream', '')
         
+        # Get template colors
+        tmpl = template_map.get(student_class)
+        border_color = tmpl.border_color if tmpl else '#1a237e'
+        bg_color = tmpl.background_color if tmpl else '#FFFFFF'
+        badge_txt = tmpl.badge_text if tmpl else "STUDENT"
+        badge_clr = tmpl.badge_color if tmpl else '#1a237e'
+        color_name = tmpl.color_name if tmpl else ''
+        
         barcode_img = barcode_images.get(s.id, '')
         barcode_data = f"{s.id}|{s.payment_code}"
         
         html += f"""
-        <div class="card-back">
-            <div class="school-name">JINJA SENIOR SECONDARY SCHOOL</div>
+        <div class="card-back" style="border-color: {border_color}; background: {bg_color};">
+            <div class="school-name" style="color: {border_color}; border-bottom-color: {border_color};">JINJA SENIOR SECONDARY SCHOOL</div>
             <div class="info-section">
                 <div class="row"><strong>Name:</strong> <span>{name}</span></div>
-                <div class="row"><strong>Class:</strong> <span>{student_class} {student_stream}</span></div>
+                <div class="row"><strong>Level:</strong> <span>{badge_txt} {color_name}</span></div>
+                <div class="row"><strong>Stream:</strong> <span>{student_stream}</span></div>
                 <div class="row"><strong>Adm No:</strong> <span>{s.admission_number}</span></div>
                 <div class="row"><strong>Card ID:</strong> <span>{s.id} (v{s.card_version})</span></div>
                 <div class="row"><strong>Pay Code:</strong> <span>{s.payment_code}</span></div>

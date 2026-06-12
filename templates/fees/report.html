@@ -19,12 +19,27 @@
         .card { background: white; border-radius: 8px; padding: 24px; border: 1px solid #e8e8e8; }
         .card h2 { color: #1a237e; margin-bottom: 16px; }
         table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 14px; }
-        th { background: #f5f5f5; font-weight: 600; }
-        .badge { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 13px; }
+        th { background: #f5f5f5; font-weight: 600; color: #333; position: sticky; top: 0; }
+        .badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; white-space: nowrap; }
         .badge-success { background: #e8f5e9; color: #2e7d32; }
         .badge-warning { background: #fff3e0; color: #e65100; }
         .badge-error { background: #ffebee; color: #c62828; }
+        .filter-row { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+        .filter-row select, .filter-row input { padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
+        .filter-row .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500; }
+        .btn-primary { background: #1a237e; color: white; }
+        .btn-outline { background: white; color: #1a237e; border: 1px solid #1a237e; }
+        .stats-row { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+        .stat-item { padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; border: 2px solid transparent; }
+        .stat-item:hover { opacity: 0.8; }
+        .stat-item.active { border-color: #1a237e; }
+        .stat-all { background: #e3f2fd; color: #1565c0; }
+        .stat-cleared { background: #e8f5e9; color: #2e7d32; }
+        .stat-uncleared { background: #fff3e0; color: #e65100; }
+        .stat-unpaid { background: #ffebee; color: #c62828; }
+        .table-container { max-height: 500px; overflow-y: auto; }
+        .text-muted { color: #999; }
     </style>
 </head>
 <body>
@@ -38,26 +53,89 @@
             <a href="{% url 'fee_report' %}" style="background:#f5f5ff; color:#1a237e; border-left-color:#1a237e;">Fee Report</a>
         </div>
         <div class="main-content">
+            <h1 style="color:#1a237e; margin-bottom:8px;">Student Fee Status</h1>
+            <p style="color:#888; margin-bottom:16px; font-size:14px;">Filter by status, class, or search by name/admission number</p>
+
             <div class="card">
-                <h2>Student Fee Status</h2>
-                <table>
-                    <thead><tr><th>Student</th><th>Total</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead>
-                    <tbody>
-                        {% for s in students %}
-                        <tr>
-                            <td><strong>{{ s.id }}</strong><br><small style="color:#888;">{{ s.admission }}</small></td>
-                            <td>{{ s.total|floatformat:0 }} UGX</td>
-                            <td>{{ s.paid|floatformat:0 }} UGX</td>
-                            <td>{{ s.balance|floatformat:0 }} UGX</td>
-                            <td>
-                                {% if s.status == 'CLEARED' %}<span class="badge badge-success">CLEARED</span>
-                                {% elif s.paid == 0 %}<span class="badge badge-error">NOT PAID</span>
-                                {% else %}<span class="badge badge-warning">NOT CLEARED</span>{% endif %}
-                            </td>
-                        </tr>
+                <!-- Status quick filters -->
+                <div class="stats-row">
+                    <a href="?status=all{% if class_filter %}&class={{ class_filter }}{% endif %}" 
+                       class="stat-item stat-all {% if status_filter == 'all' %}active{% endif %}">
+                        All: {{ cleared_count|add:not_cleared_count|add:not_paid_count }}
+                    </a>
+                    <a href="?status=cleared{% if class_filter %}&class={{ class_filter }}{% endif %}" 
+                       class="stat-item stat-cleared {% if status_filter == 'cleared' %}active{% endif %}">
+                        Cleared: {{ cleared_count }}
+                    </a>
+                    <a href="?status=not_cleared{% if class_filter %}&class={{ class_filter }}{% endif %}" 
+                       class="stat-item stat-uncleared {% if status_filter == 'not_cleared' %}active{% endif %}">
+                        Not Cleared: {{ not_cleared_count }}
+                    </a>
+                    <a href="?status=not_paid{% if class_filter %}&class={{ class_filter }}{% endif %}" 
+                       class="stat-item stat-unpaid {% if status_filter == 'not_paid' %}active{% endif %}">
+                        Not Paid: {{ not_paid_count }}
+                    </a>
+                </div>
+
+                <!-- Filters -->
+                <form method="get" class="filter-row">
+                    <input type="hidden" name="status" value="{{ status_filter }}">
+                    <select name="class">
+                        <option value="">All Classes</option>
+                        {% for c in classes %}
+                        <option value="{{ c }}" {% if class_filter == c %}selected{% endif %}>{{ c }}</option>
                         {% endfor %}
-                    </tbody>
-                </table>
+                    </select>
+                    <input type="text" name="search" placeholder="Search name or admission#" value="{{ search_query }}">
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                    {% if status_filter != 'all' or class_filter or search_query %}
+                    <a href="{% url 'fee_report' %}" class="btn btn-outline">Clear</a>
+                    {% endif %}
+                </form>
+
+                <p style="color:#666; font-size:13px; margin-bottom:8px;">Showing <strong>{{ students|length }}</strong> student(s)</p>
+
+                <!-- Table -->
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Class</th>
+                                <th>Total</th>
+                                <th>Paid</th>
+                                <th>Balance</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in students %}
+                            <tr>
+                                <td>
+                                    <strong>{{ s.id }}</strong><br>
+                                    <small class="text-muted">{{ s.name }}</small><br>
+                                    <small class="text-muted">{{ s.admission }}</small>
+                                </td>
+                                <td>{{ s.class }} {{ s.stream }}</td>
+                                <td>{{ s.total|floatformat:0 }} UGX</td>
+                                <td>{{ s.paid|floatformat:0 }} UGX</td>
+                                <td><strong>{{ s.balance|floatformat:0 }} UGX</strong></td>
+                                <td>
+                                    {% if s.status == 'CLEARED' %}
+                                    <span class="badge badge-success">CLEARED</span>
+                                    {% elif s.status == 'NOT PAID' %}
+                                    <span class="badge badge-error">NOT PAID</span>
+                                    {% else %}
+                                    <span class="badge badge-warning">NOT CLEARED</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="6" style="text-align:center; color:#999; padding:30px;">No students match the selected filters.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
