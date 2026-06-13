@@ -113,3 +113,7 @@ LOGOUT_REDIRECT_URL = '/login/'
 handler404 = 'core.views.error_404'
 handler500 = 'core.views.error_500'
 handler403 = 'core.views.error_403'
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.ngrok-free.app',
+]
