@@ -28,6 +28,11 @@
             <div class="form-group"><label>Fee Balance Alert (UGX)</label><input type="number" name="fee_balance_threshold" value="{{ settings.fee_balance_threshold }}"></div>
             <div class="form-group"><label>Consecutive Days Absent</label><input type="number" name="attendance_consecutive_days" value="{{ settings.attendance_consecutive_days }}"></div>
             <div class="form-group"><label>Student Outside Alert (Hours)</label><input type="number" name="movement_hours_outside" value="{{ settings.movement_hours_outside }}"></div>
+            <div class="form-group">
+                <label>Late Arrival Cutoff Time</label>
+                <input type="time" name="late_cutoff_time" value="{{ settings.late_cutoff_time|time:'H:i'|default:'08:00' }}">
+                <small style="color:#888;">Students scanned after this time are marked Late</small>
+            </div>
             <div class="checkbox-group"><input type="checkbox" name="show_in_dashboard" {% if settings.show_in_dashboard %}checked{% endif %}><span>Show in dashboard</span></div>
             <button type="submit" class="btn">Save Settings</button>
         </form>

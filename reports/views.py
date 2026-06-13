@@ -2,13 +2,14 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.utils import timezone
-from datetime import date
+from datetime import date, time
 from core.models import Student
 from attendance.models import Attendance, MealLog
 from movement.models import MovementLog
 from fees.models import FeeStructure
 from core.services import get_payment_balance
 from core.mobile_utils import render_mobile_or_desktop
+from notifications.models import NotificationSetting
 import openpyxl
 from io import BytesIO
 from reportlab.lib.pagesizes import A4
@@ -48,11 +49,15 @@ def build_excel_response(filename, sheet_name, headers, data):
 
 @login_required
 def attendance_report(request):
-    """Attendance report with chart — filtered by class/stream."""
+    """Attendance report with chart — includes Late tracking."""
     today = date.today()
     
     class_filter = request.GET.get('class', '')
     stream_filter = request.GET.get('stream', '')
+    
+    # Get late cutoff time from settings
+    notif_settings = NotificationSetting.objects.first()
+    cutoff_time = notif_settings.late_cutoff_time if notif_settings else time(8, 0)
     
     if class_filter:
         from core.services import fetch_students_from_existing_db
@@ -65,22 +70,28 @@ def attendance_report(request):
         filtered_student_ids = Student.objects.filter(
             admission_number__in=matching_admissions, status='active'
         ).values_list('id', flat=True)
+        
         total = len(matching_admissions)
-        attendance_list = Attendance.objects.filter(scan_date=today, student_id__in=filtered_student_ids).select_related('student')[:50]
+        attendance_list = Attendance.objects.filter(
+            scan_date=today, student_id__in=filtered_student_ids
+        ).select_related('student').order_by('time_in')
         present = Attendance.objects.filter(scan_date=today, student_id__in=filtered_student_ids).count()
+        late = Attendance.objects.filter(scan_date=today, student_id__in=filtered_student_ids, time_in__gt=cutoff_time).count()
     else:
         total = Student.objects.filter(status='active').count()
-        attendance_list = Attendance.objects.filter(scan_date=today).select_related('student')[:50]
+        attendance_list = Attendance.objects.filter(scan_date=today).select_related('student').order_by('time_in')
         present = Attendance.objects.filter(scan_date=today).count()
+        late = Attendance.objects.filter(scan_date=today, time_in__gt=cutoff_time).count()
     
+    on_time = present - late
     absent = total - present
     stats = {
-        'total': total, 'present': present, 'absent': absent, 'late': 0,
+        'total': total, 'present': on_time, 'absent': absent, 'late': late,
         'rate': round((present / total * 100) if total > 0 else 0, 1),
     }
     return render_mobile_or_desktop(request, 'reports/attendance.html', 'mobile/reports_attendance.html', {
         'attendance_list': attendance_list, 'stats': stats,
-        'class_filter': class_filter, 'stream_filter': stream_filter,
+        'class_filter': class_filter, 'stream_filter': stream_filter, 'cutoff_time': cutoff_time,
     })
 
 

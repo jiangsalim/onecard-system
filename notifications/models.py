@@ -32,6 +32,7 @@ class NotificationSetting(models.Model):
     show_in_dashboard = models.BooleanField(default=True)
     email_alerts = models.BooleanField(default=False)
     email_recipient = models.EmailField(null=True, blank=True)
+    late_cutoff_time = models.TimeField(default='08:00', help_text='Students arriving after this time are marked Late')
 
     class Meta:
         db_table = 'notification_settings'

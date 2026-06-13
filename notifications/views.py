@@ -38,7 +38,7 @@ def mark_all_read(request):
 
 @login_required
 def notification_settings(request):
-    """Manage notification settings."""
+    """Manage notification settings including late cutoff time."""
     if request.user.role not in ['super_admin', 'admin']:
         messages.error(request, 'Access denied.'); return redirect('dashboard')
     
@@ -48,6 +48,7 @@ def notification_settings(request):
         settings.fee_balance_threshold = request.POST.get('fee_balance_threshold', 500000)
         settings.attendance_consecutive_days = request.POST.get('attendance_consecutive_days', 3)
         settings.movement_hours_outside = request.POST.get('movement_hours_outside', 3)
+        settings.late_cutoff_time = request.POST.get('late_cutoff_time', '08:00')
         settings.show_in_dashboard = request.POST.get('show_in_dashboard') == 'on'
         settings.save()
         messages.success(request, 'Notification settings updated!')
