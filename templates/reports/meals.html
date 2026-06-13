@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
+    <link rel="icon" href="data:,">
     <title>Meal Report - OneCard</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -92,7 +92,7 @@
             </div>
 
             <div class="card">
-                <h2>{{ meal_type|title }} — {{ meals|length }} served / {{ total }} total</h2>
+                <h2>{{ meal_type|title }} â€” {{ meals|length }} served / {{ total }} total</h2>
                 <table>
                     <thead>
                         <tr>
@@ -111,9 +111,9 @@
                             <td>{{ m.time_scanned }}</td>
                             <td>
                                 {% if m.student.category == 'hostel' %}
-                                <span class="badge badge-hostel">🏠 Hostel</span>
+                                <span class="badge badge-hostel">ðŸ  Hostel</span>
                                 {% else %}
-                                <span class="badge badge-day">☀ Day</span>
+                                <span class="badge badge-day">â˜€ Day</span>
                                 {% endif %}
                             </td>
                             <td>{{ m.location }}</td>
