@@ -218,15 +218,14 @@
             </div>
         </div>
     </div>
-
-        <script>
-        const ctx = document.getElementById('dashChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Present', 'Absent', 'Outside'],
-                datasets: [{
-                    data: [
+  <script>
+      const ctx = document.getElementById('dashChart').getContext('2d');
+      new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+              labels: ['Present', 'Absent', 'Outside'],
+              datasets: [{
+                  data: [
                         {{ stats.present }},
                         {{ stats.absent }},
                         {{ stats.outside }}
@@ -251,7 +250,7 @@
                 }
             }
         });
-    </script>
+ </script>
 </body>
 </html>
 
