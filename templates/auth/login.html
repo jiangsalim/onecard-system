@@ -17,7 +17,6 @@
             background: url('/media/school.jpg') center/cover no-repeat fixed;
             position: relative;
         }
-        /* Dark overlay */
         body::before {
             content: '';
             position: fixed;
@@ -26,7 +25,6 @@
             z-index: 0;
         }
         
-        /* Glass card */
         .login-container {
             position: relative;
             z-index: 1;
@@ -110,6 +108,29 @@
             color: #90caf9; border: 1px solid rgba(21, 101, 192, 0.3);
         }
         
+        /* Rate Limit Box */
+        .rate-limit-box {
+            padding: 30px 20px;
+            color: white;
+        }
+        .rate-limit-box .lock-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        .rate-limit-box h2 {
+            font-size: 18px; font-weight: 700; margin-bottom: 8px;
+            color: #ffcc80;
+        }
+        .rate-limit-box .countdown {
+            font-size: 42px; font-weight: 700; color: #ff9800;
+            margin: 16px 0; font-family: 'Courier New', monospace;
+            letter-spacing: 3px;
+        }
+        .rate-limit-box p {
+            font-size: 13px; color: rgba(255,255,255,0.7);
+            margin-bottom: 6px;
+        }
+        
         .footer-text {
             margin-top: 24px; font-size: 12px;
             color: rgba(255, 255, 255, 0.7);
@@ -120,13 +141,11 @@
         }
         .footer-text a:hover { color: #ff9800; text-decoration: underline; }
         
-        /* Shake animation */
         @keyframes shake {
             0%,100%{transform:translateX(0)}10%,30%,50%,70%,90%{transform:translateX(-6px)}20%,40%,60%,80%{transform:translateX(6px)}
         }
         .shake { animation: shake 0.6s ease-in-out; }
         
-        /* Badge overlay */
         .badge-overlay {
             display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0, 0, 0, 0.9); z-index: 9999;
@@ -157,19 +176,29 @@
         <!-- School Name -->
         <div class="school-name">Jinja Senior Secondary School</div>
         <div class="school-subtitle">P.O Box 255, Jinja | Tel: 0772404055</div>
-
-        <!-- System Name -->
         <div class="system-name">OneCard System</div>
         <div class="divider"></div>
 
-        <!-- Messages -->
+        {% if rate_limited %}
+        <!-- ========== RATE LIMITED VIEW ========== -->
+        <div class="rate-limit-box">
+            <div class="lock-icon">🔒</div>
+            <h2>Too Many Login Attempts</h2>
+            <p>For security reasons, login is temporarily locked.</p>
+            <div class="countdown" id="countdown">--:--</div>
+            <p>Please wait before trying again.</p>
+            <p style="font-size:11px; margin-top:12px; opacity:0.6;">
+                If you need immediate access, contact the system administrator.
+            </p>
+        </div>
+        {% else %}
+        <!-- ========== NORMAL LOGIN FORM ========== -->
         {% if messages %}
         {% for message in messages %}
         <div class="alert alert-{{ message.tags }}">{{ message }}</div>
         {% endfor %}
         {% endif %}
 
-        <!-- Login Form -->
         <form method="post" id="loginForm">
             {% csrf_token %}
             <div class="form-group">
@@ -182,6 +211,7 @@
             </div>
             <button type="submit" class="btn-signin">Sign In</button>
         </form>
+        {% endif %}
 
         <!-- Herman Software Footer -->
         <div class="footer-text">
@@ -201,10 +231,12 @@
     </div>
 
     <script>
+        // Badge expand
         function expandBadge() { document.getElementById('badgeOverlay').classList.add('show'); }
         function closeBadge() { document.getElementById('badgeOverlay').classList.remove('show'); }
         document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeBadge(); });
         
+        // Shake on error
         {% if messages %}
         {% for message in messages %}
         {% if message.tags == 'error' %}
@@ -212,6 +244,24 @@
         setTimeout(function(){ document.getElementById('loginBox').classList.remove('shake'); }, 600);
         {% endif %}
         {% endfor %}
+        {% endif %}
+
+        // Rate limit countdown
+        {% if rate_limited %}
+        let seconds = {{ retry_after|default:300 }};
+        function tick() {
+            if (seconds <= 0) {
+                window.location.reload();
+                return;
+            }
+            seconds--;
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            document.getElementById('countdown').textContent = 
+                String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+            setTimeout(tick, 1000);
+        }
+        tick();
         {% endif %}
     </script>
 </body>

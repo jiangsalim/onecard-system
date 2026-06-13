@@ -20,6 +20,15 @@ def redirect_to_login(request):
 def login_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
+    
+    # Check if rate limited by middleware
+    if hasattr(request, 'rate_limited') and request.rate_limited:
+        retry_after = getattr(request, 'rate_limit_retry_after', 300)
+        return render_mobile_or_desktop(request, 'auth/login.html', 'mobile/login.html', {
+            'rate_limited': True,
+            'retry_after': retry_after,
+        })
+    
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -58,13 +67,11 @@ def dashboard(request):
     total = Student.objects.filter(status='active').count()
     present = Attendance.objects.filter(scan_date=today).count()
 
-    # Build fee structures
     fee_structures = {}
     for f in FeeStructure.objects.filter(term='Term 2', academic_year='2026'):
         key = f"{f.class_name}_{f.category}"
         fee_structures[key] = float(f.total_fees)
 
-    # Try cached not_cleared count
     not_cleared = cache.get('not_cleared_count')
     if not_cleared is None:
         not_cleared = 0
@@ -81,7 +88,6 @@ def dashboard(request):
                         not_cleared += 1
                 except Exception:
                     pass
-        # Cache for 30 minutes (1800 seconds)
         cache.set('not_cleared_count', not_cleared, 1800)
 
     stats = {
@@ -92,7 +98,6 @@ def dashboard(request):
         'not_cleared': not_cleared,
     }
 
-    # Auto-generate alerts on dashboard visit
     try:
         from notifications.views import auto_check_alerts
         alerts = auto_check_alerts()

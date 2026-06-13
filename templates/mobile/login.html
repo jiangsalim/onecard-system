@@ -48,8 +48,19 @@
         .alert { padding: 12px; border-radius: 8px; margin-bottom: 12px; font-size: 13px; text-align: left; }
         .alert-error { background: rgba(198, 40, 40, 0.2); color: #ff8a80; border: 1px solid rgba(198, 40, 40, 0.3); }
         .alert-success { background: rgba(46, 125, 50, 0.2); color: #a5d6a7; border: 1px solid rgba(46, 125, 50, 0.3); }
+        
+        .rate-limit-box { padding: 20px 10px; color: white; }
+        .rate-limit-box .lock-icon { font-size: 40px; margin-bottom: 12px; }
+        .rate-limit-box h2 { font-size: 16px; color: #ffcc80; margin-bottom: 8px; }
+        .rate-limit-box .countdown {
+            font-size: 36px; font-weight: 700; color: #ff9800;
+            margin: 12px 0; font-family: 'Courier New', monospace;
+        }
+        .rate-limit-box p { font-size: 12px; color: rgba(255,255,255,0.7); }
+        
         .footer-text { margin-top: 20px; font-size: 11px; color: rgba(255, 255, 255, 0.7); }
         .footer-text a { color: #ffcc80; text-decoration: none; font-weight: 600; }
+        
         @keyframes shake {
             0%,100%{transform:translateX(0)}10%,30%,50%,70%,90%{transform:translateX(-6px)}20%,40%,60%,80%{transform:translateX(6px)}
         }
@@ -63,6 +74,17 @@
         <div class="system-name">OneCard</div>
         <div class="divider"></div>
 
+        {% if rate_limited %}
+        <!-- ========== RATE LIMITED VIEW ========== -->
+        <div class="rate-limit-box">
+            <div class="lock-icon">🔒</div>
+            <h2>Too Many Attempts</h2>
+            <p>Login is temporarily locked.</p>
+            <div class="countdown" id="countdown">--:--</div>
+            <p>Please wait before trying again.</p>
+        </div>
+        {% else %}
+        <!-- ========== NORMAL LOGIN FORM ========== -->
         {% if messages %}
         {% for message in messages %}
         <div class="alert alert-{{ message.tags }}">{{ message }}</div>
@@ -81,6 +103,7 @@
             </div>
             <button type="submit" class="btn-signin">Sign In</button>
         </form>
+        {% endif %}
 
         <div class="footer-text">
             Developed & Managed by<br>
@@ -98,6 +121,20 @@
         setTimeout(function(){ document.getElementById('loginBox').classList.remove('shake'); }, 600);
         {% endif %}
         {% endfor %}
+        {% endif %}
+
+        {% if rate_limited %}
+        let seconds = {{ retry_after|default:300 }};
+        function tick() {
+            if (seconds <= 0) { window.location.reload(); return; }
+            seconds--;
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            document.getElementById('countdown').textContent = 
+                String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+            setTimeout(tick, 1000);
+        }
+        tick();
         {% endif %}
     </script>
 </body>
