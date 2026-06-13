@@ -269,12 +269,25 @@
         }
 
         function showMealError(data) {
-            document.getElementById('feesContainer').style.display = 'none'; document.getElementById('passoutContainer').style.display = 'none';
-            document.getElementById('returnContainer').style.display = 'none'; document.getElementById('attendanceConfirm').className = 'attendance-confirm';
+            document.getElementById('feesContainer').style.display = 'none';
+            document.getElementById('passoutContainer').style.display = 'none';
+            document.getElementById('returnContainer').style.display = 'none';
+            document.getElementById('attendanceConfirm').className = 'attendance-confirm';
             document.getElementById('mealContainer').style.display = 'block';
-            if (data.error_code === 'ALREADY_SERVED') { setIcon('icon-warning'); document.getElementById('resultName').style.color = '#ff9800'; }
-            else { setIcon('icon-error'); document.getElementById('resultName').style.color = '#f44336'; }
-            document.getElementById('resultName').textContent = data.error_code === 'ALREADY_SERVED' ? 'Already Served' : 'Access Denied';
+    
+            if (data.error_code === 'ALREADY_SERVED') {
+                setIcon('icon-warning');
+                document.getElementById('resultName').style.color = '#ff9800';
+                document.getElementById('resultName').textContent = 'Already Served';
+            } else if (data.error_code === 'BALANCE_TOO_HIGH') {
+                setIcon('icon-error');
+                document.getElementById('resultName').style.color = '#f44336';
+                document.getElementById('resultName').textContent = 'Meal Denied — Balance Too High';
+            } else {
+                setIcon('icon-error');
+                document.getElementById('resultName').style.color = '#f44336';
+                document.getElementById('resultName').textContent = 'Access Denied';
+            }
             document.getElementById('resultDetail').textContent = data.error;
             document.getElementById('mealContainer').innerHTML = `<p style="text-align:center; color:#ffcc80; padding:20px;">${data.error}</p>`;
         }

@@ -3,13 +3,12 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from .models import Student
 from .services import get_student_info_from_existing_db, get_payment_balance, fetch_students_from_existing_db, generate_qr_for_student, get_next_student_id
-from attendance.models import Attendance
+from attendance.models import Attendance, MealLog, MealAccessRule
 from movement.models import MovementLog
 from fees.models import FeeStructure
-from datetime import date, datetime
+from datetime import date, datetime, time
 import json
 import logging
-from datetime import time
 
 logger = logging.getLogger('onecard')
 
@@ -17,7 +16,7 @@ logger = logging.getLogger('onecard')
 @login_required
 @require_POST
 def process_scan(request):
-    """Process a QR code scan — attendance, balance, or pass-out."""
+    """Process a QR code scan — attendance, balance, pass-out, or meal tracking."""
     try:
         data = json.loads(request.body)
         student_id = data.get('student_id')
@@ -54,18 +53,25 @@ def process_scan(request):
         if not info:
             return JsonResponse({'success': False, 'error': 'Cannot fetch student data.', 'error_code': 'DB_UNAVAILABLE'}, status=503)
         
+        # ========== AUTO-ATTENDANCE ON ALL SCANS ==========
+        today = date.today()
+        already_marked = Attendance.objects.filter(student=student, scan_date=today).exists()
+        if not already_marked:
+            Attendance.objects.create(
+                student=student, scan_date=today,
+                time_in=datetime.now().time(), scan_location=location,
+                marked_by=request.user.get_full_name() or request.user.username
+            )
+        attendance_marked = not already_marked
+        
         # ========== PASS OUT MODE ==========
         if mode == 'pass_out':
-            today = date.today()
             existing = MovementLog.objects.filter(student=student, exit_date=today, time_in__isnull=True).first()
             
             if existing:
-                # Student is returning
                 now_time = datetime.now().time()
                 existing.time_in = now_time
                 existing.save()
-                
-                # Calculate duration
                 out_dt = datetime.combine(today, existing.time_out)
                 in_dt = datetime.combine(today, now_time)
                 diff = in_dt - out_dt
@@ -74,37 +80,20 @@ def process_scan(request):
                 
                 return JsonResponse({
                     'success': True,
-                    'student': {
-                        'id': student.id, 'name': info['name'],
-                        'class': info['class'], 'stream': info['stream'],
-                        'admission': student.admission_number,
-                    },
-                    'movement': {
-                        'action': 'return',
-                        'time_out': str(existing.time_out),
-                        'time_in': str(now_time),
-                        'duration': f'{hours}h {minutes}m',
-                    }
+                    'student': {'id': student.id, 'name': info['name'], 'class': info['class'], 'stream': info['stream'], 'admission': student.admission_number},
+                    'movement': {'action': 'return', 'time_out': str(existing.time_out), 'time_in': str(now_time), 'duration': f'{hours}h {minutes}m'},
+                    'attendance': {'marked': attendance_marked, 'already_marked': already_marked}
                 })
             else:
-                # Student is leaving — show exit form
                 return JsonResponse({
                     'success': True,
-                    'student': {
-                        'id': student.id, 'name': info['name'],
-                        'class': info['class'], 'stream': info['stream'],
-                        'admission': student.admission_number,
-                    },
-                    'movement': {
-                        'action': 'exit',
-                    }
+                    'student': {'id': student.id, 'name': info['name'], 'class': info['class'], 'stream': info['stream'], 'admission': student.admission_number},
+                    'movement': {'action': 'exit'},
+                    'attendance': {'marked': attendance_marked, 'already_marked': already_marked}
                 })
-            
-                # ========== MEAL TRACKING MODE ==========
+        
+        # ========== MEAL TRACKING MODE ==========
         if mode == 'meal_tracking':
-            from attendance.models import MealLog
-            
-            # Determine meal type from current time
             now = datetime.now().time()
             if time(7, 0) <= now <= time(8, 30):
                 meal_type = 'breakfast'
@@ -115,61 +104,63 @@ def process_scan(request):
             else:
                 return JsonResponse({
                     'success': False,
-                    'error': 'Not meal time. Meals: Breakfast 7-8:30, Lunch 12:30-14:00, Supper 18:00-19:30',
+                    'error': 'Not meal time. Breakfast 7-8:30, Lunch 12:30-14:00, Supper 18:00-19:30',
                     'error_code': 'NOT_MEAL_TIME'
                 })
             
-            # Get student category
             student_category = student.category if hasattr(student, 'category') else 'day'
             
-            # Check meal eligibility
+            # Day scholars only get lunch
             if student_category == 'day' and meal_type != 'lunch':
                 return JsonResponse({
                     'success': False,
-                    'error': f'DAY SCHOLAR — {meal_type.title()} is not available for day students. Only Lunch.',
+                    'error': f'DAY SCHOLAR — {meal_type.title()} not available. Only Lunch.',
                     'error_code': 'MEAL_NOT_ALLOWED',
-                    'category': student_category,
-                    'meal_type': meal_type
                 })
             
-            # Check if already eaten this meal
-            today = date.today()
-            already_eaten = MealLog.objects.filter(
-                student=student, meal_date=today, meal_type=meal_type
-            ).first()
-            
+            # Check if already eaten
+            already_eaten = MealLog.objects.filter(student=student, meal_date=today, meal_type=meal_type).first()
             if already_eaten:
                 return JsonResponse({
                     'success': False,
                     'error': f'ALREADY SERVED — {meal_type.title()} at {already_eaten.time_scanned}',
                     'error_code': 'ALREADY_SERVED',
-                    'meal_type': meal_type,
-                    'time_scanned': str(already_eaten.time_scanned)
                 })
+            
+            # Check meal access rule based on fee balance
+            student_class = info.get('class', '')
+            rule = MealAccessRule.objects.filter(
+                class_name=student_class, category=student_category,
+                term='Term 2', academic_year='2026'
+            ).first()
+            
+            if rule:
+                total_paid = get_payment_balance(student.payment_code)
+                fee = FeeStructure.objects.filter(class_name=student_class, category=student_category).first()
+                total_fees = float(fee.total_fees) if fee else 800000
+                balance = total_fees - float(total_paid)
+                
+                if balance > float(rule.max_balance):
+                    return JsonResponse({
+                        'success': False,
+                        'error': f'MEAL DENIED — Balance: {balance:,.0f} UGX. Max allowed: {float(rule.max_balance):,.0f} UGX. Clear {balance - float(rule.max_balance):,.0f} UGX to eat.',
+                        'error_code': 'BALANCE_TOO_HIGH',
+                        'balance': balance,
+                        'max_allowed': float(rule.max_balance),
+                    })
             
             # Mark meal
             MealLog.objects.create(
-                student=student,
-                meal_date=today,
-                meal_type=meal_type,
-                time_scanned=now,
-                location=location,
+                student=student, meal_date=today, meal_type=meal_type,
+                time_scanned=now, location=location,
                 marked_by=request.user.get_full_name() or request.user.username
             )
             
             return JsonResponse({
                 'success': True,
-                'meal': {
-                    'type': meal_type,
-                    'category': student_category,
-                    'time': str(now),
-                },
-                'student': {
-                    'id': student.id,
-                    'name': info['name'],
-                    'class': info['class'],
-                    'stream': info['stream'],
-                }
+                'meal': {'type': meal_type, 'category': student_category, 'time': str(now)},
+                'student': {'id': student.id, 'name': info['name'], 'class': info['class'], 'stream': info['stream']},
+                'attendance': {'marked': attendance_marked, 'already_marked': already_marked}
             })
         
         # ========== ATTENDANCE / BALANCE MODE ==========
@@ -188,18 +179,11 @@ def process_scan(request):
         elif float(total_paid) == 0: status = 'NOT PAID'
         else: status = 'NOT CLEARED'
         
-        already_marked = False
-        if mode == 'attendance_balance':
-            today = date.today()
-            already_marked = Attendance.objects.filter(student=student, scan_date=today).exists()
-            if not already_marked:
-                Attendance.objects.create(student=student, scan_date=today, time_in=datetime.now().time(), scan_location=location, marked_by=request.user.get_full_name() or request.user.username)
-        
         return JsonResponse({
             'success': True,
             'student': {'id': student.id, 'name': info['name'], 'class': info['class'], 'stream': info['stream'], 'admission': student.admission_number, 'payment_code': student.payment_code},
             'fees': {'total': total_fees, 'paid': float(total_paid), 'balance': balance, 'status': status},
-            'attendance': {'marked': not already_marked, 'already_marked': already_marked}
+            'attendance': {'marked': attendance_marked, 'already_marked': already_marked}
         })
         
     except json.JSONDecodeError:
@@ -207,6 +191,7 @@ def process_scan(request):
     except Exception as e:
         logger.error(f"Scan error: {str(e)}", exc_info=True)
         return JsonResponse({'success': False, 'error': 'Internal server error'}, status=500)
+
 
 @login_required
 def api_students_list(request):
@@ -219,12 +204,9 @@ def api_students_list(request):
     stream = request.GET.get('stream', '')
     search = request.GET.get('search', '').lower()
     
-    if cls:
-        students = [s for s in students if s['current_class'] == cls]
-    if stream:
-        students = [s for s in students if s['stream'] == stream]
-    if search:
-        students = [s for s in students if search in s['full_name'].lower() or search in s['admission_number'].lower()]
+    if cls: students = [s for s in students if s['current_class'] == cls]
+    if stream: students = [s for s in students if s['stream'] == stream]
+    if search: students = [s for s in students if search in s['full_name'].lower() or search in s['admission_number'].lower()]
     
     page = int(request.GET.get('page', 1))
     per_page = int(request.GET.get('per_page', 50))
@@ -234,8 +216,7 @@ def api_students_list(request):
     end = start + per_page
     
     return JsonResponse({
-        'students': students[start:end],
-        'total': total, 'page': page, 'total_pages': total_pages,
+        'students': students[start:end], 'total': total, 'page': page, 'total_pages': total_pages,
         'imported_count': len(imported_ids), 'remaining_count': total,
     })
 
@@ -249,7 +230,6 @@ def api_import_students(request):
         selected = data.get('students', [])
         import_all = data.get('import_all', False)
         
-        # If import_all is True, fetch ALL unimported students from school DB
         if import_all:
             all_school = fetch_students_from_existing_db()
             imported_ids = set(Student.objects.values_list('admission_number', flat=True))
@@ -258,40 +238,30 @@ def api_import_students(request):
         if not selected:
             return JsonResponse({'success': False, 'message': 'No students to import.'})
         
-        # Fetch ALL school students ONCE
         all_school_students = fetch_students_from_existing_db()
         school_dict = {s['admission_number']: s for s in all_school_students}
         
-        imported = 0
-        skipped = 0
-        errors = 0
+        imported = skipped = errors = 0
         
         for admission_number in selected:
             try:
                 if Student.objects.filter(admission_number=admission_number).exists():
-                    skipped += 1
-                    continue
-                
+                    skipped += 1; continue
                 student_data = school_dict.get(admission_number)
-                if not student_data:
-                    errors += 1
-                    continue
+                if not student_data: errors += 1; continue
                 
                 student_id = get_next_student_id()
                 qr_file = generate_qr_for_student(student_id)
                 
                 student = Student(
-                    id=student_id,
-                    admission_number=admission_number,
+                    id=student_id, admission_number=admission_number,
                     payment_code=student_data['payment_code'],
                     category=student_data.get('category', 'day'),
-                    status='active',
-                    card_version=1
+                    status='active', card_version=1
                 )
                 student.qr_code.save(f'{student_id}.png', qr_file, save=False)
                 student.save()
                 imported += 1
-                
             except Exception as e:
                 logger.error(f"Import error for {admission_number}: {e}")
                 errors += 1
@@ -300,12 +270,7 @@ def api_import_students(request):
         if skipped > 0: message += f' | Skipped: {skipped}'
         if errors > 0: message += f' | Errors: {errors}'
         
-        return JsonResponse({
-            'success': True,
-            'message': message,
-            'imported': Student.objects.filter(status='active').count(),
-        })
-        
+        return JsonResponse({'success': True, 'message': message, 'imported': Student.objects.filter(status='active').count()})
     except Exception as e:
         logger.error(f"Import batch error: {str(e)}", exc_info=True)
         return JsonResponse({'success': False, 'message': str(e)})

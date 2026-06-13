@@ -145,3 +145,40 @@ def fee_report(request):
         'not_paid_count': not_paid_count,
         'total_count': len(student_data),
     })
+@login_required
+def meal_access_rules(request):
+    """Manage meal access rules — max balance per class/category."""
+    if request.user.role not in ['super_admin', 'admin']:
+        messages.error(request, 'Access denied.'); return redirect('dashboard')
+    
+    from attendance.models import MealAccessRule
+    
+    term = request.POST.get('term', 'Term 2')
+    year = request.POST.get('academic_year', '2026')
+    classes = ['Senior 1', 'Senior 2', 'Senior 3', 'Senior 4', 'Senior 5', 'Senior 6']
+    categories = ['day', 'hostel']
+    
+    existing_rules = {}
+    for r in MealAccessRule.objects.filter(term=term, academic_year=year):
+        key = f"{r.class_name}_{r.category}"
+        existing_rules[key] = r.max_balance
+    
+    if request.method == 'POST' and request.POST.get('action') == 'save':
+        for class_name in classes:
+            for cat in categories:
+                amount = request.POST.get(f'rule_{class_name}_{cat}')
+                if amount:
+                    MealAccessRule.objects.update_or_create(
+                        class_name=class_name, category=cat, term=term, academic_year=year,
+                        defaults={'max_balance': amount}
+                    )
+                    existing_rules[f"{class_name}_{cat}"] = amount
+        messages.success(request, f'Meal access rules updated for {term} {year}!')
+    
+    return render(request, 'fees/meal_rules.html', {
+        'classes': classes,
+        'categories': categories,
+        'term': term,
+        'year': year,
+        'existing_rules': existing_rules,
+    })
