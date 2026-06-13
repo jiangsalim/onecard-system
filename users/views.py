@@ -3,6 +3,7 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from datetime import date
+from django.core.cache import cache
 import logging
 from .models import User
 from core.mobile_utils import render_mobile_or_desktop
@@ -50,33 +51,38 @@ def dashboard(request):
     from core.models import Student
     from attendance.models import Attendance
     from movement.models import MovementLog
-    from core.services import get_payment_balance
+    from core.services import get_payment_balance, get_student_info_from_existing_db
     from fees.models import FeeStructure
-    from core.services import get_student_info_from_existing_db
 
     today = date.today()
     total = Student.objects.filter(status='active').count()
     present = Attendance.objects.filter(scan_date=today).count()
 
-    not_cleared = 0
+    # Build fee structures
     fee_structures = {}
     for f in FeeStructure.objects.filter(term='Term 2', academic_year='2026'):
         key = f"{f.class_name}_{f.category}"
         fee_structures[key] = float(f.total_fees)
-    
-    if total > 0:
-        for s in Student.objects.filter(status='active')[:500]:
-            try:
-                info = get_student_info_from_existing_db(s.admission_number)
-                class_name = info['class'] if info else None
-                student_cat = getattr(s, 'category', 'day')
-                fee_key = f"{class_name}_{student_cat}" if class_name else None
-                total_fee = fee_structures.get(fee_key, 800000) if fee_key else 800000
-                paid = get_payment_balance(s.payment_code)
-                if float(paid) < total_fee:
-                    not_cleared += 1
-            except Exception:
-                pass
+
+    # Try cached not_cleared count
+    not_cleared = cache.get('not_cleared_count')
+    if not_cleared is None:
+        not_cleared = 0
+        if total > 0 and fee_structures:
+            for s in Student.objects.filter(status='active'):
+                try:
+                    info = get_student_info_from_existing_db(s.admission_number)
+                    class_name = info['class'] if info else None
+                    student_cat = getattr(s, 'category', 'day')
+                    fee_key = f"{class_name}_{student_cat}" if class_name else None
+                    total_fee = fee_structures.get(fee_key, 800000) if fee_key else 800000
+                    paid = get_payment_balance(s.payment_code)
+                    if float(paid) < total_fee:
+                        not_cleared += 1
+                except Exception:
+                    pass
+        # Cache for 30 minutes (1800 seconds)
+        cache.set('not_cleared_count', not_cleared, 1800)
 
     stats = {
         'total': total,
@@ -86,6 +92,7 @@ def dashboard(request):
         'not_cleared': not_cleared,
     }
 
+    # Auto-generate alerts on dashboard visit
     try:
         from notifications.views import auto_check_alerts
         alerts = auto_check_alerts()
