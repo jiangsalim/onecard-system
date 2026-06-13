@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <link rel="icon" href="data:,">
+    <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
     <title>Admin - OneCard</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -33,6 +33,11 @@
         .bottom-nav a { flex: 1; text-align: center; padding: 10px 0; color: #888; text-decoration: none; font-size: 11px; }
         .bottom-nav a.active { color: #1a237e; }
         .bottom-nav a svg { display: block; margin: 0 auto 3px; }
+        .export-section { margin-top: 12px; }
+        .export-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 12px; }
+        .export-btn { padding: 8px 14px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
+        .btn-excel { background: #e8f5e9; color: #2e7d32; }
+        .btn-pdf { background: #ffebee; color: #c62828; }
     </style>
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
@@ -66,6 +71,27 @@
         </div>
     </div>
 
+    <div class="section">
+        <div class="section-title">Export Reports</div>
+        <div class="card export-section">
+            <div class="export-row">
+                <strong>Attendance:</strong>
+                <button class="export-btn btn-excel" onclick="exportAttendance('xlsx')">Excel</button>
+                <button class="export-btn btn-pdf" onclick="exportAttendance('pdf')">PDF</button>
+            </div>
+            <div class="export-row">
+                <strong>Fees:</strong>
+                <a href="{% url 'export_fees' %}?format=xlsx" class="export-btn btn-excel" style="text-decoration:none;">Excel</a>
+                <a href="{% url 'export_fees' %}?format=pdf" class="export-btn btn-pdf" style="text-decoration:none;">PDF</a>
+            </div>
+            <div class="export-row">
+                <strong>Movement:</strong>
+                <a href="{% url 'export_movement' %}?format=xlsx" class="export-btn btn-excel" style="text-decoration:none;">Excel</a>
+                <a href="{% url 'export_movement' %}?format=pdf" class="export-btn btn-pdf" style="text-decoration:none;">PDF</a>
+            </div>
+        </div>
+    </div>
+
     {% if notifications %}
     <div class="section">
         <div class="section-title">Alerts</div>
@@ -86,5 +112,15 @@
         <a href="{% url 'backup_now' %}"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>Backup</a>
         <a href="{% url 'notification_list' %}"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Alerts</a>
     </div>
+
+    <script>
+        function exportAttendance(format) {
+            const startDate = prompt('Enter start date (YYYY-MM-DD):', '2026-01-01');
+            if (!startDate) return;
+            const endDate = prompt('Enter end date (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
+            if (!endDate) return;
+            window.open('/reports/export/attendance/?format=' + format + '&start_date=' + startDate + '&end_date=' + endDate, '_blank');
+        }
+    </script>
 </body>
 </html>

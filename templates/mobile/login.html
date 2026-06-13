@@ -3,50 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <link rel="icon" href="data:,">
+    <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
     <title>OneCard - Login</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
-            background: linear-gradient(135deg, #1a237e 0%, #283593 50%, #3949ab 100%);
             min-height: 100vh; display: flex; flex-direction: column;
             justify-content: center; align-items: center; padding: 20px;
+            background: url('/media/school.jpg') center/cover no-repeat fixed;
+            position: relative;
+        }
+        body::before {
+            content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.55); z-index: 0;
         }
         .login-card {
-            background: white; border-radius: 20px; padding: 36px 24px;
+            position: relative; z-index: 1;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 24px; padding: 36px 24px;
             width: 100%; max-width: 360px; text-align: center;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
         }
         .badge-img { width: 80px; height: 80px; border-radius: 16px; margin-bottom: 16px; }
-        .school-name { font-size: 14px; font-weight: 700; color: #1a237e; text-transform: uppercase; }
-        .system-name { font-size: 22px; font-weight: 700; color: #1a237e; margin: 4px 0 16px; }
+        .school-name { font-size: 14px; font-weight: 700; color: #fff; text-transform: uppercase; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .system-name { font-size: 22px; font-weight: 700; color: #fff; margin: 4px 0 16px; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         .divider { width: 50px; height: 3px; background: #ff9800; margin: 0 auto 24px; border-radius: 2px; }
         .form-group { margin-bottom: 18px; text-align: left; }
-        .form-group label { display: block; font-weight: 600; font-size: 13px; color: #333; margin-bottom: 6px; }
+        .form-group label { display: block; font-weight: 600; font-size: 13px; color: rgba(255,255,255,0.9); margin-bottom: 6px; }
         .form-group input {
-            width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0;
-            border-radius: 12px; font-size: 16px; outline: none;
+            width: 100%; padding: 14px 16px; background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 12px;
+            font-size: 16px; color: white; outline: none;
         }
-        .form-group input:focus { border-color: #1a237e; }
+        .form-group input::placeholder { color: rgba(255,255,255,0.4); }
+        .form-group input:focus { border-color: #ff9800; }
         .btn-signin {
             width: 100%; padding: 16px; background: #1a237e; color: white;
             border: none; border-radius: 12px; font-size: 16px; font-weight: 600;
             cursor: pointer; margin-top: 8px;
         }
-        .alert {
-            padding: 12px; border-radius: 8px; margin-bottom: 12px;
-            font-size: 13px; text-align: left;
-        }
-        .alert-error { background: #ffebee; color: #c62828; }
-        .alert-success { background: #e8f5e9; color: #2e7d32; }
-        .footer-text { margin-top: 16px; font-size: 11px; color: rgba(255,255,255,0.6); text-align: center; }
+        .alert { padding: 12px; border-radius: 8px; margin-bottom: 12px; font-size: 13px; text-align: left; }
+        .alert-error { background: rgba(198, 40, 40, 0.2); color: #ff8a80; border: 1px solid rgba(198, 40, 40, 0.3); }
+        .alert-success { background: rgba(46, 125, 50, 0.2); color: #a5d6a7; border: 1px solid rgba(46, 125, 50, 0.3); }
+        .footer-text { margin-top: 20px; font-size: 11px; color: rgba(255, 255, 255, 0.7); }
+        .footer-text a { color: #ffcc80; text-decoration: none; font-weight: 600; }
         @keyframes shake {
             0%,100%{transform:translateX(0)}10%,30%,50%,70%,90%{transform:translateX(-6px)}20%,40%,60%,80%{transform:translateX(6px)}
         }
         .shake { animation: shake 0.6s ease-in-out; }
     </style>
-    <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
     <div class="login-card" id="loginBox">
@@ -73,8 +81,14 @@
             </div>
             <button type="submit" class="btn-signin">Sign In</button>
         </form>
+
+        <div class="footer-text">
+            Developed & Managed by<br>
+            <a href="https://herman-software-website.vercel.app/" target="_blank">
+                Herman Software Solutions
+            </a>
+        </div>
     </div>
-    <div class="footer-text">&copy; {% now "Y" %} Jinja SSS</div>
 
     <script>
         {% if messages %}

@@ -104,26 +104,40 @@ def attendance_report(request):
 
 @login_required
 def export_attendance(request):
+    """Export attendance — with date range filter."""
     fmt = request.GET.get('format', 'xlsx')
-    today = date.today()
-    records = Attendance.objects.filter(scan_date=today).select_related('student')
+    start_date = request.GET.get('start_date', str(date.today()))
+    end_date = request.GET.get('end_date', str(date.today()))
+    
+    try:
+        from datetime import datetime
+        start = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end = datetime.strptime(end_date, '%Y-%m-%d').date()
+    except (ValueError, TypeError):
+        start = date.today()
+        end = date.today()
+    
+    records = Attendance.objects.filter(
+        scan_date__gte=start, scan_date__lte=end
+    ).select_related('student').order_by('scan_date', 'time_in')
+
     if fmt == 'pdf':
         styles = getSampleStyleSheet()
-        elements = [Paragraph(f"Attendance Report — {today}", styles['Title']), Spacer(1, 20)]
-        table_data = [['Student ID', 'Admission #', 'Time In', 'Location', 'Marked By']]
+        date_range = f"{start} to {end}" if start != end else str(start)
+        elements = [Paragraph(f"Attendance Report — {date_range}", styles['Title']), Spacer(1, 20)]
+        table_data = [['Student ID', 'Admission #', 'Date', 'Time In', 'Location', 'Marked By']]
         for a in records:
-            table_data.append([a.student.id, a.student.admission_number, str(a.time_in), a.scan_location, a.marked_by])
+            table_data.append([a.student.id, a.student.admission_number, str(a.scan_date), str(a.time_in), a.scan_location, a.marked_by])
         t = Table(table_data)
         t.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1a237e')),
                                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
                                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey)]))
         elements.append(t)
-        return build_pdf_response(f'attendance_report_{today}.pdf', elements)
+        return build_pdf_response(f'attendance_report_{start}_{end}.pdf', elements)
     else:
         headers = ['Student ID', 'Admission #', 'Date', 'Time In', 'Location', 'Marked By']
-        data = [[a.student.id, a.student.admission_number, str(a.scan_date), str(a.time_in), a.scan_location, a.marked_by] for a in Attendance.objects.select_related('student').all()]
-        return build_excel_response(f'attendance_report_{today}.xlsx', 'Attendance', headers, data)
-
+        data = [[a.student.id, a.student.admission_number, str(a.scan_date), str(a.time_in), a.scan_location, a.marked_by] for a in records]
+        return build_excel_response(f'attendance_report_{start}_{end}.xlsx', 'Attendance', headers, data)
 
 @login_required
 def export_fees(request):

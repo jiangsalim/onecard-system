@@ -1,7 +1,7 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="icon" href="data:,">
+    <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - OneCard</title>
@@ -202,8 +202,8 @@
                 
                 <div class="export-row">
                     <span class="export-label">Attendance:</span>
-                    <a href="{% url 'export_attendance' %}?format=xlsx" class="btn btn-outline">Excel</a>
-                    <a href="{% url 'export_attendance' %}?format=pdf" class="btn btn-outline">PDF</a>
+                    <a href="#" onclick="exportAttendance('xlsx')" class="btn btn-outline">Excel</a>
+                    <a href="#" onclick="exportAttendance('pdf')" class="btn btn-outline">PDF</a>
                 </div>
                 <div class="export-row">
                     <span class="export-label">Fees:</span>
@@ -250,8 +250,17 @@
                 }
             }
         });
+
+        function exportAttendance(format) {
+    const startDate = prompt('Enter start date (YYYY-MM-DD):', '2026-01-01');
+    if (!startDate) return;
+    const endDate = prompt('Enter end date (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
+    if (!endDate) return;
+    window.open(`/reports/export/attendance/?format=${format}&start_date=${startDate}&end_date=${endDate}`, '_blank');
+}
  </script>
 </body>
 </html>
+
 
 
