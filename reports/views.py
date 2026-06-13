@@ -47,17 +47,50 @@ def build_excel_response(filename, sheet_name, headers, data):
 
 @login_required
 def attendance_report(request):
+    """Attendance report with chart — filtered by class/stream."""
     today = date.today()
-    attendance_list = Attendance.objects.filter(scan_date=today).select_related('student')
-    total = Student.objects.filter(status='active').count()
-    present = Attendance.objects.filter(scan_date=today).count()
+    
+    class_filter = request.GET.get('class', '')
+    stream_filter = request.GET.get('stream', '')
+    
+    # Get student IDs for the filtered class/stream
+    if class_filter:
+        from core.services import fetch_students_from_existing_db
+        all_school = fetch_students_from_existing_db()
+        matching_admissions = [
+            s['admission_number'] for s in all_school 
+            if s['current_class'] == class_filter 
+            and (not stream_filter or s['stream'] == stream_filter)
+        ]
+        filtered_student_ids = Student.objects.filter(
+            admission_number__in=matching_admissions, status='active'
+        ).values_list('id', flat=True)
+        
+        total = len(matching_admissions)
+        attendance_list = Attendance.objects.filter(
+            scan_date=today, student_id__in=filtered_student_ids
+        ).select_related('student')[:50]
+        present = Attendance.objects.filter(
+            scan_date=today, student_id__in=filtered_student_ids
+        ).count()
+    else:
+        total = Student.objects.filter(status='active').count()
+        attendance_list = Attendance.objects.filter(
+            scan_date=today
+        ).select_related('student')[:50]
+        present = Attendance.objects.filter(scan_date=today).count()
+    
     absent = total - present
     stats = {
         'total': total, 'present': present, 'absent': absent, 'late': 0,
         'rate': round((present / total * 100) if total > 0 else 0, 1),
     }
-    return render(request, 'reports/attendance.html', {'attendance_list': attendance_list, 'stats': stats})
-
+    return render(request, 'reports/attendance.html', {
+        'attendance_list': attendance_list,
+        'stats': stats,
+        'class_filter': class_filter,
+        'stream_filter': stream_filter,
+    })
 
 @login_required
 def export_attendance(request):
@@ -136,19 +169,48 @@ def export_movement(request):
 
 @login_required
 def meal_report(request):
-    """Meal tracking report."""
+    """Meal tracking report — filtered by class if teacher."""
     today = date.today()
     meal_type = request.GET.get('meal', 'lunch')
-
+    
+    class_filter = request.GET.get('class', '')
+    stream_filter = request.GET.get('stream', '')
+    
+    # If teacher, force their class
+    if request.user.role == 'class_teacher':
+        class_filter = request.user.assigned_class
+        stream_filter = request.user.assigned_stream
+    
     meals = MealLog.objects.filter(meal_date=today, meal_type=meal_type).select_related('student')
-
-    total = Student.objects.filter(status='active').count()
-    served = meals.count()
+    
+    # Filter by class if specified
+    if class_filter:
+        from core.services import fetch_students_from_existing_db
+        all_school = fetch_students_from_existing_db()
+        matching_admissions = [
+            s['admission_number'] for s in all_school 
+            if s['current_class'] == class_filter 
+            and (not stream_filter or s['stream'] == stream_filter)
+        ]
+        class_student_ids = Student.objects.filter(
+            admission_number__in=matching_admissions
+        ).values_list('id', flat=True)
+        meals = meals.filter(student_id__in=class_student_ids)
+        total = len(matching_admissions)
+    else:
+        total = Student.objects.filter(status='active').count()
+    
+    breakfast_count = MealLog.objects.filter(meal_date=today, meal_type='breakfast').count()
+    lunch_count = MealLog.objects.filter(meal_date=today, meal_type='lunch').count()
+    supper_count = MealLog.objects.filter(meal_date=today, meal_type='supper').count()
 
     return render(request, 'reports/meals.html', {
         'meals': meals,
         'meal_type': meal_type,
         'today': today,
         'total': total,
-        'served': served,
+        'served': meals.count(),
+        'breakfast_count': breakfast_count,
+        'lunch_count': lunch_count,
+        'supper_count': supper_count,
     })

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
-    <title>User Management - OneCard</title>
+    <title>Meal Report - OneCard</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; }
@@ -20,21 +20,17 @@
         .card { background: white; border-radius: 8px; padding: 24px; border: 1px solid #e8e8e8; }
         .card h2 { color: #1a237e; margin-bottom: 16px; }
         table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 14px; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 13px; }
         th { background: #f5f5f5; font-weight: 600; }
-        .badge { padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; }
-        .badge-super { background: #4a148c; color: #e1bee7; }
-        .badge-admin { background: #1a237e; color: #c5cae9; }
-        .badge-bursar { background: #e65100; color: #ffcc80; }
-        .badge-gate { background: #00695c; color: #b2dfdb; }
-        .badge-teacher { background: #0d47a1; color: #90caf9; }
-        .btn { padding: 6px 14px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500; text-decoration: none; display: inline-block; }
-        .btn-primary { background: #1a237e; color: white; }
-        .btn-danger { background: #c62828; color: white; }
-        .btn-sm { padding: 4px 10px; font-size: 12px; }
-        .alert { padding: 12px 20px; border-radius: 6px; margin-bottom: 16px; }
-        .alert-success { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #4caf50; }
-        .alert-error { background: #ffebee; color: #c62828; border-left: 4px solid #f44336; }
+        .stats { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+        .stat-item { padding: 10px 18px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; border: 2px solid transparent; text-decoration: none; }
+        .stat-item.active { border-color: #1a237e; }
+        .stat-breakfast { background: #fff3e0; color: #e65100; }
+        .stat-lunch { background: #e8f5e9; color: #2e7d32; }
+        .stat-supper { background: #e3f2fd; color: #1565c0; }
+        .badge { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .badge-day { background: #ECEFF1; color: #546E7A; }
+        .badge-hostel { background: #FFF3E0; color: #E65100; }
         /* Mobile Responsive */
 @media (max-width: 768px) {
     .layout { flex-direction: column; }
@@ -79,61 +75,51 @@
     </div>
     <div class="layout">
         <div class="sidebar">
-            <div class="section-title">Main</div>
-            <a href="{% url 'dashboard' %}">Dashboard</a>
-            <div class="section-title">Admin</div>
-            <a href="{% url 'user_management' %}" style="background:#f5f5ff; color:#1a237e; border-left-color:#1a237e;">Users</a>
+            <div class="section-title">Reports</div>
+            <a href="{% url 'attendance_report' %}">Attendance</a>
+            <a href="{% url 'fee_report' %}">Fees</a>
+            <a href="{% url 'movement_history' %}">Movement</a>
+            <a href="{% url 'meal_report' %}" style="background:#f5f5ff; color:#1a237e; border-left-color:#1a237e;">Meals</a>
         </div>
         <div class="main-content">
-            {% if messages %}
-            {% for m in messages %}<div class="alert alert-{{ m.tags }}">{{ m }}</div>{% endfor %}
-            {% endif %}
+            <h1 style="color:#1a237e; margin-bottom:8px;">Meal Report</h1>
+            <p style="color:#888; margin-bottom:16px; font-size:14px;">{{ today|date:"d M Y" }}</p>
 
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <h1 style="color:#1a237e;">User Management</h1>
-                <a href="{% url 'add_user' %}" class="btn btn-primary">+ Add New User</a>
+            <div class="stats">
+                <a href="?meal=breakfast" class="stat-item stat-breakfast {% if meal_type == 'breakfast' %}active{% endif %}">Breakfast: {{ breakfast_count|default:0 }}</a>
+                <a href="?meal=lunch" class="stat-item stat-lunch {% if meal_type == 'lunch' %}active{% endif %}">Lunch: {{ lunch_count|default:0 }}</a>
+                <a href="?meal=supper" class="stat-item stat-supper {% if meal_type == 'supper' %}active{% endif %}">Supper: {{ supper_count|default:0 }}</a>
             </div>
 
             <div class="card">
+                <h2>{{ meal_type|title }} — {{ meals|length }} served / {{ total }} total</h2>
                 <table>
                     <thead>
                         <tr>
-                            <th>Username</th>
-                            <th>Full Name</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Assignment</th>
-                            <th>Active</th>
-                            <th>Actions</th>
+                            <th>Student ID</th>
+                            <th>Name</th>
+                            <th>Time</th>
+                            <th>Category</th>
+                            <th>Location</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for u in users %}
+                        {% for m in meals %}
                         <tr>
-                            <td><strong>{{ u.username }}</strong></td>
-                            <td>{{ u.get_full_name }}</td>
-                            <td>{{ u.email }}</td>
+                            <td><strong>{{ m.student.id }}</strong></td>
+                            <td>{{ m.student.admission_number }}</td>
+                            <td>{{ m.time_scanned }}</td>
                             <td>
-                                {% if u.role == 'super_admin' %}<span class="badge badge-super">Super Admin</span>
-                                {% elif u.role == 'admin' %}<span class="badge badge-admin">Admin</span>
-                                {% elif u.role == 'bursar' %}<span class="badge badge-bursar">Bursar</span>
-                                {% elif u.role == 'gate_staff' %}<span class="badge badge-gate">Gate Staff</span>
-                                {% elif u.role == 'class_teacher' %}<span class="badge badge-teacher">Teacher</span>
+                                {% if m.student.category == 'hostel' %}
+                                <span class="badge badge-hostel">🏠 Hostel</span>
+                                {% else %}
+                                <span class="badge badge-day">☀ Day</span>
                                 {% endif %}
                             </td>
-                            <td>
-                                {% if u.assigned_location %}{{ u.assigned_location }}{% endif %}
-                                {% if u.assigned_class %}{{ u.assigned_class }} {{ u.assigned_stream }}{% endif %}
-                                {% if not u.assigned_location and not u.assigned_class %}-{% endif %}
-                            </td>
-                            <td>{{ u.is_active|yesno:"Yes,No" }}</td>
-                            <td>
-                                <a href="{% url 'edit_user' u.id %}" class="btn btn-primary btn-sm">Edit</a>
-                                {% if u != request.user %}
-                                <a href="{% url 'delete_user' u.id %}" class="btn btn-danger btn-sm">Delete</a>
-                                {% endif %}
-                            </td>
+                            <td>{{ m.location }}</td>
                         </tr>
+                        {% empty %}
+                        <tr><td colspan="5" style="text-align:center; color:#999; padding:30px;">No meal records for {{ meal_type }} today.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>

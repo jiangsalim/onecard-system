@@ -1,9 +1,9 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
     <title>Gate - OneCard</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -32,6 +32,43 @@
         .btn-success { background: #2e7d32; color: white; }
         .btn-warning { background: #e65100; color: white; }
         .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .action-card { text-align: center; }
+        /* Mobile Responsive */
+@media (max-width: 768px) {
+    .layout { flex-direction: column; }
+    .sidebar { 
+        width: 100%; min-height: auto; 
+        display: flex; flex-wrap: wrap; gap: 0;
+        padding: 5px 0; border-right: none; 
+        border-bottom: 1px solid #e0e0e0;
+    }
+    .sidebar .section-title { display: none; }
+    .sidebar a { 
+        padding: 8px 12px; font-size: 12px; 
+        border-left: none; border-bottom: 2px solid transparent;
+    }
+    .sidebar a:hover { border-bottom-color: #1a237e; border-left: none; }
+    .main-content { margin-left: 0; padding: 12px; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .stat-card { padding: 16px 10px; }
+    .stat-card .stat-value { font-size: 22px; }
+    .stat-card .stat-label { font-size: 11px; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .action-grid { grid-template-columns: 1fr; }
+    .card { padding: 16px; }
+    .card h2 { font-size: 16px; }
+    table { font-size: 11px; }
+    th, td { padding: 6px 8px; }
+    .btn { padding: 8px 14px; font-size: 12px; }
+    .navbar { padding: 0 10px; }
+    .navbar .brand { font-size: 15px; }
+    .navbar .user-info { gap: 8px; font-size: 11px; }
+    .navbar .role-badge { padding: 2px 8px; font-size: 9px; }
+    .quick-links { flex-direction: column; }
+    .quick-links .btn { width: 100%; text-align: center; }
+    .filter-row { flex-direction: column; }
+    .filter-row select, .filter-row input { width: 100%; }
+}
     </style>
 </head>
 <body>
@@ -56,39 +93,50 @@
             <a href="{% url 'movement_history' %}">Movement History</a>
             <div class="section-title">Reports</div>
             <a href="{% url 'attendance_report' %}">Attendance Report</a>
+            <a href="{% url 'meal_report' %}">Meal Report</a>
         </div>
         <div class="main-content">
-            <h1 style="color:#1a237e; margin-bottom:20px;">Gate Operations</h1>
+            <h1 style="color:#1a237e; margin-bottom:4px;">Gate Operations</h1>
+            <p style="color:#888; margin-bottom:20px; font-size:14px;">{{ user.assigned_location|default:"Main Gate" }}</p>
 
             <div class="stats-row">
                 <div class="stat-card">
-                    <div class="stat-value">{{ stats.present|default:"792" }}</div>
+                    <div class="stat-value">{{ stats.present }}</div>
                     <div class="stat-label">Checked In Today</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value" style="color:#e65100;">{{ stats.outside|default:"12" }}</div>
+                    <div class="stat-value" style="color:#e65100;">{{ stats.outside }}</div>
                     <div class="stat-label">Currently Outside</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value" style="color:#c62828;">{{ stats.absent|default:"45" }}</div>
+                    <div class="stat-value" style="color:#c62828;">{{ stats.absent }}</div>
                     <div class="stat-label">Absent Today</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value">--:--</div>
+                    <div class="stat-value" style="font-size:22px;">{{ stats.last_scan }}</div>
                     <div class="stat-label">Last Scan</div>
                 </div>
             </div>
 
             <div class="action-grid">
-                <div class="card" style="text-align:center;">
+                <div class="card action-card">
                     <h2>Attendance Check-In</h2>
-                    <p style="color:#666; margin-bottom:16px;">Scan student cards for morning check-in.</p>
+                    <p style="color:#666; margin-bottom:16px;">Scan student cards for morning check-in. Auto-marks attendance.</p>
                     <a href="{% url 'scanner' %}" class="btn btn-success">Open Scanner</a>
                 </div>
-                <div class="card" style="text-align:center;">
+                <div class="card action-card">
                     <h2>Movement Tracking</h2>
-                    <p style="color:#666; margin-bottom:16px;">View and manage student pass-outs.</p>
+                    <p style="color:#666; margin-bottom:16px;">View and manage student pass-outs. Track who is outside.</p>
                     <a href="{% url 'movement_dashboard' %}" class="btn btn-warning">View Movement</a>
+                </div>
+            </div>
+
+            <div class="card" style="text-align:center;">
+                <h2>Quick Reports</h2>
+                <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:12px;">
+                    <a href="{% url 'attendance_report' %}" class="btn btn-outline">Today's Attendance</a>
+                    <a href="{% url 'movement_history' %}" class="btn btn-outline">Movement History</a>
+                    <a href="{% url 'meal_report' %}" class="btn btn-outline">Meal Report</a>
                 </div>
             </div>
         </div>

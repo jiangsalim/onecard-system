@@ -12,18 +12,48 @@ import logging
 logger = logging.getLogger('onecard')
 
 
+def get_class_student_ids(class_filter, stream_filter):
+    """Helper to get student IDs for a class/stream."""
+    if not class_filter:
+        return None
+    from core.services import fetch_students_from_existing_db
+    all_school = fetch_students_from_existing_db()
+    matching = [
+        s['admission_number'] for s in all_school 
+        if s['current_class'] == class_filter 
+        and (not stream_filter or s['stream'] == stream_filter)
+    ]
+    return Student.objects.filter(admission_number__in=matching, status='active').values_list('id', flat=True)
+
+
 @login_required
 def movement_dashboard(request):
     today = date.today()
-    active_passes = MovementLog.objects.filter(exit_date=today, time_in__isnull=True).select_related('student')
-    today_logs = MovementLog.objects.filter(exit_date=today).select_related('student').order_by('-time_out')[:20]
-    return render(request, 'movement/dashboard.html', {'active_passes': active_passes, 'today_logs': today_logs})
+    
+    class_filter = request.GET.get('class', '')
+    stream_filter = request.GET.get('stream', '')
+    if request.user.role == 'class_teacher':
+        class_filter = request.user.assigned_class
+        stream_filter = request.user.assigned_stream
+    
+    student_ids = get_class_student_ids(class_filter, stream_filter)
+    
+    if student_ids is not None:
+        active_passes = MovementLog.objects.filter(exit_date=today, time_in__isnull=True, student_id__in=student_ids).select_related('student')
+        today_logs = MovementLog.objects.filter(exit_date=today, student_id__in=student_ids).select_related('student').order_by('-time_out')[:20]
+    else:
+        active_passes = MovementLog.objects.filter(exit_date=today, time_in__isnull=True).select_related('student')
+        today_logs = MovementLog.objects.filter(exit_date=today).select_related('student').order_by('-time_out')[:20]
+    
+    return render(request, 'movement/dashboard.html', {
+        'active_passes': active_passes,
+        'today_logs': today_logs,
+    })
 
 
 @login_required
 @require_POST
 def process_pass_out(request):
-    """Confirm a pass-out exit."""
     try:
         data = json.loads(request.body)
         student_id = data.get('student_id')
@@ -42,17 +72,11 @@ def process_pass_out(request):
         today = date.today()
         now = datetime.now().time()
         
-        # Check if already outside
         existing = MovementLog.objects.filter(student=student, exit_date=today, time_in__isnull=True).first()
         if existing:
             return JsonResponse({'success': False, 'error': 'Student is already outside.'})
         
-        # Create exit record
-        MovementLog.objects.create(
-            student=student, exit_date=today, time_out=now,
-            reason=reason, authorized_by=authorized_by
-        )
-        
+        MovementLog.objects.create(student=student, exit_date=today, time_out=now, reason=reason, authorized_by=authorized_by)
         return JsonResponse({'success': True, 'message': 'Exit logged successfully.'})
         
     except json.JSONDecodeError:
@@ -64,5 +88,17 @@ def process_pass_out(request):
 
 @login_required
 def movement_history(request):
-    logs = MovementLog.objects.select_related('student').all().order_by('-exit_date', '-time_out')[:100]
+    class_filter = request.GET.get('class', '')
+    stream_filter = request.GET.get('stream', '')
+    if request.user.role == 'class_teacher':
+        class_filter = request.user.assigned_class
+        stream_filter = request.user.assigned_stream
+    
+    student_ids = get_class_student_ids(class_filter, stream_filter)
+    
+    if student_ids is not None:
+        logs = MovementLog.objects.filter(student_id__in=student_ids).select_related('student').order_by('-exit_date', '-time_out')[:100]
+    else:
+        logs = MovementLog.objects.select_related('student').all().order_by('-exit_date', '-time_out')[:100]
+    
     return render(request, 'movement/history.html', {'logs': logs})

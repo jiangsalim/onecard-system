@@ -1,17 +1,18 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
     <title>My Class - OneCard</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; }
         .navbar { background: #1a237e; color: white; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; height: 60px; }
         .navbar .brand { font-size: 18px; font-weight: 600; }
+        .navbar a { color: white; text-decoration: none; }
         .navbar .user-info { display: flex; align-items: center; gap: 16px; font-size: 14px; }
-        .navbar .role-badge { background: #2196f3; color: white; padding: 4px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .navbar .role-badge { background: #2196f3; color: white; padding: 4px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
         .navbar button { background: #c62828; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
         .layout { display: flex; }
         .sidebar { width: 240px; background: white; min-height: calc(100vh - 60px); border-right: 1px solid #e0e0e0; padding-top: 10px; }
@@ -21,15 +22,55 @@
         .main-content { flex: 1; padding: 24px 32px; }
         .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
         .stat-card { background: white; border-radius: 8px; padding: 24px; text-align: center; border: 1px solid #e8e8e8; }
-        .stat-card .stat-value { font-size: 32px; font-weight: 700; color: #1a237e; }
+        .stat-card .stat-value { font-size: 28px; font-weight: 700; color: #1a237e; }
         .stat-card .stat-label { font-size: 13px; color: #888; margin-top: 4px; }
-        .card { background: white; border-radius: 8px; padding: 24px; border: 1px solid #e8e8e8; }
-        .card h2 { color: #1a237e; margin-bottom: 12px; }
+        .card { background: white; border-radius: 8px; padding: 24px; border: 1px solid #e8e8e8; margin-bottom: 20px; }
+        .card h2 { color: #1a237e; font-size: 18px; margin-bottom: 12px; }
+        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500; text-decoration: none; display: inline-block; }
+        .btn-primary { background: #1a237e; color: white; }
+        .btn-outline { background: white; color: #1a237e; border: 1px solid #1a237e; }
+        .quick-links { display: flex; gap: 10px; flex-wrap: wrap; }
+        /* Mobile Responsive */
+@media (max-width: 768px) {
+    .layout { flex-direction: column; }
+    .sidebar { 
+        width: 100%; min-height: auto; 
+        display: flex; flex-wrap: wrap; gap: 0;
+        padding: 5px 0; border-right: none; 
+        border-bottom: 1px solid #e0e0e0;
+    }
+    .sidebar .section-title { display: none; }
+    .sidebar a { 
+        padding: 8px 12px; font-size: 12px; 
+        border-left: none; border-bottom: 2px solid transparent;
+    }
+    .sidebar a:hover { border-bottom-color: #1a237e; border-left: none; }
+    .main-content { margin-left: 0; padding: 12px; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .stat-card { padding: 16px 10px; }
+    .stat-card .stat-value { font-size: 22px; }
+    .stat-card .stat-label { font-size: 11px; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .action-grid { grid-template-columns: 1fr; }
+    .card { padding: 16px; }
+    .card h2 { font-size: 16px; }
+    table { font-size: 11px; }
+    th, td { padding: 6px 8px; }
+    .btn { padding: 8px 14px; font-size: 12px; }
+    .navbar { padding: 0 10px; }
+    .navbar .brand { font-size: 15px; }
+    .navbar .user-info { gap: 8px; font-size: 11px; }
+    .navbar .role-badge { padding: 2px 8px; font-size: 9px; }
+    .quick-links { flex-direction: column; }
+    .quick-links .btn { width: 100%; text-align: center; }
+    .filter-row { flex-direction: column; }
+    .filter-row select, .filter-row input { width: 100%; }
+}
     </style>
 </head>
 <body>
     <div class="navbar">
-        <div class="brand">OneCard System</div>
+        <div class="brand"><a href="{% url 'dashboard' %}" style="color:white;">OneCard System</a></div>
         <div class="user-info">
             <span class="role-badge">Teacher</span>
             <span>{{ user.get_full_name|default:user.username }}</span>
@@ -41,35 +82,45 @@
     <div class="layout">
         <div class="sidebar">
             <div class="section-title">Main</div>
-            <a href="{% url 'teacher_dashboard' %}">My Class</a>
-            <div class="section-title">Reports</div>
-            <a href="#">Attendance</a>
-            <a href="#">Fees</a>
-            <a href="#">Movement</a>
+            <a href="{% url 'teacher_dashboard' %}" style="background:#f5f5ff; color:#1a237e; border-left-color:#1a237e;">My Class</a>
+            <div class="section-title">Reports ({{ user.assigned_class }} {{ user.assigned_stream }})</div>
+            <a href="{% url 'attendance_report' %}?class={{ user.assigned_class|urlencode }}&stream={{ user.assigned_stream|urlencode }}">Attendance</a>
+            <a href="{% url 'fee_report' %}?class={{ user.assigned_class|urlencode }}&stream={{ user.assigned_stream|urlencode }}">Fees</a>
+            <a href="{% url 'movement_history' %}?class={{ user.assigned_class|urlencode }}&stream={{ user.assigned_stream|urlencode }}">Movement</a>
+            <a href="{% url 'meal_report' %}">Meals</a>
         </div>
         <div class="main-content">
-            <h1 style="color:#1a237e; margin-bottom:20px;">My Class Dashboard</h1>
+            <h1 style="color:#1a237e; margin-bottom:4px;">My Class Dashboard</h1>
+            <p style="color:#888; margin-bottom:20px; font-size:14px;">{{ stats.class_name|default:"Not Assigned" }}</p>
+
             <div class="stats-row">
                 <div class="stat-card">
-                    <div class="stat-value">42</div>
+                    <div class="stat-value">{{ stats.total }}</div>
                     <div class="stat-label">Total Students</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value">38</div>
+                    <div class="stat-value" style="color:#2e7d32;">{{ stats.present }}</div>
                     <div class="stat-label">Present Today</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value">4</div>
+                    <div class="stat-value" style="color:#c62828;">{{ stats.absent }}</div>
                     <div class="stat-label">Absent</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value">90%</div>
+                    <div class="stat-value" style="color:#1a237e;">{{ stats.rate }}%</div>
                     <div class="stat-label">Attendance Rate</div>
                 </div>
             </div>
+
             <div class="card">
-                <h2>Class Overview</h2>
-                <p style="color:#666;">View attendance, fee status, and movement history for your class.</p>
+                <h2>Class Overview — {{ stats.class_name|default:"Not Assigned" }}</h2>
+                <p style="color:#666; margin-bottom:16px; font-size:14px;">View attendance, fee status, meals, and movement history filtered to your class.</p>
+                <div class="quick-links">
+                    <a href="{% url 'attendance_report' %}?class={{ user.assigned_class|urlencode }}&stream={{ user.assigned_stream|urlencode }}" class="btn btn-primary">Attendance</a>
+                    <a href="{% url 'fee_report' %}?class={{ user.assigned_class|urlencode }}&stream={{ user.assigned_stream|urlencode }}" class="btn btn-outline">Fees</a>
+                    <a href="{% url 'movement_history' %}?class={{ user.assigned_class|urlencode }}&stream={{ user.assigned_stream|urlencode }}" class="btn btn-outline">Movement</a>
+                    <a href="{% url 'meal_report' %}" class="btn btn-outline">Meals</a>
+                </div>
             </div>
         </div>
     </div>

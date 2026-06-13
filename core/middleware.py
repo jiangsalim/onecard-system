@@ -39,9 +39,9 @@ class RateLimitMiddleware:
     
     # Format: path_prefix: (max_requests, window_seconds)
     RATE_LIMITS = {
-        '/api/scan/': (30, 60),         # 30 scans per minute
-        '/login/': (5, 900),            # 5 login attempts per 15 minutes
-        '/api/pass-out/': (15, 60),     # 15 pass-outs per minute
+        '/api/scan/': (60, 60),         # 60 scans per minute
+        '/login/': (10, 300),            # 10 login attempts per 5 minutes
+        '/api/pass-out/': (30, 60),     # 30 pass-outs per minute
     }
     
     def __init__(self, get_response):

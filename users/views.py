@@ -1,10 +1,10 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from datetime import date
-from django.shortcuts import render, redirect, get_object_or_404
 import logging
+from .models import User
 
 logger = logging.getLogger('onecard')
 
@@ -114,12 +114,77 @@ def bursar_dashboard(request):
 
 @login_required
 def gate_dashboard(request):
-    return render(request, 'admin_dashboard/gate.html')
+    """Gate staff dashboard with live stats."""
+    from core.models import Student
+    from attendance.models import Attendance
+    from movement.models import MovementLog
+    from datetime import date, datetime
+    
+    today = date.today()
+    total = Student.objects.filter(status='active').count()
+    present = Attendance.objects.filter(scan_date=today).count()
+    outside = MovementLog.objects.filter(exit_date=today, time_in__isnull=True).count()
+    
+    # Get last scan time
+    last_scan = Attendance.objects.filter(scan_date=today).order_by('-time_in').first()
+    last_scan_time = last_scan.time_in.strftime('%H:%M') if last_scan else '--:--'
+    
+    stats = {
+        'total': total,
+        'present': present,
+        'outside': outside,
+        'absent': total - present if total > present else 0,
+        'last_scan': last_scan_time,
+    }
+    
+    return render(request, 'admin_dashboard/gate.html', {'stats': stats})
 
 
 @login_required
 def teacher_dashboard(request):
-    return render(request, 'admin_dashboard/teacher.html')
+    """Class teacher dashboard with live stats filtered to assigned class."""
+    from core.models import Student
+    from attendance.models import Attendance, MealLog
+    from movement.models import MovementLog
+    from core.services import get_student_info_from_existing_db, fetch_students_from_existing_db
+    from datetime import date
+    
+    today = date.today()
+    assigned_class = request.user.assigned_class
+    assigned_stream = request.user.assigned_stream
+    
+    # Get admission numbers for this teacher's class
+    all_school = fetch_students_from_existing_db()
+    class_admissions = [
+        s['admission_number'] for s in all_school 
+        if s['current_class'] == assigned_class 
+        and (not assigned_stream or s['stream'] == assigned_stream)
+    ]
+    
+    # Filter OneCard students
+    class_students = Student.objects.filter(
+        admission_number__in=class_admissions,
+        status='active'
+    )
+    class_student_ids = class_students.values_list('id', flat=True)
+    
+    total_students = class_students.count()
+    present_today = Attendance.objects.filter(
+        student__in=class_student_ids, scan_date=today
+    ).count()
+    
+    stats = {
+        'total': total_students,
+        'present': present_today,
+        'absent': total_students - present_today if total_students > present_today else 0,
+        'outside': MovementLog.objects.filter(
+            student__in=class_student_ids, exit_date=today, time_in__isnull=True
+        ).count(),
+        'rate': round((present_today / total_students * 100) if total_students > 0 else 0, 1),
+        'class_name': f"{assigned_class} {assigned_stream}",
+    }
+    
+    return render(request, 'admin_dashboard/teacher.html', {'stats': stats})
 
 
 @login_required
