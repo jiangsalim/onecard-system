@@ -111,9 +111,11 @@
                             <td>{{ m.time_scanned }}</td>
                             <td>
                                 {% if m.student.category == 'hostel' %}
-                                <span class="badge badge-hostel">ðŸ  Hostel</span>
+                                <span class="badge badge-hostel"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Hostel</span>
+                                
                                 {% else %}
-                                <span class="badge badge-day">â˜€ Day</span>
+                                <span class="badge badge-day"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="23" y2="12"/></svg> Day</span>
+
                                 {% endif %}
                             </td>
                             <td>{{ m.location }}</td>

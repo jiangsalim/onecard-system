@@ -243,7 +243,7 @@ def download_cards_pdf(request):
             cat_badge = 'HOSTEL'
             cat_bg = '#FF8F00'
             cat_text = '#FFF'
-            cat_icon = '🏠'
+            cat_icon_text = '[H]'  # for hostel
             if not tmpl:
                 border_color = '#FF8F00'
                 bg_color = '#FFFDE7'
@@ -251,7 +251,7 @@ def download_cards_pdf(request):
             cat_badge = 'DAY'
             cat_bg = '#78909C'
             cat_text = '#FFF'
-            cat_icon = '☀'
+            cat_icon_text = '[D]'  # for day scholar
             if not tmpl:
                 border_color = '#78909C'
                 bg_color = '#FAFAFA'
@@ -276,7 +276,7 @@ def download_cards_pdf(request):
                     <div class="label">Student ID Card</div>
                 </div>
                 <div class="badge-text" style="background:{badge_clr};">{badge_txt} {color_name}</div>
-                <div class="category-badge" style="background:{cat_bg}; color:{cat_text};">{cat_icon} {cat_badge}</div>
+                <div class="category-badge" style="background:{cat_bg}; color:{cat_text};">{cat_icon_text} {cat_badge}</div>
             </div>
             <div class="middle">
                 <div class="photo-box"><img src="{photo_url}" alt="Photo"></div>
@@ -287,7 +287,7 @@ def download_cards_pdf(request):
                     <strong>Adm:</strong> {s.admission_number}<br>
                     <strong>Level:</strong> {badge_txt} {color_name}<br>
                     <strong>Stream:</strong> {student_stream}<br>
-                    <strong>Category:</strong> {cat_icon} {cat_badge}<br>
+                    <strong>Category:</strong> {cat_icon_text} {cat_badge}<br>
                     <strong>Pay:</strong> {s.payment_code}<br>
                     <strong>Ver:</strong> v{s.card_version}
                 </div>
@@ -315,14 +315,14 @@ def download_cards_pdf(request):
         # Category
         if student_category == 'hostel':
             cat_badge = 'HOSTEL'
-            cat_icon = '🏠'
+            cat_icon_text = '[H]'  # for hostel
             cat_bg = '#FF8F00'
             if not tmpl:
                 border_color = '#FF8F00'
                 bg_color = '#FFFDE7'
         else:
             cat_badge = 'DAY SCHOLAR'
-            cat_icon = '☀'
+            cat_icon_text = '[D]'  # for day scholar
             cat_bg = '#78909C'
             if not tmpl:
                 border_color = '#78909C'
@@ -338,7 +338,7 @@ def download_cards_pdf(request):
                 <div class="row"><strong>Name:</strong> <span>{name}</span></div>
                 <div class="row"><strong>Level:</strong> <span>{badge_txt} {color_name}</span></div>
                 <div class="row"><strong>Stream:</strong> <span>{student_stream}</span></div>
-                <div class="row"><strong>Category:</strong> <span style="background:{cat_bg}; color:white; padding:1px 6px; border-radius:3px; font-size:7px;">{cat_icon} {cat_badge}</span></div>
+                <div class="row"><strong>Category:</strong> <span style="background:{cat_bg}; color:white; padding:1px 6px; border-radius:3px; font-size:7px;">{cat_icon_text} {cat_badge}</span></div>
                 <div class="row"><strong>Adm No:</strong> <span>{s.admission_number}</span></div>
                 <div class="row"><strong>Card ID:</strong> <span>{s.id} (v{s.card_version})</span></div>
                 <div class="row"><strong>Pay Code:</strong> <span>{s.payment_code}</span></div>
