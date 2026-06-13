@@ -29,8 +29,8 @@
 <body>
     <div class="header"><div class="title">Attendance{% if class_filter %} — {{ class_filter }} {{ stream_filter }}{% endif %}</div></div>
     <div class="stats-grid">
-        <div class="stat-card"><div class="val">{{ stats.total }}</div><div class="lbl">Total</div></div>
-        <div class="stat-card"><div class="val" style="color:#2e7d32;">{{ stats.present }}</div><div class="lbl">Present</div></div>
+        <div class="stat-card"><div class="val" style="color:#2e7d32;">{{ stats.on_time }}</div><div class="lbl">On Time</div></div>
+        <div class="stat-card"><div class="val" style="color:#e65100;">{{ stats.late }}</div><div class="lbl">Late</div></div>
         <div class="stat-card"><div class="val" style="color:#c62828;">{{ stats.absent }}</div><div class="lbl">Absent</div></div>
         <div class="stat-card"><div class="val">{{ stats.rate }}%</div><div class="lbl">Rate</div></div>
     </div>

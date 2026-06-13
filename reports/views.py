@@ -49,7 +49,7 @@ def build_excel_response(filename, sheet_name, headers, data):
 
 @login_required
 def attendance_report(request):
-    """Attendance report with chart — includes Late tracking."""
+    """Attendance report with chart — Late students ARE present, just flagged."""
     today = date.today()
     
     class_filter = request.GET.get('class', '')
@@ -75,7 +75,9 @@ def attendance_report(request):
         attendance_list = Attendance.objects.filter(
             scan_date=today, student_id__in=filtered_student_ids
         ).select_related('student').order_by('time_in')
+        # ALL students scanned today = present (includes late)
         present = Attendance.objects.filter(scan_date=today, student_id__in=filtered_student_ids).count()
+        # Late = scanned after cutoff
         late = Attendance.objects.filter(scan_date=today, student_id__in=filtered_student_ids, time_in__gt=cutoff_time).count()
     else:
         total = Student.objects.filter(status='active').count()
@@ -83,10 +85,15 @@ def attendance_report(request):
         present = Attendance.objects.filter(scan_date=today).count()
         late = Attendance.objects.filter(scan_date=today, time_in__gt=cutoff_time).count()
     
-    on_time = present - late
-    absent = total - present
+    on_time = present - late  # Those who arrived before cutoff
+    absent = total - present  # Those not scanned at all
+    
     stats = {
-        'total': total, 'present': on_time, 'absent': absent, 'late': late,
+        'total': total,
+        'present': present,       # ALL scanned (on time + late)
+        'on_time': on_time,       # Scanned before cutoff
+        'absent': absent,         # Not scanned at all
+        'late': late,             # Scanned after cutoff
         'rate': round((present / total * 100) if total > 0 else 0, 1),
     }
     return render_mobile_or_desktop(request, 'reports/attendance.html', 'mobile/reports_attendance.html', {

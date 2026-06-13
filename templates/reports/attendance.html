@@ -97,23 +97,24 @@
           </h1>
 
             <div class="stats-row">
-                <div class="stat-card">
-                    <div class="stat-value">{{ stats.total|default:0 }}</div>
-                    <div class="stat-label">Total Students</div>
+               <div class="stat-card">
+                  <div class="stat-value" style="color:#2e7d32;">{{ stats.on_time }}</div>
+                  <div class="stat-label">On Time</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value" style="color:#2e7d32;">{{ stats.present|default:0 }}</div>
-                    <div class="stat-label">Present Today</div>
+                   <div class="stat-value" style="color:#e65100;">{{ stats.late }}</div>
+                   <div class="stat-label">Late</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value" style="color:#c62828;">{{ stats.absent|default:0 }}</div>
-                    <div class="stat-label">Absent</div>
+                   <div class="stat-value" style="color:#c62828;">{{ stats.absent }}</div>
+                   <div class="stat-label">Absent</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value" style="color:#1a237e;">{{ stats.rate|default:0 }}%</div>
-                    <div class="stat-label">Attendance Rate</div>
+                   <div class="stat-value">{{ stats.rate }}%</div>
+                   <div class="stat-label">Attendance Rate</div>
                 </div>
             </div>
+      </div>
 
             <div class="card">
                 <h2>Today's Attendance</h2>
@@ -143,26 +144,26 @@
         </div>
     </div>
 
-    <script>
-        const ctx = document.getElementById('attendanceChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Present', 'Absent', 'Late'],
-                datasets: [{
-                    label: 'Students',
-                    data: [{{ stats.present|default:0 }}, {{ stats.absent|default:0 }}, {{ stats.late|default:0 }}],
-                    backgroundColor: ['#2e7d32', '#c62828', '#e65100'],
-                    borderRadius: 4,
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-            }
-        });
-    </script>
+  <script>
+      const ctx = document.getElementById('attendanceChart').getContext('2d');
+      new Chart(ctx, {
+          type: 'bar',
+          data: {
+              labels: ['On Time', 'Late', 'Absent'],
+              datasets: [{
+                  label: 'Students',
+                  data: [{{ stats.on_time }}, {{ stats.late }}, {{ stats.absent }}],
+                  backgroundColor: ['#2e7d32', '#e65100', '#c62828'],
+                  borderRadius: 4,
+             s}]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        }
+    });
+  </script>
 </body>
 </html>
 
