@@ -1,0 +1,38 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="icon" href="data:,">
+    <title>Printed Cards - OneCard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 70px; }
+        .header { background: #1a237e; color: white; padding: 14px 16px; }
+        .header .title { font-size: 16px; font-weight: 600; }
+        .student-list { padding: 12px 16px; }
+        .student-card { background: white; border-radius: 10px; padding: 14px; margin-bottom: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+        .student-card .top { display: flex; justify-content: space-between; }
+        .student-card .name { font-weight: 600; font-size: 14px; }
+        .student-card .detail { font-size: 11px; color: #888; }
+        .badge { padding: 3px 8px; border-radius: 8px; font-size: 11px; font-weight: 600; }
+        .badge-info { background: #e3f2fd; color: #1565c0; }
+    </style>
+    <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
+</head>
+<body>
+    <div class="header"><div class="title">Printed Cards ({{ students.count }})</div></div>
+    <div class="student-list">
+        {% for s in students %}
+        <div class="student-card">
+            <div class="top">
+                <div><div class="name">{{ s.id }}</div><div class="detail">{{ s.admission_number }} | {{ s.card_printed_date|date:"d M Y" }}</div></div>
+                <span class="badge badge-info">v{{ s.card_version }}{% if s.reprint_count > 0 %} ({{ s.reprint_count }}x){% endif %}</span>
+            </div>
+        </div>
+        {% empty %}
+        <p style="text-align:center;color:#999;padding:40px;">No cards printed yet.</p>
+        {% endfor %}
+    </div>
+</body>
+</html>

@@ -1,4 +1,4 @@
-{% load card_filters %}
+﻿{% load card_filters %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -46,6 +46,7 @@
             th, td { padding: 6px 8px; }
         }
     </style>
+    <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
     <div class="navbar">
@@ -64,8 +65,8 @@
             {% endif %}
 
             <div class="card">
-                <h2>Meal Access Rules — Maximum Balance Allowed</h2>
-                <p class="hint">Students with balance ≤ the set amount can access meals. Students with higher balances are denied.</p>
+                <h2>Meal Access Rules â€” Maximum Balance Allowed</h2>
+                <p class="hint">Students with balance â‰¤ the set amount can access meals. Students with higher balances are denied.</p>
                 
                 <form method="post">
                     {% csrf_token %}

@@ -1,0 +1,42 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="icon" href="data:,">
+    <title>Assign Templates - OneCard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 70px; }
+        .header { background: #1a237e; color: white; padding: 14px 16px; }
+        .header .title { font-size: 16px; font-weight: 600; }
+        .form-card { background: white; border-radius: 12px; padding: 20px; margin: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .assign-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+        .assign-row .class-name { font-weight: 600; font-size: 14px; }
+        .assign-row select { padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; max-width: 160px; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 12px; }
+        .btn-primary { background: #1a237e; color: white; }
+    </style>
+    <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
+</head>
+<body>
+    <div class="header"><div class="title">Assign Templates</div></div>
+    <div class="form-card">
+        <form method="post">
+            {% csrf_token %}
+            {% for class_name in classes %}
+            <div class="assign-row">
+                <span class="class-name">{{ class_name }}</span>
+                <select name="template_{{ class_name }}">
+                    <option value="">-- Select --</option>
+                    {% for t in templates %}
+                    <option value="{{ t.id }}" {% if current|get_item:class_name == t.id %}selected{% endif %}>{{ t.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary">Save Assignments</button>
+        </form>
+    </div>
+</body>
+</html>

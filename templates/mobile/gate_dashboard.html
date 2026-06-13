@@ -1,0 +1,107 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="icon" href="data:,">
+    <title>Gate - OneCard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 70px; }
+        .header { background: #1a237e; color: white; padding: 16px 20px; }
+        .header .top { display: flex; justify-content: space-between; align-items: center; }
+        .header .name { font-size: 16px; font-weight: 600; }
+        .header .location { font-size: 12px; opacity: 0.8; }
+        .header .logout { color: #ff8a80; text-decoration: none; font-size: 13px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 16px; }
+        .stat-card { background: white; border-radius: 12px; padding: 16px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .stat-card .value { font-size: 24px; font-weight: 700; }
+        .stat-card .label { font-size: 12px; color: #888; }
+        .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px; margin-bottom: 16px; }
+        .action-btn {
+            background: white; border-radius: 12px; padding: 20px; text-align: center;
+            text-decoration: none; color: #1a237e; font-weight: 600; font-size: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex;
+            flex-direction: column; align-items: center; gap: 8px;
+        }
+        .action-btn svg { width: 32px; height: 32px; }
+        .action-btn.scan { background: #1a237e; color: white; }
+        .action-btn.exit { background: #e65100; color: white; }
+        .action-btn.meal { background: #2e7d32; color: white; }
+        .action-btn.movement { background: #0d47a1; color: white; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; border-top: 1px solid #e0e0e0; }
+        .bottom-nav a { flex: 1; text-align: center; padding: 10px 0; color: #888; text-decoration: none; font-size: 11px; }
+        .bottom-nav a.active { color: #1a237e; }
+        .bottom-nav a svg { display: block; margin: 0 auto 3px; }
+    </style>
+    <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
+</head>
+<body>
+    <div class="header">
+        <div class="top">
+            <div>
+                <div class="name">{{ user.get_full_name|default:user.username }}</div>
+                <div class="location">{{ user.assigned_location|default:"Main Gate" }} | Gate Staff</div>
+            </div>
+            <a href="{% url 'logout' %}" class="logout">Logout</a>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="value" style="color:#2e7d32;">{{ stats.present }}</div>
+            <div class="label">Checked In</div>
+        </div>
+        <div class="stat-card">
+            <div class="value" style="color:#e65100;">{{ stats.outside }}</div>
+            <div class="label">Outside</div>
+        </div>
+        <div class="stat-card">
+            <div class="value" style="color:#c62828;">{{ stats.absent }}</div>
+            <div class="label">Absent</div>
+        </div>
+        <div class="stat-card">
+            <div class="value" style="font-size:16px;">{{ stats.last_scan }}</div>
+            <div class="label">Last Scan</div>
+        </div>
+    </div>
+
+    <div class="quick-actions">
+        <a href="{% url 'scanner' %}" class="action-btn scan">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            Scan Card
+        </a>
+        <a href="{% url 'scanner' %}" class="action-btn exit">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Pass Out
+        </a>
+        <a href="{% url 'scanner' %}" class="action-btn meal">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+            Meal Track
+        </a>
+        <a href="{% url 'movement_dashboard' %}" class="action-btn movement">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></svg>
+            Movement
+        </a>
+    </div>
+
+    <div class="bottom-nav">
+        <a href="#" class="active">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            Home
+        </a>
+        <a href="{% url 'scanner' %}">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            Scanner
+        </a>
+        <a href="{% url 'attendance_report' %}">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+            Report
+        </a>
+        <a href="{% url 'meal_report' %}">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg>
+            Meals
+        </a>
+    </div>
+</body>
+</html>

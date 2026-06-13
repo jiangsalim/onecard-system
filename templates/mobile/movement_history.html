@@ -1,0 +1,40 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="icon" href="data:,">
+    <title>Movement History - OneCard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 20px; }
+        .header { background: #1a237e; color: white; padding: 14px 16px; }
+        .header .title { font-size: 16px; font-weight: 600; }
+        .list { padding: 12px 16px; }
+        .log-card { background: white; border-radius: 10px; padding: 12px 14px; margin-bottom: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .log-card .top { display: flex; justify-content: space-between; }
+        .log-card .name { font-weight: 600; font-size: 14px; }
+        .log-card .detail { font-size: 11px; color: #888; }
+        .badge { padding: 3px 8px; border-radius: 8px; font-size: 10px; font-weight: 600; }
+        .badge-out { background: #fff3e0; color: #e65100; }
+        .badge-in { background: #e8f5e9; color: #2e7d32; }
+    </style>
+    <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
+</head>
+<body>
+    <div class="header"><div class="title">Movement History</div></div>
+    <div class="list">
+        {% for log in logs %}
+        <div class="log-card">
+            <div class="top">
+                <div><div class="name">{{ log.student.id }}</div><div class="detail">{{ log.exit_date }} | {{ log.time_out }}{% if log.time_in %} → {{ log.time_in }}{% else %} — Still Out{% endif %}</div></div>
+                <span class="badge {% if log.is_active %}badge-out{% else %}badge-in{% endif %}">{% if log.is_active %}Out{% else %}In{% endif %}</span>
+            </div>
+            <div class="detail">{{ log.get_reason_display }} | By: {{ log.authorized_by }}</div>
+        </div>
+        {% empty %}
+        <p style="text-align:center;color:#999;padding:40px;">No records.</p>
+        {% endfor %}
+    </div>
+</body>
+</html>

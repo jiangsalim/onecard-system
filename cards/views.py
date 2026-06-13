@@ -6,6 +6,7 @@ from datetime import date
 from .models import CardTemplate, ClassTemplateAssignment, CardReprint
 from core.models import Student
 from core.services import get_student_info_from_existing_db
+from core.mobile_utils import render_mobile_or_desktop
 import barcode
 from barcode.writer import ImageWriter
 from io import BytesIO
@@ -18,7 +19,7 @@ def template_list(request):
     if request.user.role not in ['super_admin', 'admin']:
         messages.error(request, 'Access denied.'); return redirect('dashboard')
     templates = CardTemplate.objects.all()
-    return render(request, 'cards/template_list.html', {'templates': templates})
+    return render_mobile_or_desktop(request, 'cards/template_list.html', 'mobile/cards_templates.html', {'templates': templates})
 
 
 @login_required
@@ -35,7 +36,7 @@ def template_create(request):
         template.save()
         messages.success(request, f'Template "{template.name}" created!')
         return redirect('template_list')
-    return render(request, 'cards/template_form.html')
+    return render_mobile_or_desktop(request, 'cards/template_form.html', 'mobile/cards_template_form.html')
 
 
 @login_required
@@ -51,7 +52,7 @@ def template_edit(request, template_id):
         template.save()
         messages.success(request, f'Template "{template.name}" updated!')
         return redirect('template_list')
-    return render(request, 'cards/template_form.html', {'template': template})
+    return render_mobile_or_desktop(request, 'cards/template_form.html', 'mobile/cards_template_form.html', {'template': template})
 
 
 @login_required
@@ -70,20 +71,20 @@ def assign_templates(request):
         messages.error(request, 'Access denied.'); return redirect('dashboard')
     templates = CardTemplate.objects.all()
     classes = ['Senior 1', 'Senior 2', 'Senior 3', 'Senior 4', 'Senior 5', 'Senior 6']
+    assignments = ClassTemplateAssignment.objects.filter(academic_year='2026')
+    current = {a.class_name: a.template_id for a in assignments}
     if request.method == 'POST':
         for class_name in classes:
             template_id = request.POST.get(f'template_{class_name}')
             if template_id:
                 template = CardTemplate.objects.get(id=template_id)
-                ClassTemplateAssignment.objects.update_or_create(
+                obj, created = ClassTemplateAssignment.objects.update_or_create(
                     class_name=class_name, academic_year='2026',
                     defaults={'template': template, 'assigned_by': request.user.get_full_name() or request.user.username}
                 )
+                current[class_name] = template_id
         messages.success(request, 'Template assignments saved!')
-        return redirect('assign_templates')
-    assignments = ClassTemplateAssignment.objects.all()
-    current = {a.class_name: a.template_id for a in assignments}
-    return render(request, 'cards/assign_templates.html', {'templates': templates, 'classes': classes, 'current': current})
+    return render_mobile_or_desktop(request, 'cards/assign_templates.html', 'mobile/cards_assign.html', {'templates': templates, 'classes': classes, 'current': current})
 
 
 @login_required
@@ -107,12 +108,12 @@ def print_cards(request):
                 Student.objects.filter(id__in=selected_ids).update(card_printed=True, card_printed_date=date.today())
                 messages.success(request, f'{len(selected_ids)} card(s) marked as printed.')
             return redirect('print_cards')
-    return render(request, 'cards/print_cards.html', {'classes': classes, 'students': students, 'selected_class': selected_class})
+    return render_mobile_or_desktop(request, 'cards/print_cards.html', 'mobile/cards_print.html', {'classes': classes, 'students': students, 'selected_class': selected_class})
 
 
 @login_required
 def download_cards_pdf(request):
-    """Open printable page for selected cards — front with badge/photo/QR, back with barcode. Uses assigned template colors and Day/Hostel category."""
+    """Open printable page for selected cards — front with badge/photo/QR, back with barcode."""
     if request.user.role not in ['super_admin', 'admin']:
         messages.error(request, 'Access denied.'); return redirect('dashboard')
     
@@ -123,18 +124,15 @@ def download_cards_pdf(request):
     
     students = Student.objects.filter(id__in=student_ids, status='active')
     
-    # Pre-fetch all student info from school DB
     from core.services import fetch_students_from_existing_db
     all_school = fetch_students_from_existing_db()
     school_dict = {s['admission_number']: s for s in all_school}
     
-    # Pre-fetch template assignments for colors
     template_map = {}
     for a in ClassTemplateAssignment.objects.filter(academic_year='2026').select_related('template'):
         if a.template:
             template_map[a.class_name] = a.template
     
-    # Pre-generate barcodes
     barcode_images = {}
     for s in students:
         try:
@@ -146,7 +144,6 @@ def download_cards_pdf(request):
         except Exception:
             barcode_images[s.id] = ''
     
-    # School badge URL
     badge_url = request.build_absolute_uri('/media/badge.jpg')
     
     html = """<!DOCTYPE html>
@@ -155,37 +152,16 @@ def download_cards_pdf(request):
         @page { size: 320px 220px; margin: 0; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; background: white; }
-        
-        .no-print-btn { 
-            display: inline-block; background: #1a237e; color: white; padding: 10px 20px; 
-            border: none; border-radius: 4px; cursor: pointer; font-size: 13px; margin: 5px; 
-            text-decoration: none;
-        }
-        
-        .card, .card-back {
-            width: 300px; height: 200px; margin: 0 auto;
-            border: 3px solid #1a237e; border-radius: 6px;
-            background: white; page-break-after: always; 
-            page-break-inside: avoid; overflow: hidden;
-        }
-        
-        /* FRONT */
-        .card {
-            padding: 8px 10px;
-            display: flex; flex-direction: column; justify-content: space-between;
-        }
-        .card .top { 
-            display: flex; align-items: center; gap: 8px; 
-            border-bottom: 1px solid #1a237e; padding-bottom: 4px;
-        }
+        .no-print-btn { display: inline-block; background: #1a237e; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; margin: 5px; text-decoration: none; }
+        .card, .card-back { width: 300px; height: 200px; margin: 0 auto; border: 3px solid #1a237e; border-radius: 6px; background: white; page-break-after: always; page-break-inside: avoid; overflow: hidden; }
+        .card { padding: 8px 10px; display: flex; flex-direction: column; justify-content: space-between; }
+        .card .top { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #1a237e; padding-bottom: 4px; }
         .card .top .badge img { width: 45px; height: auto; max-height: 40px; border-radius: 4px; object-fit: contain; }
         .card .top .school { font-weight: bold; font-size: 9px; color: #1a237e; }
         .card .top .label { font-size: 7px; color: #888; }
         .card .top .badge-text { font-size: 7px; padding: 2px 6px; border-radius: 3px; color: white; white-space: nowrap; }
         .card .top .category-badge { font-size: 7px; padding: 2px 6px; border-radius: 3px; color: white; white-space: nowrap; margin-left: 2px; }
-        .card .middle { 
-            display: flex; align-items: center; gap: 6px; flex: 1; margin: 4px 0; 
-        }
+        .card .middle { display: flex; align-items: center; gap: 6px; flex: 1; margin: 4px 0; }
         .card .middle .photo-box { width: 55px; height: 70px; flex-shrink: 0; border: 1px solid #ddd; }
         .card .middle .photo-box img { width: 55px; height: 70px; object-fit: cover; }
         .card .middle .qr { width: 65px; height: 65px; flex-shrink: 0; }
@@ -193,12 +169,7 @@ def download_cards_pdf(request):
         .card .middle .details { font-size: 8px; line-height: 1.3; flex: 1; }
         .card .middle .details strong { color: #1a237e; }
         .card .bottom { text-align: center; font-size: 6px; color: #888; border-top: 1px solid #ddd; padding-top: 2px; }
-        
-        /* BACK */
-        .card-back {
-            padding: 10px 14px;
-            display: flex; flex-direction: column; justify-content: space-between;
-        }
+        .card-back { padding: 10px 14px; display: flex; flex-direction: column; justify-content: space-between; }
         .card-back .school-name { font-size: 10px; font-weight: bold; text-align: center; border-bottom: 2px solid #1a237e; padding-bottom: 4px; margin-bottom: 4px; }
         .card-back .info-section { font-size: 8px; line-height: 1.4; color: #333; }
         .card-back .info-section .row { display: flex; justify-content: space-between; margin-bottom: 1px; }
@@ -208,11 +179,7 @@ def download_cards_pdf(request):
         .card-back .barcode-text { text-align: center; font-size: 7px; color: #666; font-family: 'Courier New', monospace; }
         .card-back .warning-box { background: #fff3e0; border: 1px solid #ffcc80; border-radius: 4px; padding: 4px 6px; font-size: 7px; color: #e65100; text-align: center; margin: 3px 0; }
         .card-back .contact { font-size: 7px; color: #666; text-align: center; }
-        
-        @media print {
-            body { margin: 0; padding: 0; }
-            .no-print { display: none !important; }
-        }
+        @media print { body { margin: 0; padding: 0; } .no-print { display: none !important; } }
     </style></head><body>
     <div style="text-align:center; padding:10px;" class="no-print">
         <button class="no-print-btn" onclick="window.print()">Print / Save as PDF</button>
@@ -230,7 +197,6 @@ def download_cards_pdf(request):
         student_stream = school_info.get('stream', '')
         student_category = school_info.get('category', s.category if hasattr(s, 'category') else 'day')
         
-        # Get assigned template colors
         tmpl = template_map.get(student_class)
         border_color = tmpl.border_color if tmpl else '#1a237e'
         bg_color = tmpl.background_color if tmpl else '#FFFFFF'
@@ -238,25 +204,15 @@ def download_cards_pdf(request):
         badge_clr = tmpl.badge_color if tmpl else '#1a237e'
         color_name = tmpl.color_name if tmpl else ''
         
-        # Category styling — if no template assigned, use category colors
         if student_category == 'hostel':
             cat_badge = 'HOSTEL'
-            cat_bg = '#FF8F00'
-            cat_text = '#FFF'
-            cat_icon_text = '[H]'  # for hostel
-            if not tmpl:
-                border_color = '#FF8F00'
-                bg_color = '#FFFDE7'
+            cat_bg = '#FF8F00'; cat_text = '#FFF'; cat_icon_text = '[H]'
+            if not tmpl: border_color = '#FF8F00'; bg_color = '#FFFDE7'
         else:
             cat_badge = 'DAY'
-            cat_bg = '#78909C'
-            cat_text = '#FFF'
-            cat_icon_text = '[D]'  # for day scholar
-            if not tmpl:
-                border_color = '#78909C'
-                bg_color = '#FAFAFA'
+            cat_bg = '#78909C'; cat_text = '#FFF'; cat_icon_text = '[D]'
+            if not tmpl: border_color = '#78909C'; bg_color = '#FAFAFA'
         
-        # Photo URL — priority: 1) Admin uploaded  2) School DB photo_path  3) Generated avatar
         if s.photo:
             photo_url = request.build_absolute_uri(s.photo.url)
         else:
@@ -271,10 +227,7 @@ def download_cards_pdf(request):
         <div class="card" style="border-color: {border_color}; background: {bg_color};">
             <div class="top" style="border-bottom-color: {border_color};">
                 <div class="badge"><img src="{badge_url}" alt="Badge"></div>
-                <div style="flex:1;">
-                    <div class="school">JINJA SENIOR SECONDARY SCHOOL</div>
-                    <div class="label">Student ID Card</div>
-                </div>
+                <div style="flex:1;"><div class="school">JINJA SENIOR SECONDARY SCHOOL</div><div class="label">Student ID Card</div></div>
                 <div class="badge-text" style="background:{badge_clr};">{badge_txt} {color_name}</div>
                 <div class="category-badge" style="background:{cat_bg}; color:{cat_text};">{cat_icon_text} {cat_badge}</div>
             </div>
@@ -282,14 +235,10 @@ def download_cards_pdf(request):
                 <div class="photo-box"><img src="{photo_url}" alt="Photo"></div>
                 <div class="qr"><img src="{qr_url}" alt="QR"></div>
                 <div class="details">
-                    <strong>ID:</strong> {s.id}<br>
-                    <strong>Name:</strong> {name_front}<br>
-                    <strong>Adm:</strong> {s.admission_number}<br>
-                    <strong>Level:</strong> {badge_txt} {color_name}<br>
-                    <strong>Stream:</strong> {student_stream}<br>
-                    <strong>Category:</strong> {cat_icon_text} {cat_badge}<br>
-                    <strong>Pay:</strong> {s.payment_code}<br>
-                    <strong>Ver:</strong> v{s.card_version}
+                    <strong>ID:</strong> {s.id}<br><strong>Name:</strong> {name_front}<br>
+                    <strong>Adm:</strong> {s.admission_number}<br><strong>Level:</strong> {badge_txt} {color_name}<br>
+                    <strong>Stream:</strong> {student_stream}<br><strong>Category:</strong> {cat_icon_text} {cat_badge}<br>
+                    <strong>Pay:</strong> {s.payment_code}<br><strong>Ver:</strong> v{s.card_version}
                 </div>
             </div>
             <div class="bottom">Property of JINJA SSS. Return if found.</div>
@@ -304,7 +253,6 @@ def download_cards_pdf(request):
         student_stream = school_info.get('stream', '')
         student_category = school_info.get('category', s.category if hasattr(s, 'category') else 'day')
         
-        # Get template colors
         tmpl = template_map.get(student_class)
         border_color = tmpl.border_color if tmpl else '#1a237e'
         bg_color = tmpl.background_color if tmpl else '#FFFFFF'
@@ -312,21 +260,12 @@ def download_cards_pdf(request):
         badge_clr = tmpl.badge_color if tmpl else '#1a237e'
         color_name = tmpl.color_name if tmpl else ''
         
-        # Category
         if student_category == 'hostel':
-            cat_badge = 'HOSTEL'
-            cat_icon_text = '[H]'  # for hostel
-            cat_bg = '#FF8F00'
-            if not tmpl:
-                border_color = '#FF8F00'
-                bg_color = '#FFFDE7'
+            cat_badge = 'HOSTEL'; cat_icon_text = '[H]'; cat_bg = '#FF8F00'
+            if not tmpl: border_color = '#FF8F00'; bg_color = '#FFFDE7'
         else:
-            cat_badge = 'DAY SCHOLAR'
-            cat_icon_text = '[D]'  # for day scholar
-            cat_bg = '#78909C'
-            if not tmpl:
-                border_color = '#78909C'
-                bg_color = '#FAFAFA'
+            cat_badge = 'DAY SCHOLAR'; cat_icon_text = '[D]'; cat_bg = '#78909C'
+            if not tmpl: border_color = '#78909C'; bg_color = '#FAFAFA'
         
         barcode_img = barcode_images.get(s.id, '')
         barcode_data = f"{s.id}|{s.payment_code}"
@@ -352,6 +291,7 @@ def download_cards_pdf(request):
     
     html += """</body></html>"""
     return HttpResponse(html)
+
 
 @login_required
 def reprint_card(request):
@@ -380,14 +320,13 @@ def reprint_card(request):
                     return redirect('print_cards')
             except Student.DoesNotExist:
                 messages.error(request, 'Student not found.')
-    return render(request, 'cards/reprint.html', {'student': student, 'reprints': reprints})
+    return render_mobile_or_desktop(request, 'cards/reprint.html', 'mobile/cards_reprint.html', {'student': student, 'reprints': reprints})
+
 
 @login_required
 def printed_cards(request):
     """View all printed cards."""
     if request.user.role not in ['super_admin', 'admin', 'bursar']:
         messages.error(request, 'Access denied.'); return redirect('dashboard')
-    
     students = Student.objects.filter(card_printed=True, status='active').select_related('template').order_by('-card_printed_date')
-    
-    return render(request, 'cards/printed_cards.html', {'students': students})
+    return render_mobile_or_desktop(request, 'cards/printed_cards.html', 'mobile/cards_printed.html', {'students': students})

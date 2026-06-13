@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import FeeStructure
+from core.mobile_utils import render_mobile_or_desktop
 
 
 @login_required
@@ -15,7 +16,6 @@ def fee_management(request):
     classes = ['Senior 1', 'Senior 2', 'Senior 3', 'Senior 4', 'Senior 5', 'Senior 6']
     categories = ['day', 'hostel']
     
-    # Get existing fees
     existing_fees = {}
     for f in FeeStructure.objects.filter(term=term, academic_year=year):
         key = f"{f.class_name}_{f.category}"
@@ -33,12 +33,8 @@ def fee_management(request):
                     existing_fees[f"{class_name}_{cat}"] = amount
         messages.success(request, f'Fees updated for {term} {year}!')
     
-    return render(request, 'fees/management.html', {
-        'classes': classes,
-        'categories': categories,
-        'term': term,
-        'year': year,
-        'existing_fees': existing_fees,
+    return render_mobile_or_desktop(request, 'fees/management.html', 'mobile/fees_management.html', {
+        'classes': classes, 'categories': categories, 'term': term, 'year': year, 'existing_fees': existing_fees,
     })
 
 
@@ -56,12 +52,10 @@ def fee_report(request):
     stream_filter = request.GET.get('stream', '')
     search_query = request.GET.get('search', '').strip()
     
-    # Force class filter for teachers
     if request.user.role == 'class_teacher':
         class_filter = request.user.assigned_class
         stream_filter = request.user.assigned_stream
     
-    # If class filter is set, get matching student IDs
     if class_filter:
         all_school = fetch_students_from_existing_db()
         matching_admissions = [
@@ -69,13 +63,10 @@ def fee_report(request):
             if s['current_class'] == class_filter 
             and (not stream_filter or s['stream'] == stream_filter)
         ]
-        students = Student.objects.filter(
-            admission_number__in=matching_admissions, status='active'
-        )
+        students = Student.objects.filter(admission_number__in=matching_admissions, status='active')
     else:
         students = Student.objects.filter(status='active')
     
-    # Pre-fetch fee structures with category
     fee_map = {}
     for f in FeeStructure.objects.filter(term='Term 2', academic_year='2026'):
         key = f"{f.class_name}_{f.category}"
@@ -118,33 +109,22 @@ def fee_report(request):
             continue
         
         student_data.append({
-            'id': s.id,
-            'admission': s.admission_number,
-            'payment_code': s.payment_code,
-            'name': info.get('name', ''),
-            'class': class_name,
-            'stream': student_stream,
-            'category': student_category,
-            'total': total_fee,
-            'paid': float(paid),
-            'balance': balance,
-            'status': status,
+            'id': s.id, 'admission': s.admission_number, 'payment_code': s.payment_code,
+            'name': info.get('name', ''), 'class': class_name, 'stream': student_stream,
+            'category': student_category, 'total': total_fee, 'paid': float(paid),
+            'balance': balance, 'status': status,
         })
     
     classes = ['Senior 1', 'Senior 2', 'Senior 3', 'Senior 4', 'Senior 5', 'Senior 6']
     
-    return render(request, 'fees/report.html', {
-        'students': student_data,
-        'classes': classes,
-        'status_filter': status_filter,
-        'class_filter': class_filter,
-        'stream_filter': stream_filter,
-        'search_query': search_query,
-        'cleared_count': cleared_count,
-        'not_cleared_count': not_cleared_count,
-        'not_paid_count': not_paid_count,
-        'total_count': len(student_data),
+    return render_mobile_or_desktop(request, 'fees/report.html', 'mobile/fees_report.html', {
+        'students': student_data, 'classes': classes, 'status_filter': status_filter,
+        'class_filter': class_filter, 'stream_filter': stream_filter, 'search_query': search_query,
+        'cleared_count': cleared_count, 'not_cleared_count': not_cleared_count,
+        'not_paid_count': not_paid_count, 'total_count': len(student_data),
     })
+
+
 @login_required
 def meal_access_rules(request):
     """Manage meal access rules — max balance per class/category."""
@@ -175,10 +155,6 @@ def meal_access_rules(request):
                     existing_rules[f"{class_name}_{cat}"] = amount
         messages.success(request, f'Meal access rules updated for {term} {year}!')
     
-    return render(request, 'fees/meal_rules.html', {
-        'classes': classes,
-        'categories': categories,
-        'term': term,
-        'year': year,
-        'existing_rules': existing_rules,
+    return render_mobile_or_desktop(request, 'fees/meal_rules.html', 'mobile/fees_meal_rules.html', {
+        'classes': classes, 'categories': categories, 'term': term, 'year': year, 'existing_rules': existing_rules,
     })

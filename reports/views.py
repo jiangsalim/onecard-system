@@ -8,6 +8,7 @@ from attendance.models import Attendance, MealLog
 from movement.models import MovementLog
 from fees.models import FeeStructure
 from core.services import get_payment_balance
+from core.mobile_utils import render_mobile_or_desktop
 import openpyxl
 from io import BytesIO
 from reportlab.lib.pagesizes import A4
@@ -53,7 +54,6 @@ def attendance_report(request):
     class_filter = request.GET.get('class', '')
     stream_filter = request.GET.get('stream', '')
     
-    # Get student IDs for the filtered class/stream
     if class_filter:
         from core.services import fetch_students_from_existing_db
         all_school = fetch_students_from_existing_db()
@@ -65,19 +65,12 @@ def attendance_report(request):
         filtered_student_ids = Student.objects.filter(
             admission_number__in=matching_admissions, status='active'
         ).values_list('id', flat=True)
-        
         total = len(matching_admissions)
-        attendance_list = Attendance.objects.filter(
-            scan_date=today, student_id__in=filtered_student_ids
-        ).select_related('student')[:50]
-        present = Attendance.objects.filter(
-            scan_date=today, student_id__in=filtered_student_ids
-        ).count()
+        attendance_list = Attendance.objects.filter(scan_date=today, student_id__in=filtered_student_ids).select_related('student')[:50]
+        present = Attendance.objects.filter(scan_date=today, student_id__in=filtered_student_ids).count()
     else:
         total = Student.objects.filter(status='active').count()
-        attendance_list = Attendance.objects.filter(
-            scan_date=today
-        ).select_related('student')[:50]
+        attendance_list = Attendance.objects.filter(scan_date=today).select_related('student')[:50]
         present = Attendance.objects.filter(scan_date=today).count()
     
     absent = total - present
@@ -85,19 +78,17 @@ def attendance_report(request):
         'total': total, 'present': present, 'absent': absent, 'late': 0,
         'rate': round((present / total * 100) if total > 0 else 0, 1),
     }
-    return render(request, 'reports/attendance.html', {
-        'attendance_list': attendance_list,
-        'stats': stats,
-        'class_filter': class_filter,
-        'stream_filter': stream_filter,
+    return render_mobile_or_desktop(request, 'reports/attendance.html', 'mobile/reports_attendance.html', {
+        'attendance_list': attendance_list, 'stats': stats,
+        'class_filter': class_filter, 'stream_filter': stream_filter,
     })
+
 
 @login_required
 def export_attendance(request):
     fmt = request.GET.get('format', 'xlsx')
     today = date.today()
     records = Attendance.objects.filter(scan_date=today).select_related('student')
-
     if fmt == 'pdf':
         styles = getSampleStyleSheet()
         elements = [Paragraph(f"Attendance Report — {today}", styles['Title']), Spacer(1, 20)]
@@ -129,7 +120,6 @@ def export_fees(request):
         balance = total - float(paid)
         status = 'CLEARED' if balance <= 0 else 'NOT CLEARED'
         rows.append([s.id, s.admission_number, s.payment_code, total, float(paid), balance, status])
-
     if fmt == 'pdf':
         styles = getSampleStyleSheet()
         elements = [Paragraph(f"Fee Report — {today}", styles['Title']), Spacer(1, 20)]
@@ -152,7 +142,6 @@ def export_movement(request):
     rows = []
     for m in logs:
         rows.append([m.student.id, str(m.exit_date), str(m.time_out), str(m.time_in or 'Still Out'), m.get_reason_display(), m.authorized_by])
-
     if fmt == 'pdf':
         styles = getSampleStyleSheet()
         elements = [Paragraph(f"Movement Log — {today}", styles['Title']), Spacer(1, 20)]
@@ -172,18 +161,15 @@ def meal_report(request):
     """Meal tracking report — filtered by class if teacher."""
     today = date.today()
     meal_type = request.GET.get('meal', 'lunch')
-    
     class_filter = request.GET.get('class', '')
     stream_filter = request.GET.get('stream', '')
     
-    # If teacher, force their class
     if request.user.role == 'class_teacher':
         class_filter = request.user.assigned_class
         stream_filter = request.user.assigned_stream
     
     meals = MealLog.objects.filter(meal_date=today, meal_type=meal_type).select_related('student')
     
-    # Filter by class if specified
     if class_filter:
         from core.services import fetch_students_from_existing_db
         all_school = fetch_students_from_existing_db()
@@ -192,9 +178,7 @@ def meal_report(request):
             if s['current_class'] == class_filter 
             and (not stream_filter or s['stream'] == stream_filter)
         ]
-        class_student_ids = Student.objects.filter(
-            admission_number__in=matching_admissions
-        ).values_list('id', flat=True)
+        class_student_ids = Student.objects.filter(admission_number__in=matching_admissions).values_list('id', flat=True)
         meals = meals.filter(student_id__in=class_student_ids)
         total = len(matching_admissions)
     else:
@@ -204,13 +188,8 @@ def meal_report(request):
     lunch_count = MealLog.objects.filter(meal_date=today, meal_type='lunch').count()
     supper_count = MealLog.objects.filter(meal_date=today, meal_type='supper').count()
 
-    return render(request, 'reports/meals.html', {
-        'meals': meals,
-        'meal_type': meal_type,
-        'today': today,
-        'total': total,
-        'served': meals.count(),
-        'breakfast_count': breakfast_count,
-        'lunch_count': lunch_count,
-        'supper_count': supper_count,
+    return render_mobile_or_desktop(request, 'reports/meals.html', 'mobile/reports_meals.html', {
+        'meals': meals, 'meal_type': meal_type, 'today': today, 'total': total,
+        'served': meals.count(), 'breakfast_count': breakfast_count,
+        'lunch_count': lunch_count, 'supper_count': supper_count,
     })

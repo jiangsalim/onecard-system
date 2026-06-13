@@ -1,0 +1,74 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="icon" href="data:,">
+    <title>Print Cards - OneCard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 70px; }
+        .header { background: #1a237e; color: white; padding: 14px 16px; }
+        .header .title { font-size: 16px; font-weight: 600; }
+        .section { margin: 12px 16px; }
+        .card-white { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .card-white h3 { font-size: 14px; color: #1a237e; margin-bottom: 12px; }
+        .class-list { display: flex; flex-wrap: wrap; gap: 8px; }
+        .class-chip { padding: 10px 16px; border: 2px solid #e0e0e0; border-radius: 20px; font-size: 13px; cursor: pointer; background: white; }
+        .class-chip.selected { border-color: #1a237e; background: #e8eaf6; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+        .btn-primary { background: #1a237e; color: white; }
+        .btn-success { background: #2e7d32; color: white; }
+        .btn-outline { background: white; color: #1a237e; border: 2px solid #1a237e; }
+    </style>
+    <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
+</head>
+<body>
+    <div class="header"><div class="title">Print Cards</div></div>
+    <div class="section">
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="preview">
+            <div class="card-white">
+                <h3>Select Class</h3>
+                <div class="class-list">
+                    {% for c in classes %}
+                    <label class="class-chip" onclick="this.classList.toggle('selected')">
+                        <input type="radio" name="class_name" value="{{ c }}" style="display:none;">{{ c }}
+                    </label>
+                    {% endfor %}
+                </div>
+                <button type="submit" class="btn btn-primary">Show Unprinted Cards</button>
+            </div>
+        </form>
+    </div>
+    {% if students %}
+    <div class="section">
+        <div class="card-white">
+            <h3>{{ selected_class }} — {{ students.count }} cards</h3>
+            <form method="post" id="printForm">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="print_selected">
+                {% for s in students %}
+                <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0;">
+                    <input type="checkbox" name="selected_students" value="{{ s.id }}" style="width:20px;height:20px;">
+                    <div style="flex:1;"><strong>{{ s.id }}</strong><br><small style="color:#888;">{{ s.admission_number }}</small></div>
+                    {% if s.qr_code %}<img src="{{ s.qr_code.url }}" style="width:40px;height:40px;">{% endif %}
+                </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-success" style="margin-top:12px;">Mark as Printed</button>
+                <button type="button" class="btn btn-outline" onclick="downloadPDF()" style="margin-top:6px;">Download PDF</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+    <script>
+        function downloadPDF() {
+            const ids = [];
+            document.querySelectorAll('input[name="selected_students"]:checked').forEach(cb => ids.push(cb.value));
+            if (ids.length === 0) { alert('Select cards first.'); return; }
+            window.open('/cards/download-cards-pdf/?ids=' + ids.join('&ids='), '_blank');
+        }
+    </script>
+</body>
+</html>

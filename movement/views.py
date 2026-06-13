@@ -6,6 +6,7 @@ from django.views.decorators.http import require_POST
 from core.models import Student
 from .models import MovementLog
 from datetime import date, datetime
+from core.mobile_utils import render_mobile_or_desktop
 import json
 import logging
 
@@ -45,9 +46,8 @@ def movement_dashboard(request):
         active_passes = MovementLog.objects.filter(exit_date=today, time_in__isnull=True).select_related('student')
         today_logs = MovementLog.objects.filter(exit_date=today).select_related('student').order_by('-time_out')[:20]
     
-    return render(request, 'movement/dashboard.html', {
-        'active_passes': active_passes,
-        'today_logs': today_logs,
+    return render_mobile_or_desktop(request, 'movement/dashboard.html', 'mobile/movement_dashboard.html', {
+        'active_passes': active_passes, 'today_logs': today_logs,
     })
 
 
@@ -101,4 +101,4 @@ def movement_history(request):
     else:
         logs = MovementLog.objects.select_related('student').all().order_by('-exit_date', '-time_out')[:100]
     
-    return render(request, 'movement/history.html', {'logs': logs})
+    return render_mobile_or_desktop(request, 'movement/history.html', 'mobile/movement_history.html', {'logs': logs})

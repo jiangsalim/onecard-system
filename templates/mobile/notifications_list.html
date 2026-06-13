@@ -1,0 +1,44 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="icon" href="data:,">
+    <title>Notifications - OneCard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 20px; }
+        .header { background: #1a237e; color: white; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; }
+        .header .title { font-size: 16px; font-weight: 600; }
+        .header a { color: #ffcc80; text-decoration: none; font-size: 13px; }
+        .notif-list { padding: 12px 16px; }
+        .notif-card { background: white; border-radius: 10px; padding: 14px; margin-bottom: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border-left: 4px solid #1a237e; }
+        .notif-card.read { border-left-color: #ccc; opacity: 0.7; }
+        .notif-card .title { font-weight: 600; font-size: 14px; }
+        .notif-card .msg { font-size: 12px; color: #666; margin-top: 3px; }
+        .notif-card .time { font-size: 11px; color: #999; margin-top: 4px; }
+        .badge { padding: 2px 8px; border-radius: 8px; font-size: 10px; font-weight: 600; }
+        .badge-high { background: #ffebee; color: #c62828; }
+        .badge-medium { background: #fff3e0; color: #e65100; }
+        .badge-low { background: #e8f5e9; color: #2e7d32; }
+    </style>
+    <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
+</head>
+<body>
+    <div class="header">
+        <div class="title">Notifications ({{ unread_count }} unread)</div>
+        <a href="{% url 'mark_all_read' %}">Mark All Read</a>
+    </div>
+    <div class="notif-list">
+        {% for n in notifications %}
+        <div class="notif-card {% if n.is_read %}read{% endif %}">
+            <div class="title">{{ n.title }} <span class="badge badge-{{ n.priority }}">{{ n.priority }}</span></div>
+            <div class="msg">{{ n.message }}</div>
+            <div class="time">{{ n.created_at|timesince }} ago {% if not n.is_read %}| <a href="{% url 'mark_as_read' n.id %}" style="color:#1a237e;">Mark read</a>{% endif %}</div>
+        </div>
+        {% empty %}
+        <p style="text-align:center;color:#999;padding:40px;">No notifications.</p>
+        {% endfor %}
+    </div>
+</body>
+</html>

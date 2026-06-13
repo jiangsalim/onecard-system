@@ -1,0 +1,69 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="icon" href="data:,">
+    <title>Movement - OneCard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 70px; }
+        .header { background: #1a237e; color: white; padding: 14px 16px; }
+        .header .title { font-size: 16px; font-weight: 600; }
+        .stats-row { display: flex; gap: 10px; padding: 12px 16px; }
+        .stat-card { flex: 1; background: white; border-radius: 10px; padding: 16px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+        .stat-card .val { font-size: 24px; font-weight: 700; }
+        .stat-card .lbl { font-size: 11px; color: #888; }
+        .section-title { font-size: 14px; font-weight: 600; padding: 8px 16px; color: #333; }
+        .student-list { padding: 8px 16px; }
+        .student-card { background: white; border-radius: 10px; padding: 12px 14px; margin-bottom: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .student-card .top { display: flex; justify-content: space-between; align-items: center; }
+        .student-card .name { font-weight: 600; font-size: 14px; }
+        .student-card .reason { font-size: 11px; color: #888; }
+        .badge { padding: 3px 8px; border-radius: 8px; font-size: 11px; font-weight: 600; }
+        .badge-outside { background: #fff3e0; color: #e65100; }
+        .badge-returned { background: #e8f5e9; color: #2e7d32; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; border-top: 1px solid #e0e0e0; }
+        .bottom-nav a { flex: 1; text-align: center; padding: 10px 0; color: #888; text-decoration: none; font-size: 11px; }
+        .bottom-nav a.active { color: #1a237e; }
+    </style>
+    <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
+</head>
+<body>
+    <div class="header"><div class="title">Movement Tracking</div></div>
+    <div class="stats-row">
+        <div class="stat-card"><div class="val" style="color:#e65100;">{{ active_passes.count }}</div><div class="lbl">Outside Now</div></div>
+        <div class="stat-card"><div class="val">{{ today_logs.count }}</div><div class="lbl">Today</div></div>
+    </div>
+    <div class="section-title">Currently Outside</div>
+    <div class="student-list">
+        {% for p in active_passes %}
+        <div class="student-card">
+            <div class="top">
+                <div><div class="name">{{ p.student.id }}</div><div class="reason">{{ p.get_reason_display }} | Out: {{ p.time_out }}</div></div>
+                <span class="badge badge-outside">Outside</span>
+            </div>
+        </div>
+        {% empty %}
+        <p style="text-align:center;color:#999;padding:20px;">No students outside.</p>
+        {% endfor %}
+    </div>
+    <div class="section-title">Today's Log</div>
+    <div class="student-list">
+        {% for log in today_logs %}
+        <div class="student-card">
+            <div class="top">
+                <div><div class="name">{{ log.student.id }}</div><div class="reason">{{ log.time_out }}{% if log.time_in %} → {{ log.time_in }}{% else %} — Still Out{% endif %}</div></div>
+                <span class="badge {% if log.is_active %}badge-outside{% else %}badge-returned{% endif %}">{% if log.is_active %}Out{% else %}In{% endif %}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="bottom-nav">
+        <a href="{% url 'dashboard' %}">Home</a>
+        <a href="#" class="active">Movement</a>
+        <a href="{% url 'movement_history' %}">History</a>
+        <a href="{% url 'scanner' %}">Scanner</a>
+    </div>
+</body>
+</html>

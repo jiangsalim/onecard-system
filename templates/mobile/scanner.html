@@ -1,0 +1,113 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="icon" href="data:,">
+    <title>Scanner - OneCard</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #1a1a2e; color: #e0e0e0; padding: 16px; min-height: 100vh; }
+        .header { text-align: center; margin-bottom: 16px; }
+        .header h1 { font-size: 18px; color: white; }
+        .controls { display: flex; gap: 8px; margin-bottom: 12px; }
+        .controls select { flex: 1; padding: 12px; border-radius: 10px; background: #16213e; color: #e0e0e0; border: 1px solid #333; font-size: 14px; }
+        #reader { width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 12px; display: none; }
+        .result-card { background: #16213e; border-radius: 12px; padding: 20px; display: none; border: 1px solid #2a2a4a; margin-bottom: 12px; }
+        .result-card.show { display: block; }
+        .result-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+        .result-icon svg { width: 36px; height: 36px; }
+        .result-name { font-size: 18px; font-weight: 700; }
+        .result-detail { font-size: 12px; color: #8899aa; }
+        .fees-box { background: #0f3460; border-radius: 8px; padding: 14px; margin: 10px 0; }
+        .fees-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; }
+        .fees-total { font-size: 18px; font-weight: 700; padding-top: 8px; border-top: 1px solid #1a4a7a; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 16px; font-size: 12px; font-weight: 600; }
+        .badge-success { background: #1b5e20; color: #a5d6a7; }
+        .badge-warning { background: #e65100; color: #ffcc80; }
+        .badge-error { background: #b71c1c; color: #ef9a9a; }
+        .manual-entry { margin-top: 16px; }
+        .manual-entry .input-row { display: flex; gap: 8px; }
+        .manual-entry input { flex: 1; padding: 14px; border-radius: 10px; border: 1px solid #333; background: #16213e; color: white; font-size: 16px; }
+        .manual-entry button { padding: 14px 20px; border-radius: 10px; background: #3f51b5; color: white; border: none; font-weight: 600; font-size: 14px; }
+        .status-text { text-align: center; font-size: 12px; color: #8899aa; margin: 10px 0; }
+        .close-btn { background: #c62828; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; }
+        .toggle-camera { text-align: center; margin: 10px 0; }
+        .toggle-camera button { padding: 12px 24px; border-radius: 10px; border: 1px solid #3f51b5; background: transparent; color: #3f51b5; font-size: 14px; cursor: pointer; width: 100%; }
+    </style>
+    <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
+</head>
+<body>
+    <div class="header"><h1>OneCard Scanner</h1></div>
+    <div class="controls">
+        <select id="location"><option value="Main Gate">Main Gate</option><option value="Dining Hall">Dining Hall</option><option value="Bursar Office">Bursar Office</option></select>
+        <select id="mode" onchange="onModeChange()">
+            <option value="attendance_balance">Attendance</option>
+            <option value="balance_only">Balance</option>
+            <option value="pass_out">Pass Out</option>
+            <option value="meal_tracking">Meal</option>
+        </select>
+    </div>
+    <div class="toggle-camera"><button onclick="toggleCamera()">Open Camera</button></div>
+    <div id="reader"></div>
+    <div class="status-text" id="statusText">Enter Student ID below</div>
+
+    <div id="result" class="result-card">
+        <div style="text-align:right; margin-bottom:8px;"><button class="close-btn" onclick="closeResult()">Close</button></div>
+        <div class="result-header"><div class="result-icon" id="resultIcon"></div><div><div class="result-name" id="resultName"></div><div class="result-detail" id="resultDetail"></div></div></div>
+        <div id="feesContainer"><div class="fees-box"><div class="fees-row"><span>Total</span><span id="feesTotal"></span></div><div class="fees-row"><span>Paid</span><span id="feesPaid"></span></div><div class="fees-row fees-total"><span>Balance</span><span id="feesBalance"></span></div></div><div style="text-align:center;" id="feesStatus"></div></div>
+        <div id="passoutContainer" style="display:none;"><div id="passoutForm"></div></div>
+        <div id="returnContainer" style="display:none;"></div>
+        <div id="mealContainer" style="display:none;"></div>
+        <div id="attendanceConfirm" style="text-align:center; padding:10px; border-radius:8px; margin-top:10px; font-size:13px; display:none;"></div>
+    </div>
+
+    <div class="manual-entry">
+        <div class="input-row">
+            <input type="text" id="manualId" placeholder="Student ID (e.g. STU-001)">
+            <button onclick="manualLookup()">Lookup</button>
+        </div>
+    </div>
+
+    <template id="icon-success"><svg viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="8,12 11,15 16,9"/></svg></template>
+    <template id="icon-warning"><svg viewBox="0 0 24 24" fill="none" stroke="#ff9800" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="7" x2="12" y2="13"/><circle cx="12" cy="16" r="0.5" fill="#ff9800" stroke="none"/></svg></template>
+    <template id="icon-error"><svg viewBox="0 0 24 24" fill="none" stroke="#f44336" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg></template>
+
+    <script>
+        let cameraActive = false;
+        const html5QrCode = new Html5Qrcode("reader");
+        function setIcon(id) { const d = document.getElementById('resultIcon'); d.innerHTML = ''; d.appendChild(document.getElementById(id).content.cloneNode(true)); }
+        function onModeChange() { document.getElementById('statusText').textContent = 'Enter Student ID below'; }
+        function toggleCamera() {
+            if (cameraActive) { html5QrCode.stop().then(() => { cameraActive = false; document.getElementById('reader').style.display = 'none'; }).catch(()=>{}); }
+            else { document.getElementById('reader').style.display = 'block'; html5QrCode.start({facingMode:"environment"},{fps:10,qrbox:{width:250,height:250}},onScanSuccess,onScanFailure).then(()=>{cameraActive=true;}).catch(()=>{document.getElementById('reader').style.display='none';alert('Camera unavailable');}); }
+        }
+        function onScanSuccess(decodedText) { html5QrCode.pause(); processScan(decodedText); }
+        function onScanFailure(err) {}
+        function showLoading() { setIcon('icon-warning'); document.getElementById('resultName').textContent='Processing...'; document.getElementById('resultDetail').textContent=''; document.getElementById('feesContainer').style.display='none'; document.getElementById('result').classList.add('show'); }
+        function processScan(studentId) {
+            const mode = document.getElementById('mode').value, location = document.getElementById('location').value;
+            fetch('/api/scan/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},body:JSON.stringify({student_id:studentId,location:location,mode:mode})})
+            .then(r=>r.json()).then(data=>{
+                if(data.success) showBalanceResult(data);
+                else { setIcon('icon-error'); document.getElementById('resultName').textContent='Error'; document.getElementById('resultDetail').textContent=data.error; document.getElementById('result').classList.add('show'); }
+            }).catch(()=>{ setIcon('icon-error'); document.getElementById('resultName').textContent='Error'; document.getElementById('resultDetail').textContent='Connection failed'; document.getElementById('result').classList.add('show'); });
+        }
+        function showBalanceResult(data) {
+            const s=data.student,f=data.fees;
+            document.getElementById('feesContainer').style.display='block'; document.getElementById('passoutContainer').style.display='none'; document.getElementById('returnContainer').style.display='none'; document.getElementById('mealContainer').style.display='none';
+            setIcon(f.status==='CLEARED'?'icon-success':'icon-warning');
+            document.getElementById('resultName').textContent=s.name; document.getElementById('resultDetail').textContent=`${s.class} ${s.stream} | ${s.admission}`;
+            document.getElementById('feesTotal').textContent=f.total.toLocaleString()+' UGX'; document.getElementById('feesPaid').textContent=f.paid.toLocaleString()+' UGX'; document.getElementById('feesBalance').textContent=f.balance.toLocaleString()+' UGX';
+            document.getElementById('feesStatus').innerHTML=f.status==='CLEARED'?'<span class="badge badge-success">CLEARED</span>':'<span class="badge badge-warning">NOT CLEARED</span>';
+            if(data.attendance&&data.attendance.marked){document.getElementById('attendanceConfirm').textContent='Attendance Recorded'; document.getElementById('attendanceConfirm').style.display='block'; document.getElementById('attendanceConfirm').style.background='#1b5e20'; document.getElementById('attendanceConfirm').style.color='#a5d6a7';}
+            document.getElementById('result').classList.add('show');
+        }
+        function closeResult() { document.getElementById('result').classList.remove('show'); }
+        function manualLookup() { const id=document.getElementById('manualId').value.trim(); if(!id) return; showLoading(); processScan(id); document.getElementById('manualId').value=''; }
+        function getCookie(name) { let v=document.cookie.match('(^|;) ?'+name+'=([^;]*)(;|$)'); return v?v[2]:null; }
+        document.getElementById('manualId').addEventListener('keypress',function(e){if(e.key==='Enter')manualLookup();});
+    </script>
+</body>
+</html>

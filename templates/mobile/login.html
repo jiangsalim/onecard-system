@@ -1,0 +1,90 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="icon" href="data:,">
+    <title>OneCard - Login</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a237e 0%, #283593 50%, #3949ab 100%);
+            min-height: 100vh; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; padding: 20px;
+        }
+        .login-card {
+            background: white; border-radius: 20px; padding: 36px 24px;
+            width: 100%; max-width: 360px; text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .badge-img { width: 80px; height: 80px; border-radius: 16px; margin-bottom: 16px; }
+        .school-name { font-size: 14px; font-weight: 700; color: #1a237e; text-transform: uppercase; }
+        .system-name { font-size: 22px; font-weight: 700; color: #1a237e; margin: 4px 0 16px; }
+        .divider { width: 50px; height: 3px; background: #ff9800; margin: 0 auto 24px; border-radius: 2px; }
+        .form-group { margin-bottom: 18px; text-align: left; }
+        .form-group label { display: block; font-weight: 600; font-size: 13px; color: #333; margin-bottom: 6px; }
+        .form-group input {
+            width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0;
+            border-radius: 12px; font-size: 16px; outline: none;
+        }
+        .form-group input:focus { border-color: #1a237e; }
+        .btn-signin {
+            width: 100%; padding: 16px; background: #1a237e; color: white;
+            border: none; border-radius: 12px; font-size: 16px; font-weight: 600;
+            cursor: pointer; margin-top: 8px;
+        }
+        .alert {
+            padding: 12px; border-radius: 8px; margin-bottom: 12px;
+            font-size: 13px; text-align: left;
+        }
+        .alert-error { background: #ffebee; color: #c62828; }
+        .alert-success { background: #e8f5e9; color: #2e7d32; }
+        .footer-text { margin-top: 16px; font-size: 11px; color: rgba(255,255,255,0.6); text-align: center; }
+        @keyframes shake {
+            0%,100%{transform:translateX(0)}10%,30%,50%,70%,90%{transform:translateX(-6px)}20%,40%,60%,80%{transform:translateX(6px)}
+        }
+        .shake { animation: shake 0.6s ease-in-out; }
+    </style>
+    <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
+</head>
+<body>
+    <div class="login-card" id="loginBox">
+        <img src="/media/badge.jpg" alt="Badge" class="badge-img">
+        <div class="school-name">Jinja Senior Secondary School</div>
+        <div class="system-name">OneCard</div>
+        <div class="divider"></div>
+
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" name="username" required autofocus placeholder="Enter username">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" required placeholder="Enter password">
+            </div>
+            <button type="submit" class="btn-signin">Sign In</button>
+        </form>
+    </div>
+    <div class="footer-text">&copy; {% now "Y" %} Jinja SSS</div>
+
+    <script>
+        {% if messages %}
+        {% for message in messages %}
+        {% if message.tags == 'error' %}
+        document.getElementById('loginBox').classList.add('shake');
+        setTimeout(function(){ document.getElementById('loginBox').classList.remove('shake'); }, 600);
+        {% endif %}
+        {% endfor %}
+        {% endif %}
+    </script>
+</body>
+</html>

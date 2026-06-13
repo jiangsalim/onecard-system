@@ -1,0 +1,56 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="icon" href="data:,">
+    <title>Reprint - OneCard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 70px; }
+        .header { background: #1a237e; color: white; padding: 14px 16px; }
+        .header .title { font-size: 16px; font-weight: 600; }
+        .card-white { background: white; border-radius: 12px; padding: 20px; margin: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 5px; }
+        .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
+        .btn-primary { background: #1a237e; color: white; }
+        .btn-warning { background: #e65100; color: white; margin-top: 10px; }
+        .info-text { font-size: 14px; padding: 10px 0; }
+        .warning-box { background: #fff3e0; padding: 12px; border-radius: 8px; font-size: 13px; color: #e65100; margin-top: 12px; }
+        .badge { padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 600; }
+        .badge-info { background: #e3f2fd; color: #1565c0; }
+    </style>
+    <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
+</head>
+<body>
+    <div class="header"><div class="title">Reprint Card</div></div>
+    <div class="card-white">
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group"><label>Student ID</label><input type="text" name="student_id" value="{{ student.id|default:'' }}" placeholder="e.g. STU-001" required></div>
+            <button type="submit" name="lookup" class="btn btn-primary">Lookup Student</button>
+        </form>
+    </div>
+    {% if student %}
+    <div class="card-white">
+        <div class="info-text"><strong>{{ student.id }}</strong><br><small style="color:#888;">{{ student.admission_number }} | v{{ student.card_version }}</small></div>
+        <div style="font-size:13px;">Current Reprints: <span class="badge badge-info">{{ student.reprint_count }}</span></div>
+        {% if reprints %}
+        <div style="margin-top:10px;font-size:12px;color:#888;">
+            {% for r in reprints %}<div>#{{ r.reprint_number }}: {{ r.get_reason_display }} — {{ r.reprinted_at|date:"d M Y" }}</div>{% endfor %}
+        </div>
+        {% endif %}
+        <div class="warning-box">⚠ Reprinting deactivates the old card. The student's QR code stays the same.</div>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="student_id" value="{{ student.id }}">
+            <input type="hidden" name="confirm" value="yes">
+            <div class="form-group" style="margin-top:12px;"><label>Reason</label><select name="reason"><option value="lost">Lost</option><option value="damaged">Damaged</option><option value="correction">Correction</option><option value="other">Other</option></select></div>
+            <button type="submit" class="btn btn-warning">Confirm Reprint</button>
+        </form>
+    </div>
+    {% endif %}
+</body>
+</html>

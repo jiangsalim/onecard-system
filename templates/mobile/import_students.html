@@ -1,0 +1,103 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="icon" href="data:,">
+    <title>Import - OneCard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 70px; }
+        .header { background: #1a237e; color: white; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; }
+        .header .title { font-size: 16px; font-weight: 600; }
+        .header a { color: white; text-decoration: none; font-size: 13px; }
+        .filter-bar { padding: 10px 16px; background: white; display: flex; gap: 8px; border-bottom: 1px solid #e0e0e0; }
+        .filter-bar select, .filter-bar input { padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; flex: 1; }
+        .stats { padding: 10px 16px; display: flex; gap: 16px; font-size: 13px; color: #666; }
+        .stats strong { color: #1a237e; }
+        .action-bar { padding: 8px 16px; display: flex; gap: 8px; }
+        .btn { padding: 10px 16px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+        .btn-primary { background: #1a237e; color: white; }
+        .btn-success { background: #2e7d32; color: white; }
+        .btn-warning { background: #e65100; color: white; flex: 1; }
+        .student-list { padding: 8px 16px; }
+        .student-card { background: white; border-radius: 8px; padding: 12px; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .student-card input[type=checkbox] { width: 20px; height: 20px; }
+        .student-card .info { flex: 1; }
+        .student-card .name { font-weight: 600; font-size: 14px; }
+        .student-card .detail { font-size: 11px; color: #888; }
+        .progress { height: 4px; background: #e0e0e0; margin: 0 16px; border-radius: 2px; }
+        .progress-bar { height: 100%; background: #2e7d32; border-radius: 2px; width: 0%; }
+    </style>
+    <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
+</head>
+<body>
+    <div class="header">
+        <div class="title">Import Students</div>
+        <a href="{% url 'view_students' %}">View All</a>
+    </div>
+    <div class="filter-bar">
+        <select id="filterClass"><option value="">All Classes</option><option>Senior 1</option><option>Senior 2</option><option>Senior 3</option><option>Senior 4</option><option>Senior 5</option><option>Senior 6</option></select>
+        <select id="filterStream"><option value="">All Streams</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option></select>
+    </div>
+    <div class="stats">
+        <span>Remaining: <strong id="totalCount">0</strong></span>
+        <span>Imported: <strong id="importedCount">0</strong></span>
+        <span>Selected: <strong id="selectedCount">0</strong></span>
+    </div>
+    <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="action-bar">
+        <button class="btn btn-primary" onclick="selectAll()">All</button>
+        <button class="btn btn-primary" onclick="deselectAll()">None</button>
+        <button class="btn btn-warning" id="importAllBtn" onclick="importAll()">Import All</button>
+        <button class="btn btn-success" id="importBtn" onclick="importSelected()">Import</button>
+    </div>
+    <div class="student-list" id="studentList"></div>
+
+    <script>
+        const PER_PAGE = 30; let currentPage = 1, allStudents = [], selectedSet = new Set();
+        function loadStudents(page) {
+            currentPage = page;
+            const cls = document.getElementById('filterClass').value, stream = document.getElementById('filterStream').value;
+            document.getElementById('studentList').innerHTML = '<p style="text-align:center;padding:20px;">Loading...</p>';
+            fetch(`/api/students-list/?cls=${cls}&stream=${stream}&page=${page}&per_page=${PER_PAGE}`)
+            .then(r => r.json()).then(data => {
+                allStudents = data.students;
+                document.getElementById('totalCount').textContent = data.remaining_count;
+                document.getElementById('importedCount').textContent = data.imported_count;
+                renderList();
+            });
+        }
+        function renderList() {
+            const list = document.getElementById('studentList');
+            if (allStudents.length === 0) { list.innerHTML = '<p style="text-align:center;color:#2e7d32;padding:30px;">All students imported!</p>'; return; }
+            list.innerHTML = allStudents.map(s => `
+                <div class="student-card">
+                    <input type="checkbox" value="${s.admission_number}" ${selectedSet.has(s.admission_number)?'checked':''} onchange="toggleStudent(this)">
+                    <div class="info">
+                        <div class="name">${s.full_name}</div>
+                        <div class="detail">${s.admission_number} | ${s.current_class} ${s.stream} | ${s.payment_code}</div>
+                    </div>
+                </div>
+            `).join('');
+            document.getElementById('selectedCount').textContent = selectedSet.size;
+            document.getElementById('progressBar').style.width = (selectedSet.size / Math.max(1, allStudents.length) * 100) + '%';
+        }
+        function toggleStudent(cb) { if(cb.checked) selectedSet.add(cb.value); else selectedSet.delete(cb.value); document.getElementById('selectedCount').textContent = selectedSet.size; }
+        function selectAll() { allStudents.forEach(s => selectedSet.add(s.admission_number)); renderList(); }
+        function deselectAll() { selectedSet.clear(); renderList(); }
+        function importSelected() {
+            if(selectedSet.size===0){alert('Select students first.');return;}
+            fetch('/api/import-students/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},body:JSON.stringify({students:Array.from(selectedSet)})})
+            .then(r=>r.json()).then(data=>{alert(data.message);if(data.success){selectedSet.clear();loadStudents(currentPage);}});
+        }
+        function importAll() {
+            if(!confirm('Import ALL remaining students?')) return;
+            fetch('/api/import-students/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},body:JSON.stringify({import_all:true})})
+            .then(r=>r.json()).then(data=>{alert(data.message);if(data.success){selectedSet.clear();loadStudents(1);}});
+        }
+        function getCookie(name){let v=document.cookie.match('(^|;) ?'+name+'=([^;]*)(;|$)');return v?v[2]:null;}
+        loadStudents(1);
+    </script>
+</body>
+</html>

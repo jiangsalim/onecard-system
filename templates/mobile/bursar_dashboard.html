@@ -1,0 +1,122 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="icon" href="data:,">
+    <title>Bursar - OneCard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 70px; }
+        .header { background: #1a237e; color: white; padding: 16px 20px; }
+        .header .top { display: flex; justify-content: space-between; align-items: center; }
+        .header .name { font-size: 16px; font-weight: 600; }
+        .header .role-info { font-size: 12px; opacity: 0.8; }
+        .header .logout { color: #ff8a80; text-decoration: none; font-size: 13px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 16px; }
+        .stat-card { background: white; border-radius: 12px; padding: 16px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .stat-card .value { font-size: 24px; font-weight: 700; color: #1a237e; }
+        .stat-card .label { font-size: 12px; color: #888; }
+        .section { margin: 0 16px 16px; }
+        .section-title { font-size: 14px; font-weight: 600; color: #333; margin-bottom: 10px; }
+        .lookup-box { display: flex; gap: 8px; }
+        .lookup-box input { flex: 1; padding: 14px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; }
+        .lookup-box button { padding: 14px 20px; background: #1a237e; color: white; border: none; border-radius: 10px; font-weight: 600; font-size: 14px; }
+        .card { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .list-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+        .list-item:last-child { border-bottom: none; }
+        .badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .badge-success { background: #e8f5e9; color: #2e7d32; }
+        .badge-warning { background: #fff3e0; color: #e65100; }
+        .badge-error { background: #ffebee; color: #c62828; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; border-top: 1px solid #e0e0e0; }
+        .bottom-nav a { flex: 1; text-align: center; padding: 10px 0; color: #888; text-decoration: none; font-size: 11px; }
+        .bottom-nav a.active { color: #1a237e; }
+        .bottom-nav a svg { display: block; margin: 0 auto 3px; }
+        .result-card { background: white; border-radius: 12px; padding: 16px; margin-top: 10px; display: none; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .result-card.show { display: block; }
+    </style>
+    <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
+</head>
+<body>
+    <div class="header">
+        <div class="top">
+            <div>
+                <div class="name">{{ user.get_full_name|default:user.username }}</div>
+                <div class="role-info">Bursar</div>
+            </div>
+            <a href="{% url 'logout' %}" class="logout">Logout</a>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Student Balance Lookup</div>
+        <div class="lookup-box">
+            <input type="text" id="lookupInput" placeholder="Student ID (e.g. STU-001)">
+            <button onclick="quickLookup()">Check</button>
+        </div>
+        <div class="result-card" id="lookupResult"></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Fee Summary</div>
+        <div class="card">
+            <div class="list-item"><span>Cleared</span><span class="badge badge-success" id="clearedCount">...</span></div>
+            <div class="list-item"><span>Not Cleared</span><span class="badge badge-warning" id="notClearedCount">...</span></div>
+            <div class="list-item"><span>Not Paid</span><span class="badge badge-error" id="notPaidCount">...</span></div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <a href="#" class="active">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            Home
+        </a>
+        <a href="{% url 'fee_report' %}">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Fees
+        </a>
+        <a href="{% url 'reprint_card' %}">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 6,2 18,2 18,9"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Reprint
+        </a>
+        <a href="{% url 'scanner' %}">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+            Scan
+        </a>
+    </div>
+
+    <script>
+        function quickLookup() {
+            const q = document.getElementById('lookupInput').value.trim();
+            if (!q) return;
+            fetch('/api/scan/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
+                body: JSON.stringify({student_id: q, location: 'Bursar Office', mode: 'balance_only'})
+            })
+            .then(r => r.json())
+            .then(data => {
+                const r = document.getElementById('lookupResult');
+                r.classList.add('show');
+                if (data.success) {
+                    const s = data.student, f = data.fees;
+                    r.innerHTML = `<div style="background:#e8f5e9;padding:14px;border-radius:10px;">
+                        <strong style="font-size:16px;">${s.name}</strong><br>
+                        <span style="color:#888;">${s.class} ${s.stream} | ${s.admission}</span>
+                        <div style="margin-top:10px; display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                            <div><small>Total:</small><br><strong>${f.total.toLocaleString()} UGX</strong></div>
+                            <div><small>Paid:</small><br><strong>${f.paid.toLocaleString()} UGX</strong></div>
+                            <div><small>Balance:</small><br><strong style="color:${f.status==='CLEARED'?'#2e7d32':'#c62828'}">${f.balance.toLocaleString()} UGX</strong></div>
+                            <div><small>Status:</small><br><span class="badge ${f.status==='CLEARED'?'badge-success':'badge-error'}">${f.status}</span></div>
+                        </div>
+                    </div>`;
+                } else {
+                    r.innerHTML = `<div style="background:#ffebee;padding:14px;border-radius:10px;color:#c62828;">${data.error}</div>`;
+                }
+            });
+        }
+        function getCookie(name) { let v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)'); return v ? v[2] : null; }
+    </script>
+</body>
+</html>

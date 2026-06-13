@@ -1,0 +1,52 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="icon" href="data:,">
+    <title>Fee Management - OneCard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 70px; }
+        .header { background: #1a237e; color: white; padding: 14px 16px; }
+        .header .title { font-size: 16px; font-weight: 600; }
+        .card-white { background: white; border-radius: 12px; padding: 16px; margin: 12px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+        .fee-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+        .fee-row .cls { font-weight: 600; font-size: 13px; }
+        .fee-row input { width: 100px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; text-align: right; font-size: 13px; }
+        .btn { width: 100%; padding: 14px; background: #2e7d32; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+        .cat-label { font-size: 11px; color: #888; }
+    </style>
+    <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
+</head>
+<body>
+    <div class="header"><div class="title">Manage Fees</div></div>
+    <div class="card-white">
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="save">
+            <div class="form-row">
+                <div class="form-group"><label>Term</label><select name="term"><option>Term 1</option><option selected>Term 2</option><option>Term 3</option></select></div>
+                <div class="form-group"><label>Year</label><input type="text" name="academic_year" value="{{ year|default:'2026' }}"></div>
+            </div>
+            {% for class_name in classes %}
+            <div style="margin-bottom:10px;">
+                <strong style="font-size:13px;">{{ class_name }}</strong>
+                <div class="fee-row">
+                    <span class="cat-label">☀ Day</span>
+                    <input type="number" name="fees_{{ class_name }}_day" value="{{ existing_fees|get_item:class_name|add:'_day'|default:'' }}" placeholder="UGX">
+                </div>
+                <div class="fee-row">
+                    <span class="cat-label">🏠 Hostel</span>
+                    <input type="number" name="fees_{{ class_name }}_hostel" value="{{ existing_fees|get_item:class_name|add:'_hostel'|default:'' }}" placeholder="UGX">
+                </div>
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn">Save Fees</button>
+        </form>
+    </div>
+</body>
+</html>

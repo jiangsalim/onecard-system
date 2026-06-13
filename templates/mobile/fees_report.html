@@ -1,0 +1,72 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="icon" href="data:,">
+    <title>Fee Report - OneCard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 70px; }
+        .header { background: #1a237e; color: white; padding: 14px 16px; }
+        .header .title { font-size: 16px; font-weight: 600; }
+        .filter-row { display: flex; gap: 6px; padding: 10px 16px; background: white; flex-wrap: wrap; }
+        .filter-row select, .filter-row input { padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; flex: 1; min-width: 80px; }
+        .filter-row button { padding: 10px 16px; background: #1a237e; color: white; border: none; border-radius: 8px; font-weight: 600; }
+        .stats-row { display: flex; gap: 8px; padding: 10px 16px; }
+        .stat-pill { flex: 1; padding: 8px; border-radius: 8px; text-align: center; font-size: 12px; font-weight: 600; text-decoration: none; }
+        .stat-all { background: #e3f2fd; color: #1565c0; }
+        .stat-cleared { background: #e8f5e9; color: #2e7d32; }
+        .stat-uncleared { background: #fff3e0; color: #e65100; }
+        .stat-unpaid { background: #ffebee; color: #c62828; }
+        .student-list { padding: 8px 16px; }
+        .student-card { background: white; border-radius: 10px; padding: 14px; margin-bottom: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+        .student-card .top { display: flex; justify-content: space-between; }
+        .student-card .name { font-weight: 600; font-size: 14px; }
+        .student-card .class { font-size: 11px; color: #888; }
+        .student-card .amounts { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 8px; font-size: 12px; }
+        .student-card .amounts div { text-align: center; }
+        .student-card .amounts .val { font-weight: 700; font-size: 14px; }
+        .badge { padding: 3px 8px; border-radius: 8px; font-size: 11px; font-weight: 600; }
+        .badge-success { background: #e8f5e9; color: #2e7d32; }
+        .badge-warning { background: #fff3e0; color: #e65100; }
+        .badge-error { background: #ffebee; color: #c62828; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; border-top: 1px solid #e0e0e0; }
+        .bottom-nav a { flex: 1; text-align: center; padding: 10px 0; color: #888; text-decoration: none; font-size: 11px; }
+        .bottom-nav a.active { color: #1a237e; }
+    </style>
+    <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
+</head>
+<body>
+    <div class="header"><div class="title">Fee Report</div></div>
+    <form class="filter-row">
+        <input type="hidden" name="status" value="{{ status_filter }}">
+        <select name="class"><option value="">All</option>{% for c in classes %}<option value="{{ c }}" {% if class_filter == c %}selected{% endif %}>{{ c }}</option>{% endfor %}</select>
+        <input type="text" name="search" placeholder="Search..." value="{{ search_query }}">
+        <button type="submit">Go</button>
+    </form>
+    <div class="stats-row">
+        <a href="?status=all" class="stat-pill stat-all">All: {{ cleared_count|add:not_cleared_count|add:not_paid_count }}</a>
+        <a href="?status=cleared" class="stat-pill stat-cleared">✓ {{ cleared_count }}</a>
+        <a href="?status=not_cleared" class="stat-pill stat-uncleared">⚠ {{ not_cleared_count }}</a>
+        <a href="?status=not_paid" class="stat-pill stat-unpaid">✗ {{ not_paid_count }}</a>
+    </div>
+    <div class="student-list">
+        {% for s in students %}
+        <div class="student-card">
+            <div class="top">
+                <div><div class="name">{{ s.name }}</div><div class="class">{{ s.class }} {{ s.stream }} | {{ s.id }}</div></div>
+                <span class="badge {% if s.status == 'CLEARED' %}badge-success{% elif s.status == 'NOT PAID' %}badge-error{% else %}badge-warning{% endif %}">{{ s.status }}</span>
+            </div>
+            <div class="amounts">
+                <div><div style="color:#888;">Total</div><div class="val">{{ s.total|floatformat:0 }}</div></div>
+                <div><div style="color:#888;">Paid</div><div class="val" style="color:#2e7d32;">{{ s.paid|floatformat:0 }}</div></div>
+                <div><div style="color:#888;">Balance</div><div class="val" style="color:#c62828;">{{ s.balance|floatformat:0 }}</div></div>
+            </div>
+        </div>
+        {% empty %}
+        <p style="text-align:center;color:#999;padding:40px;">No students found.</p>
+        {% endfor %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,58 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="icon" href="data:,">
+    <title>Attendance - OneCard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 70px; }
+        .header { background: #1a237e; color: white; padding: 14px 16px; }
+        .header .title { font-size: 16px; font-weight: 600; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px 16px; }
+        .stat-card { background: white; border-radius: 10px; padding: 16px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+        .stat-card .val { font-size: 26px; font-weight: 700; color: #1a237e; }
+        .stat-card .lbl { font-size: 12px; color: #888; }
+        .student-list { padding: 8px 16px; }
+        .student-card { background: white; border-radius: 10px; padding: 12px 14px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .student-card .info .name { font-weight: 600; font-size: 14px; }
+        .student-card .info .detail { font-size: 11px; color: #888; }
+        .student-card .time { font-size: 13px; color: #2e7d32; font-weight: 600; }
+        .section-title { font-size: 14px; font-weight: 600; color: #333; padding: 8px 16px; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; border-top: 1px solid #e0e0e0; }
+        .bottom-nav a { flex: 1; text-align: center; padding: 10px 0; color: #888; text-decoration: none; font-size: 11px; }
+        .bottom-nav a.active { color: #1a237e; }
+    </style>
+    <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
+</head>
+<body>
+    <div class="header"><div class="title">Attendance{% if class_filter %} — {{ class_filter }} {{ stream_filter }}{% endif %}</div></div>
+    <div class="stats-grid">
+        <div class="stat-card"><div class="val">{{ stats.total }}</div><div class="lbl">Total</div></div>
+        <div class="stat-card"><div class="val" style="color:#2e7d32;">{{ stats.present }}</div><div class="lbl">Present</div></div>
+        <div class="stat-card"><div class="val" style="color:#c62828;">{{ stats.absent }}</div><div class="lbl">Absent</div></div>
+        <div class="stat-card"><div class="val">{{ stats.rate }}%</div><div class="lbl">Rate</div></div>
+    </div>
+    <div class="section-title">Today's Records</div>
+    <div class="student-list">
+        {% for a in attendance_list %}
+        <div class="student-card">
+            <div class="info">
+                <div class="name">{{ a.student.id }}</div>
+                <div class="detail">{{ a.student.admission_number }} | {{ a.scan_location }}</div>
+            </div>
+            <div class="time">{{ a.time_in }}</div>
+        </div>
+        {% empty %}
+        <p style="text-align:center;color:#999;padding:30px;">No records today.</p>
+        {% endfor %}
+    </div>
+    <div class="bottom-nav">
+        <a href="{% url 'dashboard' %}">Home</a>
+        <a href="#" class="active">Attendance</a>
+        <a href="{% url 'fee_report' %}">Fees</a>
+        <a href="{% url 'movement_history' %}">Movement</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,65 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="icon" href="data:,">
+    <title>Users - OneCard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 20px; }
+        .header { background: #1a237e; color: white; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; }
+        .header .title { font-size: 16px; font-weight: 600; }
+        .header a { color: #ffcc80; text-decoration: none; font-size: 14px; font-weight: 600; }
+        .user-list { padding: 12px 16px; }
+        .user-card { background: white; border-radius: 10px; padding: 14px; margin-bottom: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+        .user-card .top { display: flex; justify-content: space-between; align-items: center; }
+        .user-card .name { font-weight: 600; font-size: 14px; }
+        .user-card .username { font-size: 12px; color: #888; }
+        .user-card .assignment { font-size: 11px; color: #666; margin-top: 2px; }
+        .badge { padding: 3px 8px; border-radius: 8px; font-size: 10px; font-weight: 600; }
+        .badge-super { background: #4a148c; color: #e1bee7; }
+        .badge-admin { background: #1a237e; color: #c5cae9; }
+        .badge-bursar { background: #e65100; color: #ffcc80; }
+        .badge-gate { background: #00695c; color: #b2dfdb; }
+        .badge-teacher { background: #0d47a1; color: #90caf9; }
+        .actions { display: flex; gap: 6px; margin-top: 8px; }
+        .btn { padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; text-decoration: none; }
+        .btn-edit { background: #1a237e; color: white; }
+        .btn-del { background: #c62828; color: white; }
+    </style>
+    <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
+</head>
+<body>
+    <div class="header">
+        <div class="title">User Management</div>
+        <a href="{% url 'add_user' %}">+ Add</a>
+    </div>
+    {% if messages %}
+    {% for m in messages %}<div style="padding:10px 16px;background:#e8f5e9;color:#2e7d32;font-size:13px;">{{ m }}</div>{% endfor %}
+    {% endif %}
+    <div class="user-list">
+        {% for u in users %}
+        <div class="user-card">
+            <div class="top">
+                <div>
+                    <div class="name">{{ u.get_full_name }}</div>
+                    <div class="username">@{{ u.username }}</div>
+                    {% if u.assigned_class %}<div class="assignment">{{ u.assigned_class }} {{ u.assigned_stream }}</div>{% endif %}
+                    {% if u.assigned_location %}<div class="assignment">{{ u.assigned_location }}</div>{% endif %}
+                </div>
+                <span class="badge {% if u.role == 'super_admin' %}badge-super{% elif u.role == 'admin' %}badge-admin{% elif u.role == 'bursar' %}badge-bursar{% elif u.role == 'gate_staff' %}badge-gate{% else %}badge-teacher{% endif %}">
+                    {{ u.get_role_display }}
+                </span>
+            </div>
+            {% if u != request.user %}
+            <div class="actions">
+                <a href="{% url 'edit_user' u.id %}" class="btn btn-edit">Edit</a>
+                <a href="{% url 'delete_user' u.id %}" class="btn btn-del">Delete</a>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>

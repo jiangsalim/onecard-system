@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 from .models import Notification, NotificationSetting
 from datetime import date, timedelta, datetime
+from core.mobile_utils import render_mobile_or_desktop
 
 
 @login_required
@@ -11,9 +12,8 @@ def notification_list(request):
     """View all notifications."""
     notifications = Notification.objects.all().order_by('-created_at')[:50]
     unread_count = Notification.objects.filter(is_read=False).count()
-    return render(request, 'notifications/list.html', {
-        'notifications': notifications,
-        'unread_count': unread_count,
+    return render_mobile_or_desktop(request, 'notifications/list.html', 'mobile/notifications_list.html', {
+        'notifications': notifications, 'unread_count': unread_count,
     })
 
 
@@ -40,8 +40,7 @@ def mark_all_read(request):
 def notification_settings(request):
     """Manage notification settings."""
     if request.user.role not in ['super_admin', 'admin']:
-        messages.error(request, 'Access denied.')
-        return redirect('dashboard')
+        messages.error(request, 'Access denied.'); return redirect('dashboard')
     
     settings, _ = NotificationSetting.objects.get_or_create(id=1)
     
@@ -54,7 +53,7 @@ def notification_settings(request):
         messages.success(request, 'Notification settings updated!')
         return redirect('notification_settings')
     
-    return render(request, 'notifications/settings.html', {'settings': settings})
+    return render_mobile_or_desktop(request, 'notifications/settings.html', 'mobile/notifications_settings.html', {'settings': settings})
 
 
 @login_required
@@ -71,8 +70,7 @@ def create_test_notification(request):
 
 
 def auto_check_alerts():
-    """Check for alert conditions and create notifications.
-    Called from dashboard view or can be scheduled via Celery."""
+    """Check for alert conditions and create notifications."""
     from core.models import Student
     from core.services import get_payment_balance
     from attendance.models import Attendance
@@ -80,80 +78,48 @@ def auto_check_alerts():
 
     settings = NotificationSetting.objects.first()
     if not settings:
-        return
+        return 0
 
     today = date.today()
     alerts_created = 0
 
-    # ---- Fee Balance Alerts ----
     if settings.fee_balance_threshold:
         for s in Student.objects.filter(status='active')[:100]:
             paid = get_payment_balance(s.payment_code)
             if float(paid) >= float(settings.fee_balance_threshold):
                 continue
-
-            already_notified = Notification.objects.filter(
-                related_student=s, category='fee',
-                created_at__date=today
-            ).exists()
-
+            already_notified = Notification.objects.filter(related_student=s, category='fee', created_at__date=today).exists()
             if not already_notified:
                 Notification.objects.create(
                     title='Fee Balance Alert',
                     message=f'Student {s.id} ({s.admission_number}) has a balance above threshold.',
-                    priority='medium',
-                    category='fee',
-                    related_student=s,
+                    priority='medium', category='fee', related_student=s,
                 )
                 alerts_created += 1
 
-    # ---- Attendance Alerts ----
     if settings.attendance_consecutive_days:
         cutoff = today - timedelta(days=settings.attendance_consecutive_days)
-
-        absent_students = Student.objects.filter(status='active').exclude(
-            attendance_records__scan_date__gte=cutoff
-        )[:50]
-
+        absent_students = Student.objects.filter(status='active').exclude(attendance_records__scan_date__gte=cutoff)[:50]
         for s in absent_students:
-            already_notified = Notification.objects.filter(
-                related_student=s, category='attendance',
-                created_at__date=today
-            ).exists()
-
+            already_notified = Notification.objects.filter(related_student=s, category='attendance', created_at__date=today).exists()
             if not already_notified:
                 Notification.objects.create(
                     title='Absent Alert',
                     message=f'Student {s.id} ({s.admission_number}) absent for {settings.attendance_consecutive_days}+ consecutive days.',
-                    priority='high',
-                    category='attendance',
-                    related_student=s,
+                    priority='high', category='attendance', related_student=s,
                 )
                 alerts_created += 1
 
-    # ---- Movement Alerts ----
     if settings.movement_hours_outside:
         hours_ago = (datetime.now() - timedelta(hours=int(settings.movement_hours_outside))).time()
-
-        long_out = MovementLog.objects.filter(
-            exit_date=today,
-            time_in__isnull=True,
-            time_out__lte=hours_ago
-        )[:50]
-
+        long_out = MovementLog.objects.filter(exit_date=today, time_in__isnull=True, time_out__lte=hours_ago)[:50]
         for m in long_out:
-            already_notified = Notification.objects.filter(
-                related_student=m.student, category='movement',
-                created_at__date=today
-            ).exists()
-
+            already_notified = Notification.objects.filter(related_student=m.student, category='movement', created_at__date=today).exists()
             if not already_notified:
                 Notification.objects.create(
                     title='Student Outside Too Long',
                     message=f'Student {m.student.id} has been outside since {m.time_out} ({settings.movement_hours_outside}+ hours).',
-                    priority='high',
-                    category='movement',
-                    related_student=m.student,
+                    priority='high', category='movement', related_student=m.student,
                 )
                 alerts_created += 1
 
