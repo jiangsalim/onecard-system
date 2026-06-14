@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿{% load card_filters %}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -28,44 +29,14 @@
         .btn-secondary { background: #e0e0e0; color: #333; text-decoration: none; margin-left: 10px; }
         .extra-fields { display: none; margin-top: 12px; padding: 12px; background: #f5f5f5; border-radius: 6px; }
         .extra-fields.show { display: block; }
-        /* Mobile Responsive */
-@media (max-width: 768px) {
-    .layout { flex-direction: column; }
-    .sidebar { 
-        width: 100%; min-height: auto; 
-        display: flex; flex-wrap: wrap; gap: 0;
-        padding: 5px 0; border-right: none; 
-        border-bottom: 1px solid #e0e0e0;
-    }
-    .sidebar .section-title { display: none; }
-    .sidebar a { 
-        padding: 8px 12px; font-size: 12px; 
-        border-left: none; border-bottom: 2px solid transparent;
-    }
-    .sidebar a:hover { border-bottom-color: #1a237e; border-left: none; }
-    .main-content { margin-left: 0; padding: 12px; }
-    .stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .stat-card { padding: 16px 10px; }
-    .stat-card .stat-value { font-size: 22px; }
-    .stat-card .stat-label { font-size: 11px; }
-    .grid-2 { grid-template-columns: 1fr; }
-    .action-grid { grid-template-columns: 1fr; }
-    .card { padding: 16px; }
-    .card h2 { font-size: 16px; }
-    table { font-size: 11px; }
-    th, td { padding: 6px 8px; }
-    .btn { padding: 8px 14px; font-size: 12px; }
-    .navbar { padding: 0 10px; }
-    .navbar .brand { font-size: 15px; }
-    .navbar .user-info { gap: 8px; font-size: 11px; }
-    .navbar .role-badge { padding: 2px 8px; font-size: 9px; }
-    .quick-links { flex-direction: column; }
-    .quick-links .btn { width: 100%; text-align: center; }
-    .filter-row { flex-direction: column; }
-    .filter-row select, .filter-row input { width: 100%; }
-}
+        @media (max-width: 768px) {
+            .layout { flex-direction: column; }
+            .sidebar { width: 100%; min-height: auto; display: flex; flex-wrap: wrap; overflow-x: auto; }
+            .sidebar .section-title { display: none; }
+            .sidebar a { display: inline-block; padding: 8px 12px; font-size: 12px; border-left: none; border-bottom: 2px solid transparent; }
+            .main-content { margin-left: 0; padding: 12px; }
+        }
     </style>
-    <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
     <div class="navbar">
@@ -107,6 +78,7 @@
                     <div class="form-group">
                         <label>Role</label>
                         <select name="role" id="roleSelect" onchange="toggleExtraFields()">
+                            <option value="super_admin" {% if target_user.role == 'super_admin' %}selected{% endif %}>Super Admin</option>
                             <option value="admin" {% if target_user.role == 'admin' %}selected{% endif %}>Admin</option>
                             <option value="bursar" {% if target_user.role == 'bursar' %}selected{% endif %}>Bursar</option>
                             <option value="gate_staff" {% if target_user.role == 'gate_staff' %}selected{% endif %}>Gate Staff</option>
@@ -118,6 +90,7 @@
                         <div class="form-group">
                             <label>Assigned Location</label>
                             <select name="assigned_location">
+                                <option value="">-- Select --</option>
                                 <option value="Main Gate" {% if target_user.assigned_location == 'Main Gate' %}selected{% endif %}>Main Gate</option>
                                 <option value="Side Gate" {% if target_user.assigned_location == 'Side Gate' %}selected{% endif %}>Side Gate</option>
                                 <option value="Dining Hall" {% if target_user.assigned_location == 'Dining Hall' %}selected{% endif %}>Dining Hall</option>
@@ -144,14 +117,9 @@
                                 <label>Assigned Stream</label>
                                 <select name="assigned_stream">
                                     <option value="">-- Select --</option>
-                                    <option value="A" {% if target_user.assigned_stream == 'A' %}selected{% endif %}>A</option>
-                                    <option value="B" {% if target_user.assigned_stream == 'B' %}selected{% endif %}>B</option>
-                                    <option value="C" {% if target_user.assigned_stream == 'C' %}selected{% endif %}>C</option>
-                                    <option value="D" {% if target_user.assigned_stream == 'D' %}selected{% endif %}>D</option>
-                                    <option value="E" {% if target_user.assigned_stream == 'E' %}selected{% endif %}>E</option>
-                                    <option value="F" {% if target_user.assigned_stream == 'F' %}selected{% endif %}>F</option>
-                                    <option value="G" {% if target_user.assigned_stream == 'G' %}selected{% endif %}>G</option>
-                                    <option value="H" {% if target_user.assigned_stream == 'H' %}selected{% endif %}>H</option>
+                                    {% for st in "ABCDEFGH" %}
+                                    <option value="{{ st }}" {% if target_user.assigned_stream == st %}selected{% endif %}>{{ st }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                         </div>
@@ -170,10 +138,7 @@
             document.getElementById('gateFields').classList.toggle('show', role === 'gate_staff');
             document.getElementById('teacherFields').classList.toggle('show', role === 'class_teacher');
         }
-        // Run on load for edit mode
         toggleExtraFields();
     </script>
 </body>
 </html>
-
-
