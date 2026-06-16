@@ -10,10 +10,24 @@
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 70px; }
         .header { background: #1a237e; color: white; padding: 14px 16px; }
         .header .title { font-size: 16px; font-weight: 600; }
+        .header .subtitle { font-size: 11px; opacity: 0.8; }
+        .gender-tabs { display: flex; gap: 6px; padding: 10px 16px; background: white; }
+        .gender-tab { flex: 1; padding: 8px; text-align: center; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; }
+        .tab-all { background: #1a237e; color: white; }
+        .tab-male { background: #1565c0; color: white; }
+        .tab-female { background: #c62828; color: white; }
+        .tab-inactive { background: #e0e0e0; color: #666; }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px 16px; }
         .stat-card { background: white; border-radius: 10px; padding: 16px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-        .stat-card .val { font-size: 26px; font-weight: 700; color: #1a237e; }
+        .stat-card .val { font-size: 26px; font-weight: 700; }
         .stat-card .lbl { font-size: 12px; color: #888; }
+        .gender-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 16px; margin-bottom: 12px; }
+        .gender-card { border-radius: 10px; padding: 14px; text-align: center; }
+        .gender-card.male { background: #e3f2fd; }
+        .gender-card.female { background: #fce4ec; }
+        .gender-card .label { font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+        .gender-card .count { font-size: 22px; font-weight: 700; }
+        .gender-card .rate { font-size: 16px; font-weight: 600; margin-top: 2px; }
         .student-list { padding: 8px 16px; }
         .student-card { background: white; border-radius: 10px; padding: 12px 14px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .student-card .info .name { font-weight: 600; font-size: 14px; }
@@ -27,13 +41,47 @@
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
-    <div class="header"><div class="title">Attendance{% if class_filter %} — {{ class_filter }} {{ stream_filter }}{% endif %}</div></div>
+    <div class="header">
+        <div class="title">Attendance{% if class_filter %} — {{ class_filter }} {{ stream_filter }}{% endif %}</div>
+        {% if gender_filter == 'M' %}
+        <div class="subtitle">Showing Males Only</div>
+        {% elif gender_filter == 'F' %}
+        <div class="subtitle">Showing Females Only</div>
+        {% endif %}
+    </div>
+
+    <!-- Gender Tabs -->
+    <div class="gender-tabs">
+        <a href="?{% if class_filter %}class={{ class_filter }}{% endif %}{% if stream_filter %}&stream={{ stream_filter }}{% endif %}" 
+           class="gender-tab {% if not gender_filter %}tab-all{% else %}tab-inactive{% endif %}">All</a>
+        <a href="?{% if class_filter %}class={{ class_filter }}{% endif %}{% if stream_filter %}&stream={{ stream_filter }}{% endif %}&gender=M" 
+           class="gender-tab {% if gender_filter == 'M' %}tab-male{% else %}tab-inactive{% endif %}">Males</a>
+        <a href="?{% if class_filter %}class={{ class_filter }}{% endif %}{% if stream_filter %}&stream={{ stream_filter }}{% endif %}&gender=F" 
+           class="gender-tab {% if gender_filter == 'F' %}tab-female{% else %}tab-inactive{% endif %}">Females</a>
+    </div>
+
+    <!-- Gender Stats Cards -->
+    <div class="gender-cards">
+        <div class="gender-card male">
+            <div class="label" style="color:#1565c0;">Males</div>
+            <div class="count" style="color:#1565c0;">{{ gender_stats.males.present }}/{{ gender_stats.males.total }}</div>
+            <div class="rate" style="color:#1565c0;">{{ gender_stats.males.rate }}%</div>
+        </div>
+        <div class="gender-card female">
+            <div class="label" style="color:#c62828;">Females</div>
+            <div class="count" style="color:#c62828;">{{ gender_stats.females.present }}/{{ gender_stats.females.total }}</div>
+            <div class="rate" style="color:#c62828;">{{ gender_stats.females.rate }}%</div>
+        </div>
+    </div>
+
+    <!-- Overall Stats -->
     <div class="stats-grid">
         <div class="stat-card"><div class="val" style="color:#2e7d32;">{{ stats.on_time }}</div><div class="lbl">On Time</div></div>
         <div class="stat-card"><div class="val" style="color:#e65100;">{{ stats.late }}</div><div class="lbl">Late</div></div>
         <div class="stat-card"><div class="val" style="color:#c62828;">{{ stats.absent }}</div><div class="lbl">Absent</div></div>
         <div class="stat-card"><div class="val">{{ stats.rate }}%</div><div class="lbl">Rate</div></div>
     </div>
+
     <div class="section-title">Today's Records</div>
     <div class="student-list">
         {% for a in attendance_list %}
@@ -56,4 +104,3 @@
     </div>
 </body>
 </html>
-

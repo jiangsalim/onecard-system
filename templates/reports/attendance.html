@@ -32,6 +32,20 @@
         .badge-success { background: #e8f5e9; color: #2e7d32; }
         .badge-warning { background: #fff3e0; color: #e65100; }
         .badge-error { background: #ffebee; color: #c62828; }
+        .gender-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+        .gender-card { padding: 20px; border-radius: 8px; text-align: center; }
+        .gender-card.male { background: #e3f2fd; border: 2px solid #90caf9; }
+        .gender-card.female { background: #fce4ec; border: 2px solid #f48fb1; }
+        .gender-card h3 { margin-bottom: 8px; font-size: 14px; }
+        .gender-card .big-number { font-size: 30px; font-weight: 700; }
+        .gender-card .detail { font-size: 12px; color: #666; margin-top: 4px; }
+        .gender-card .rate { font-size: 20px; font-weight: 600; margin-top: 6px; }
+        .filter-pills { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+        .filter-pill { padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; text-decoration: none; border: 2px solid transparent; }
+        .filter-pill.active-all { background: #1a237e; color: white; border-color: #1a237e; }
+        .filter-pill.active-male { background: #1565c0; color: white; border-color: #1565c0; }
+        .filter-pill.active-female { background: #c62828; color: white; border-color: #c62828; }
+        .filter-pill.inactive { background: #e0e0e0; color: #666; }
         @media (max-width: 768px) {
             .layout { flex-direction: column; }
             .sidebar { width: 100%; min-height: auto; display: flex; flex-wrap: wrap; overflow-x: auto; }
@@ -43,6 +57,7 @@
             .stat-card .stat-value { font-size: 22px; }
             table { font-size: 11px; }
             th, td { padding: 6px 8px; }
+            .gender-cards { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -58,16 +73,48 @@
             <a href="{% url 'movement_history' %}">Movement</a>
         </div>
         <div class="main-content">
-            <h1 style="color:#1a237e; margin-bottom:20px;">
+            <h1 style="color:#1a237e; margin-bottom:8px;">
                 Attendance Report
                 {% if class_filter %}
                 <span style="font-size:16px; color:#888;">— {{ class_filter }} {{ stream_filter }}</span>
                 {% endif %}
+                {% if gender_filter == 'M' %}
+                <span style="font-size:16px; color:#1565c0;">(Males Only)</span>
+                {% elif gender_filter == 'F' %}
+                <span style="font-size:16px; color:#c62828;">(Females Only)</span>
+                {% endif %}
             </h1>
             <p style="color:#888; margin-bottom:16px; font-size:13px;">
-                Late cutoff: {{ cutoff_time|time:'H:i' }} | Total students: {{ stats.total }}
+                Late cutoff: {{ cutoff_time|time:'H:i' }} | Total: {{ stats.total }} students
             </p>
 
+            <!-- Gender Filter Pills -->
+            <div class="filter-pills">
+                <a href="?{% if class_filter %}class={{ class_filter }}{% endif %}{% if stream_filter %}&stream={{ stream_filter }}{% endif %}" 
+                   class="filter-pill {% if not gender_filter %}active-all{% else %}inactive{% endif %}">All Students</a>
+                <a href="?{% if class_filter %}class={{ class_filter }}{% endif %}{% if stream_filter %}&stream={{ stream_filter }}{% endif %}&gender=M" 
+                   class="filter-pill {% if gender_filter == 'M' %}active-male{% else %}inactive{% endif %}">Males Only</a>
+                <a href="?{% if class_filter %}class={{ class_filter }}{% endif %}{% if stream_filter %}&stream={{ stream_filter }}{% endif %}&gender=F" 
+                   class="filter-pill {% if gender_filter == 'F' %}active-female{% else %}inactive{% endif %}">Females Only</a>
+            </div>
+
+            <!-- Gender Breakdown Cards -->
+            <div class="gender-cards">
+                <div class="gender-card male">
+                    <h3 style="color:#1565c0;">Males</h3>
+                    <div class="big-number" style="color:#1565c0;">{{ gender_stats.males.present }}/{{ gender_stats.males.total }}</div>
+                    <div class="detail">Present: {{ gender_stats.males.present }} | Absent: {{ gender_stats.males.absent }}</div>
+                    <div class="rate" style="color:#1565c0;">{{ gender_stats.males.rate }}%</div>
+                </div>
+                <div class="gender-card female">
+                    <h3 style="color:#c62828;">Females</h3>
+                    <div class="big-number" style="color:#c62828;">{{ gender_stats.females.present }}/{{ gender_stats.females.total }}</div>
+                    <div class="detail">Present: {{ gender_stats.females.present }} | Absent: {{ gender_stats.females.absent }}</div>
+                    <div class="rate" style="color:#c62828;">{{ gender_stats.females.rate }}%</div>
+                </div>
+            </div>
+
+            <!-- Overall Stats -->
             <div class="stats-row">
                 <div class="stat-card">
                     <div class="stat-value" style="color:#2e7d32;">{{ stats.on_time }}</div>

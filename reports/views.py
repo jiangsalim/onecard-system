@@ -49,16 +49,17 @@ def build_excel_response(filename, sheet_name, headers, data):
 
 @login_required
 def attendance_report(request):
-    """Attendance report with chart — Late students ARE present, just flagged."""
+    """Attendance report with gender analytics."""
     today = date.today()
     
     class_filter = request.GET.get('class', '')
     stream_filter = request.GET.get('stream', '')
+    gender_filter = request.GET.get('gender', '')  # 'M', 'F', or ''
     
-    # Get late cutoff time from settings
     notif_settings = NotificationSetting.objects.first()
     cutoff_time = notif_settings.late_cutoff_time if notif_settings else time(8, 0)
     
+    # Base query
     if class_filter:
         from core.services import fetch_students_from_existing_db
         all_school = fetch_students_from_existing_db()
@@ -67,6 +68,14 @@ def attendance_report(request):
             if s['current_class'] == class_filter 
             and (not stream_filter or s['stream'] == stream_filter)
         ]
+        # Filter by gender if specified
+        if gender_filter:
+            matching_admissions = [
+                s['admission_number'] for s in all_school 
+                if s['current_class'] == class_filter 
+                and (not stream_filter or s['stream'] == stream_filter)
+                and s.get('gender') == gender_filter
+            ]
         filtered_student_ids = Student.objects.filter(
             admission_number__in=matching_admissions, status='active'
         ).values_list('id', flat=True)
@@ -75,9 +84,7 @@ def attendance_report(request):
         attendance_list = Attendance.objects.filter(
             scan_date=today, student_id__in=filtered_student_ids
         ).select_related('student').order_by('time_in')
-        # ALL students scanned today = present (includes late)
         present = Attendance.objects.filter(scan_date=today, student_id__in=filtered_student_ids).count()
-        # Late = scanned after cutoff
         late = Attendance.objects.filter(scan_date=today, student_id__in=filtered_student_ids, time_in__gt=cutoff_time).count()
     else:
         total = Student.objects.filter(status='active').count()
@@ -85,20 +92,65 @@ def attendance_report(request):
         present = Attendance.objects.filter(scan_date=today).count()
         late = Attendance.objects.filter(scan_date=today, time_in__gt=cutoff_time).count()
     
-    on_time = present - late  # Those who arrived before cutoff
-    absent = total - present  # Those not scanned at all
+    on_time = present - late
+    absent = total - present
+    
+    # Gender breakdown
+    if class_filter:
+        male_admissions = [s['admission_number'] for s in all_school 
+                          if s['current_class'] == class_filter 
+                          and (not stream_filter or s['stream'] == stream_filter)
+                          and s.get('gender') == 'M']
+        female_admissions = [s['admission_number'] for s in all_school 
+                            if s['current_class'] == class_filter 
+                            and (not stream_filter or s['stream'] == stream_filter)
+                            and s.get('gender') == 'F']
+        male_ids = Student.objects.filter(admission_number__in=male_admissions, status='active').values_list('id', flat=True)
+        female_ids = Student.objects.filter(admission_number__in=female_admissions, status='active').values_list('id', flat=True)
+        
+        males_present = Attendance.objects.filter(scan_date=today, student_id__in=male_ids).count()
+        females_present = Attendance.objects.filter(scan_date=today, student_id__in=female_ids).count()
+        males_total = len(male_admissions)
+        females_total = len(female_admissions)
+    else:
+        # Get gender from school DB for all students
+        from core.services import fetch_students_from_existing_db
+        all_students = fetch_students_from_existing_db()
+        male_admissions = [s['admission_number'] for s in all_students if s.get('gender') == 'M']
+        female_admissions = [s['admission_number'] for s in all_students if s.get('gender') == 'F']
+        male_ids = Student.objects.filter(admission_number__in=male_admissions, status='active').values_list('id', flat=True)
+        female_ids = Student.objects.filter(admission_number__in=female_admissions, status='active').values_list('id', flat=True)
+        
+        males_present = Attendance.objects.filter(scan_date=today, student_id__in=male_ids).count()
+        females_present = Attendance.objects.filter(scan_date=today, student_id__in=female_ids).count()
+        males_total = len(male_ids)
+        females_total = len(female_ids)
+    
+    gender_stats = {
+        'males': {
+            'total': males_total,
+            'present': males_present,
+            'absent': males_total - males_present if males_total > males_present else 0,
+            'rate': round((males_present / males_total * 100) if males_total > 0 else 0, 1),
+        },
+        'females': {
+            'total': females_total,
+            'present': females_present,
+            'absent': females_total - females_present if females_total > females_present else 0,
+            'rate': round((females_present / females_total * 100) if females_total > 0 else 0, 1),
+        }
+    }
     
     stats = {
-        'total': total,
-        'present': present,       # ALL scanned (on time + late)
-        'on_time': on_time,       # Scanned before cutoff
-        'absent': absent,         # Not scanned at all
-        'late': late,             # Scanned after cutoff
+        'total': total, 'present': present, 'on_time': on_time,
+        'absent': absent, 'late': late,
         'rate': round((present / total * 100) if total > 0 else 0, 1),
     }
+    
     return render_mobile_or_desktop(request, 'reports/attendance.html', 'mobile/reports_attendance.html', {
-        'attendance_list': attendance_list, 'stats': stats,
-        'class_filter': class_filter, 'stream_filter': stream_filter, 'cutoff_time': cutoff_time,
+        'attendance_list': attendance_list, 'stats': stats, 'gender_stats': gender_stats,
+        'class_filter': class_filter, 'stream_filter': stream_filter, 
+        'gender_filter': gender_filter, 'cutoff_time': cutoff_time,
     })
 
 
