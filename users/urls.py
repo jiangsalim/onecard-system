@@ -17,4 +17,5 @@ urlpatterns = [
     path('users/<int:user_id>/delete/', views.delete_user, name='delete_user'),
     path('dismiss-alert/<str:student_id>/', views.dismiss_alert, name='dismiss_alert'),
     path('dismiss-all-alerts/', views.dismiss_all_alerts, name='dismiss_all_alerts'),
+    path('reset-system/', views.reset_system_data, name='reset_system_data'),
 ]

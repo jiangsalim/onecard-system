@@ -439,3 +439,111 @@ def delete_user(request, user_id):
         messages.success(request, f'User "{username}" deleted.')
         return redirect('user_management')
     return render_mobile_or_desktop(request, 'users/delete_confirm.html', 'mobile/users_delete.html', {'target_user': target_user})
+
+@login_required
+def reset_system_data(request):
+    """Super Admin: FULL system reset — deletes everything except Super Admin users."""
+    if request.user.role != 'super_admin':
+        messages.error(request, 'Access denied.')
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        from core.models import Student
+        from attendance.models import Attendance, MealLog, MealViolation, MealAccessRule, MealTimeSettings
+        from movement.models import MovementLog
+        from notifications.models import Notification, NotificationSetting, DismissedAlert, TeacherNotificationSetting
+        from messaging.models import Message, Conversation
+        from fees.models import FeeStructure
+        from cards.models import CardTemplate, StudentCardAssignment
+        
+        counts = {}
+        
+        # Operational data
+        counts['attendance'] = Attendance.objects.all().count()
+        Attendance.objects.all().delete()
+        
+        counts['meal_logs'] = MealLog.objects.all().count()
+        MealLog.objects.all().delete()
+        
+        counts['meal_violations'] = MealViolation.objects.all().count()
+        MealViolation.objects.all().delete()
+        
+        counts['movement'] = MovementLog.objects.all().count()
+        MovementLog.objects.all().delete()
+        
+        counts['notifications'] = Notification.objects.all().count()
+        Notification.objects.all().delete()
+        
+        counts['dismissed'] = DismissedAlert.objects.all().count()
+        DismissedAlert.objects.all().delete()
+        
+        counts['messages'] = Message.objects.all().count()
+        Message.objects.all().delete()
+        
+        counts['conversations'] = Conversation.objects.all().count()
+        Conversation.objects.all().delete()
+        
+        # Students & imports
+        counts['students'] = Student.objects.all().count()
+        Student.objects.all().delete()
+        
+        # Cards
+        counts['card_assignments'] = StudentCardAssignment.objects.all().count()
+        StudentCardAssignment.objects.all().delete()
+        
+        counts['card_templates'] = CardTemplate.objects.all().count()
+        CardTemplate.objects.all().delete()
+        
+        # Fees & Meal config
+        counts['fee_structures'] = FeeStructure.objects.all().count()
+        FeeStructure.objects.all().delete()
+        
+        counts['meal_access_rules'] = MealAccessRule.objects.all().count()
+        MealAccessRule.objects.all().delete()
+        
+        counts['meal_time_settings'] = MealTimeSettings.objects.all().count()
+        MealTimeSettings.objects.all().delete()
+        
+        # Notification settings
+        counts['notif_settings'] = NotificationSetting.objects.all().count()
+        NotificationSetting.objects.all().delete()
+        
+        counts['teacher_notif'] = TeacherNotificationSetting.objects.all().count()
+        TeacherNotificationSetting.objects.all().delete()
+        
+        # Delete all users EXCEPT super_admin
+        from users.models import User
+        non_super_users = User.objects.exclude(role='super_admin')
+        counts['users'] = non_super_users.count()
+        non_super_users.delete()
+        
+        total = sum(counts.values())
+        logger.warning(f"FULL SYSTEM RESET by {request.user.username}. {total} records deleted!")
+        messages.success(request, f'🔥 FULL SYSTEM RESET! {total} records deleted. Only Super Admin accounts remain.')
+        
+        return redirect('dashboard')
+    
+    # GET: Show confirmation page with counts
+    from core.models import Student
+    from attendance.models import Attendance, MealLog, MealViolation
+    from movement.models import MovementLog
+    from notifications.models import Notification
+    from messaging.models import Message, Conversation
+    from users.models import User
+    
+    preview = {
+        'students': Student.objects.count(),
+        'attendance': Attendance.objects.count(),
+        'meal_logs': MealLog.objects.count(),
+        'meal_violations': MealViolation.objects.count(),
+        'movement': MovementLog.objects.count(),
+        'messages': Message.objects.count(),
+        'conversations': Conversation.objects.count(),
+        'notifications': Notification.objects.count(),
+        'users': User.objects.exclude(role='super_admin').count(),
+    }
+    preview['total'] = sum(preview.values())
+    
+    return render_mobile_or_desktop(request, 'users/reset_confirm.html', 'mobile/users_reset_confirm.html', {
+        'preview': preview,
+    })
