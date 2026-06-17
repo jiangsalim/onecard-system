@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
+    <title>New Message - OneCard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; }
+        .navbar { background: #1a237e; color: white; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; height: 60px; }
+        .navbar .brand { font-size: 18px; font-weight: 600; }
+        .navbar a { color: white; text-decoration: none; }
+        .layout { display: flex; }
+        .sidebar { width: 240px; background: white; min-height: calc(100vh - 60px); border-right: 1px solid #e0e0e0; padding-top: 10px; }
+        .sidebar a { display: block; padding: 12px 24px; color: #333; text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
+        .sidebar a:hover { background: #f5f5ff; color: #1a237e; border-left-color: #1a237e; }
+        .sidebar .section-title { padding: 20px 24px 8px; font-size: 11px; text-transform: uppercase; color: #999; letter-spacing: 1.5px; font-weight: 600; }
+        .main-content { flex: 1; padding: 24px 32px; max-width: 600px; }
+        .card { background: white; border-radius: 8px; padding: 24px; border: 1px solid #e8e8e8; }
+        .card h2 { color: #1a237e; margin-bottom: 16px; }
+        .user-list { display: flex; flex-direction: column; gap: 4px; }
+        .user-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; text-decoration: none; color: #333; cursor: pointer; }
+        .user-item:hover { background: #f5f5ff; }
+        .user-item .avatar { width: 40px; height: 40px; border-radius: 50%; background: #1a237e; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0; }
+        .user-item .name { font-weight: 600; font-size: 14px; }
+        .user-item .role-badge { font-size: 11px; color: #888; background: #f0f0f0; padding: 2px 8px; border-radius: 10px; }
+        input[type="search"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; margin-bottom: 16px; }
+        @media (max-width: 768px) {
+            .layout { flex-direction: column; }
+            .sidebar { width: 100%; min-height: auto; display: flex; flex-wrap: wrap; }
+            .sidebar .section-title { display: none; }
+            .sidebar a { padding: 8px 12px; font-size: 12px; }
+            .main-content { padding: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="brand"><a href="{% url 'dashboard' %}" style="color:white;">OneCard System</a></div>
+    </div>
+    <div class="layout">
+        <div class="sidebar">
+            <div class="section-title">Messaging</div>
+            <a href="{% url 'inbox' %}">← Inbox</a>
+            <a href="{% url 'start_conversation' %}" style="background:#f5f5ff; color:#1a237e; border-left-color:#1a237e;">New Message</a>
+        </div>
+        <div class="main-content">
+            <div class="card">
+                <h2>New Message</h2>
+                <p style="color:#888; margin-bottom:16px; font-size:13px;">Select a staff member to start a conversation.</p>
+                <input type="search" id="searchInput" placeholder="Search by name or role..." oninput="filterUsers()">
+                <div class="user-list" id="userList">
+                    {% for u in users %}
+                    <form method="post" style="display:contents;">
+                        {% csrf_token %}
+                        <input type="hidden" name="user_id" value="{{ u.id }}">
+                        <button type="submit" class="user-item" style="border:none;background:none;width:100%;text-align:left;font-family:inherit;">
+                            <div class="avatar">{{ u.get_full_name|default:u.username|slice:":1"|upper }}</div>
+                            <div>
+                                <div class="name">{{ u.get_full_name|default:u.username }}</div>
+                                <span class="role-badge">{{ u.get_role_display|default:u.role }}</span>
+                            </div>
+                        </button>
+                    </form>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        function filterUsers() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            document.querySelectorAll('.user-item').forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(q) ? 'flex' : 'none';
+            });
+        }
+    </script>
+</body>
+</html>

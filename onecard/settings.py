@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'reports',
     'users',
     'notifications',
+    'messaging',
 ]
 
 MIDDLEWARE = [

@@ -86,3 +86,70 @@ class MealAccessRule(models.Model):
     
     def __str__(self):
         return f"{self.class_name} ({self.get_category_display()}) - Max: {self.max_balance} UGX"
+
+class MealTimeSettings(models.Model):
+    """Admin-configurable meal time windows."""
+    breakfast_start = models.TimeField(default='07:00')
+    breakfast_end = models.TimeField(default='08:30')
+    lunch_start = models.TimeField(default='12:30')
+    lunch_end = models.TimeField(default='14:00')
+    supper_start = models.TimeField(default='18:00')
+    supper_end = models.TimeField(default='19:30')
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'meal_time_settings'
+    
+    def __str__(self):
+        return "Meal Time Settings"
+    
+    def is_meal_time(self, meal_type):
+        """Check if current time falls within a meal window."""
+        from datetime import datetime
+        now = datetime.now().time()
+        if meal_type == 'breakfast':
+            return self.breakfast_start <= now <= self.breakfast_end
+        elif meal_type == 'lunch':
+            return self.lunch_start <= now <= self.lunch_end
+        elif meal_type == 'supper':
+            return self.supper_start <= now <= self.supper_end
+        return False
+    
+    def get_current_meal(self):
+        """Get the meal type based on current time."""
+        from datetime import datetime
+        now = datetime.now().time()
+        if self.breakfast_start <= now <= self.breakfast_end:
+            return 'breakfast'
+        elif self.lunch_start <= now <= self.lunch_end:
+            return 'lunch'
+        elif self.supper_start <= now <= self.supper_end:
+            return 'supper'
+        return None
+
+
+class MealViolation(models.Model):
+    """Track meal access violations."""
+    VIOLATION_CHOICES = [
+        ('double_serving', 'Double Serving Attempt'),
+        ('day_supper', 'Day Scholar - Supper Attempt'),
+        ('day_breakfast', 'Day Scholar - Breakfast Attempt'),
+        ('balance_high', 'Balance Above Threshold'),
+        ('outside_time', 'Outside Meal Time'),
+    ]
+    
+    student = models.ForeignKey('core.Student', on_delete=models.CASCADE, related_name='meal_violations')
+    meal_type = models.CharField(max_length=10, choices=MealLog.MEAL_CHOICES)
+    violation_type = models.CharField(max_length=20, choices=VIOLATION_CHOICES)
+    location = models.CharField(max_length=50)
+    occurred_at = models.DateTimeField(auto_now_add=True)
+    resolved = models.BooleanField(default=False)
+    resolved_by = models.CharField(max_length=50, null=True, blank=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        db_table = 'meal_violations'
+        ordering = ['-occurred_at']
+    
+    def __str__(self):
+        return f"{self.student_id} - {self.get_violation_type_display()} - {self.occurred_at}"

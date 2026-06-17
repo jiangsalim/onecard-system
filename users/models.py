@@ -15,6 +15,7 @@ class User(AbstractUser):
     assigned_location = models.CharField(max_length=50, null=True, blank=True)
     assigned_class = models.CharField(max_length=20, null=True, blank=True)
     assigned_stream = models.CharField(max_length=20, null=True, blank=True)
+    profile_photo = models.ImageField(upload_to='profile_photos/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -35,3 +36,9 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.get_full_name()} ({self.get_role_display()})"
+
+    def get_avatar_url(self):
+        """Return profile photo URL or None for fallback to letter avatar."""
+        if self.profile_photo:
+            return self.profile_photo.url
+        return None

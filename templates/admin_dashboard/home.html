@@ -57,8 +57,6 @@
             padding: 12px 20px; border-radius: 6px; margin-bottom: 16px; font-size: 14px;
         }
         .alert-success { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #4caf50; }
-        .alert-info { background: #e3f2fd; color: #1565c0; border-left: 4px solid #2196f3; }
-        .alert-error { background: #ffebee; color: #c62828; border-left: 4px solid #f44336; }
         .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500; text-decoration: none; display: inline-block; margin: 2px; }
         .btn-primary { background: #1a237e; color: white; }
         .btn-outline { background: white; color: #1a237e; border: 1px solid #1a237e; }
@@ -66,42 +64,27 @@
         .quick-links { display: flex; gap: 10px; flex-wrap: wrap; }
         .export-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
         .export-label { font-size: 13px; font-weight: 600; min-width: 90px; }
-        /* Mobile Responsive */
-@media (max-width: 768px) {
-    .layout { flex-direction: column; }
-    .sidebar { 
-        width: 100%; min-height: auto; 
-        display: flex; flex-wrap: wrap; gap: 0;
-        padding: 5px 0; border-right: none; 
-        border-bottom: 1px solid #e0e0e0;
-    }
-    .sidebar .section-title { display: none; }
-    .sidebar a { 
-        padding: 8px 12px; font-size: 12px; 
-        border-left: none; border-bottom: 2px solid transparent;
-    }
-    .sidebar a:hover { border-bottom-color: #1a237e; border-left: none; }
-    .main-content { margin-left: 0; padding: 12px; }
-    .stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .stat-card { padding: 16px 10px; }
-    .stat-card .stat-value { font-size: 22px; }
-    .stat-card .stat-label { font-size: 11px; }
-    .grid-2 { grid-template-columns: 1fr; }
-    .action-grid { grid-template-columns: 1fr; }
-    .card { padding: 16px; }
-    .card h2 { font-size: 16px; }
-    table { font-size: 11px; }
-    th, td { padding: 6px 8px; }
-    .btn { padding: 8px 14px; font-size: 12px; }
-    .navbar { padding: 0 10px; }
-    .navbar .brand { font-size: 15px; }
-    .navbar .user-info { gap: 8px; font-size: 11px; }
-    .navbar .role-badge { padding: 2px 8px; font-size: 9px; }
-    .quick-links { flex-direction: column; }
-    .quick-links .btn { width: 100%; text-align: center; }
-    .filter-row { flex-direction: column; }
-    .filter-row select, .filter-row input { width: 100%; }
-}
+        @media (max-width: 768px) {
+            .layout { flex-direction: column; }
+            .sidebar { width: 100%; min-height: auto; display: flex; flex-wrap: wrap; padding: 5px 0; border-right: none; border-bottom: 1px solid #e0e0e0; }
+            .sidebar .section-title { display: none; }
+            .sidebar a { padding: 8px 12px; font-size: 12px; border-left: none; border-bottom: 2px solid transparent; }
+            .sidebar a:hover { border-bottom-color: #1a237e; border-left: none; }
+            .main-content { padding: 12px; }
+            .stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .stat-card { padding: 16px 10px; }
+            .stat-card .stat-value { font-size: 22px; }
+            .stat-card .stat-label { font-size: 11px; }
+            .grid-2 { grid-template-columns: 1fr; }
+            .card { padding: 16px; }
+            .card h2 { font-size: 16px; }
+            .navbar { padding: 0 10px; }
+            .navbar .brand { font-size: 15px; }
+            .navbar .user-info { gap: 8px; font-size: 11px; }
+            .navbar .role-badge { padding: 2px 8px; font-size: 9px; }
+            .quick-links { flex-direction: column; }
+            .quick-links .btn { width: 100%; text-align: center; }
+        }
     </style>
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
@@ -135,7 +118,7 @@
             <a href="{% url 'attendance_report' %}">Attendance</a>
             <a href="{% url 'fee_report' %}">Fees</a>
             <a href="{% url 'meal_access_rules' %}">Meal Access Rules</a>
-
+            <a href="{% url 'meal_violations' %}">Meal Violations {% if meal_violations %}<span style="background:#c62828;color:white;padding:2px 8px;border-radius:10px;font-size:10px;">{{ meal_violations|length }}</span>{% endif %}</a>
             <a href="{% url 'movement_history' %}">Movement</a>
             <div class="section-title">Settings</div>
             <a href="{% url 'edit_user' request.user.id %}">My Profile</a>
@@ -145,17 +128,13 @@
             <a href="{% url 'scanner' %}">Scanner</a>
             <a href="{% url 'notification_list' %}">Notifications</a>
             <a href="{% url 'backup_now' %}">Backup Now</a>
+            <div class="section-title">Communication</div>
+            <a href="{% url 'inbox' %}">Messages</a>
         </div>
 
         <div class="main-content">
-            {% if messages %}
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-            {% endfor %}
-            {% endif %}
-
-            <h1 style="color:#1a237e; margin-bottom:4px;">Dashboard</h1>
-            <p style="color:#888; margin-bottom:20px; font-size:14px;">Welcome back, {{ user.get_full_name|default:user.username }}</p>
+            <h1 style="color:#1a237e; margin-bottom:4px;">Welcome, {{ user.get_full_name|default:user.username }}!</h1>
+            <p style="color:#888; margin-bottom:20px;">Dashboard</p>
 
             <div class="stats-row">
                 <div class="stat-card">
@@ -200,7 +179,6 @@
             <div class="card">
                 <h2>Export Reports</h2>
                 <p style="color:#666; margin-bottom:16px; font-size:14px;">Download reports as PDF or Excel spreadsheet.</p>
-                
                 <div class="export-row">
                     <span class="export-label">Attendance:</span>
                     <a href="#" onclick="exportAttendance('xlsx')" class="btn btn-outline">Excel</a>
@@ -219,14 +197,15 @@
             </div>
         </div>
     </div>
-  <script>
-      const ctx = document.getElementById('dashChart').getContext('2d');
-      new Chart(ctx, {
-          type: 'doughnut',
-          data: {
-              labels: ['Present', 'Absent', 'Outside'],
-              datasets: [{
-                  data: [
+
+    <script>
+        const ctx = document.getElementById('dashChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Present', 'Absent', 'Outside'],
+                datasets: [{
+                    data: [
                         {{ stats.present }},
                         {{ stats.absent }},
                         {{ stats.outside }}
@@ -242,26 +221,19 @@
                 plugins: {
                     legend: {
                         position: 'bottom',
-                        labels: {
-                            padding: 20,
-                            usePointStyle: true,
-                            pointStyleWidth: 10,
-                        }
+                        labels: { padding: 20, usePointStyle: true, pointStyleWidth: 10 }
                     }
                 }
             }
         });
 
         function exportAttendance(format) {
-    const startDate = prompt('Enter start date (YYYY-MM-DD):', '2026-01-01');
-    if (!startDate) return;
-    const endDate = prompt('Enter end date (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
-    if (!endDate) return;
-    window.open(`/reports/export/attendance/?format=${format}&start_date=${startDate}&end_date=${endDate}`, '_blank');
-}
- </script>
+            const startDate = prompt('Enter start date (YYYY-MM-DD):', '2026-01-01');
+            if (!startDate) return;
+            const endDate = prompt('Enter end date (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
+            if (!endDate) return;
+            window.open(`/reports/export/attendance/?format=${format}&start_date=${startDate}&end_date=${endDate}`, '_blank');
+        }
+    </script>
 </body>
 </html>
-
-
-

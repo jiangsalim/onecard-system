@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import FeeStructure
 from core.mobile_utils import render_mobile_or_desktop
+from django.utils import timezone
 
 
 @login_required
@@ -158,3 +159,71 @@ def meal_access_rules(request):
     return render_mobile_or_desktop(request, 'fees/meal_rules.html', 'mobile/fees_meal_rules.html', {
         'classes': classes, 'categories': categories, 'term': term, 'year': year, 'existing_rules': existing_rules,
     })
+
+@login_required
+def meal_time_settings(request):
+    """Manage meal time windows."""
+    if request.user.role not in ['super_admin', 'admin']:
+        messages.error(request, 'Access denied.'); return redirect('dashboard')
+    
+    from attendance.models import MealTimeSettings
+    settings, _ = MealTimeSettings.objects.get_or_create(id=1)
+    
+    if request.method == 'POST':
+        settings.breakfast_start = request.POST.get('breakfast_start', '07:00')
+        settings.breakfast_end = request.POST.get('breakfast_end', '08:30')
+        settings.lunch_start = request.POST.get('lunch_start', '12:30')
+        settings.lunch_end = request.POST.get('lunch_end', '14:00')
+        settings.supper_start = request.POST.get('supper_start', '18:00')
+        settings.supper_end = request.POST.get('supper_end', '19:30')
+        settings.save()
+        messages.success(request, 'Meal times updated!')
+    
+    return render_mobile_or_desktop(request, 'fees/meal_times.html', 'mobile/meal_times.html', {'settings': settings})
+
+@login_required
+def meal_violations(request):
+    """View and resolve meal violations."""
+    from attendance.models import MealViolation
+    
+    violations = MealViolation.objects.filter(resolved=False).select_related('student').order_by('-occurred_at')
+    resolved = MealViolation.objects.filter(resolved=True).select_related('student').order_by('-resolved_at')[:20]
+    
+    return render_mobile_or_desktop(request, 'fees/meal_violations.html', 'mobile/fees_meal_violations.html', {
+        'violations': violations,
+        'resolved': resolved,
+        'unresolved_count': violations.count(),
+    })
+
+
+@login_required
+def resolve_violation(request, violation_id):
+    """Mark a meal violation as resolved."""
+    from attendance.models import MealViolation
+    
+    try:
+        violation = MealViolation.objects.get(id=violation_id)
+        violation.resolved = True
+        violation.resolved_by = request.user.get_full_name() or request.user.username
+        violation.resolved_at = timezone.now()
+        violation.save()
+        messages.success(request, f'Violation #{violation_id} resolved.')
+    except MealViolation.DoesNotExist:
+        messages.error(request, 'Violation not found.')
+    
+    return redirect('meal_violations')
+
+
+@login_required
+def resolve_all_violations(request):
+    """Resolve all meal violations at once."""
+    from attendance.models import MealViolation
+    
+    count = MealViolation.objects.filter(resolved=False).count()
+    MealViolation.objects.filter(resolved=False).update(
+        resolved=True,
+        resolved_by=request.user.get_full_name() or request.user.username,
+        resolved_at=timezone.now()
+    )
+    messages.success(request, f'{count} violation(s) resolved!')
+    return redirect('meal_violations')

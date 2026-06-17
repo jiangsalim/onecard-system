@@ -3,7 +3,7 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from .models import Student
 from .services import get_student_info_from_existing_db, get_payment_balance, fetch_students_from_existing_db, generate_qr_for_student, get_next_student_id
-from attendance.models import Attendance, MealLog, MealAccessRule
+from attendance.models import Attendance, MealLog, MealAccessRule, MealTimeSettings, MealViolation
 from movement.models import MovementLog
 from fees.models import FeeStructure
 from datetime import date, datetime, time
@@ -94,17 +94,15 @@ def process_scan(request):
         
         # ========== MEAL TRACKING MODE ==========
         if mode == 'meal_tracking':
+            # Get meal time settings (admin-configurable)
+            meal_settings, _ = MealTimeSettings.objects.get_or_create(id=1)
             now = datetime.now().time()
-            if time(7, 0) <= now <= time(8, 30):
-                meal_type = 'breakfast'
-            elif time(12, 30) <= now <= time(14, 0):
-                meal_type = 'lunch'
-            elif time(18, 0) <= now <= time(19, 30):
-                meal_type = 'supper'
-            else:
+            meal_type = meal_settings.get_current_meal()
+            
+            if not meal_type:
                 return JsonResponse({
                     'success': False,
-                    'error': 'Not meal time. Breakfast 7-8:30, Lunch 12:30-14:00, Supper 18:00-19:30',
+                    'error': 'Not meal time. Check meal schedules.',
                     'error_code': 'NOT_MEAL_TIME'
                 })
             
@@ -112,6 +110,12 @@ def process_scan(request):
             
             # Day scholars only get lunch
             if student_category == 'day' and meal_type != 'lunch':
+                # Log violation
+                violation_type = 'day_supper' if meal_type == 'supper' else 'day_breakfast'
+                MealViolation.objects.create(
+                    student=student, meal_type=meal_type,
+                    violation_type=violation_type, location=location
+                )
                 return JsonResponse({
                     'success': False,
                     'error': f'DAY SCHOLAR — {meal_type.title()} not available. Only Lunch.',
@@ -121,6 +125,11 @@ def process_scan(request):
             # Check if already eaten
             already_eaten = MealLog.objects.filter(student=student, meal_date=today, meal_type=meal_type).first()
             if already_eaten:
+                # Log violation
+                MealViolation.objects.create(
+                    student=student, meal_type=meal_type,
+                    violation_type='double_serving', location=location
+                )
                 return JsonResponse({
                     'success': False,
                     'error': f'ALREADY SERVED — {meal_type.title()} at {already_eaten.time_scanned}',
@@ -141,6 +150,11 @@ def process_scan(request):
                 balance = total_fees - float(total_paid)
                 
                 if balance > float(rule.max_balance):
+                    # Log violation
+                    MealViolation.objects.create(
+                        student=student, meal_type=meal_type,
+                        violation_type='balance_high', location=location
+                    )
                     return JsonResponse({
                         'success': False,
                         'error': f'MEAL DENIED — Balance: {balance:,.0f} UGX. Max allowed: {float(rule.max_balance):,.0f} UGX. Clear {balance - float(rule.max_balance):,.0f} UGX to eat.',

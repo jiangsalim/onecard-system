@@ -49,7 +49,7 @@ def build_excel_response(filename, sheet_name, headers, data):
 
 @login_required
 def attendance_report(request):
-    """Attendance report with gender analytics."""
+    """Attendance report with gender analytics — full filtering."""
     today = date.today()
     
     class_filter = request.GET.get('class', '')
@@ -59,72 +59,63 @@ def attendance_report(request):
     notif_settings = NotificationSetting.objects.first()
     cutoff_time = notif_settings.late_cutoff_time if notif_settings else time(8, 0)
     
-    # Base query
-    if class_filter:
-        from core.services import fetch_students_from_existing_db
-        all_school = fetch_students_from_existing_db()
-        matching_admissions = [
-            s['admission_number'] for s in all_school 
-            if s['current_class'] == class_filter 
-            and (not stream_filter or s['stream'] == stream_filter)
-        ]
-        # Filter by gender if specified
-        if gender_filter:
-            matching_admissions = [
-                s['admission_number'] for s in all_school 
-                if s['current_class'] == class_filter 
-                and (not stream_filter or s['stream'] == stream_filter)
-                and s.get('gender') == gender_filter
-            ]
+    from core.services import fetch_students_from_existing_db
+    all_school = fetch_students_from_existing_db()
+    
+    # Build matching admissions based on ALL filters (class, stream, gender)
+    matching_admissions = []
+    for s in all_school:
+        match = True
+        if class_filter and s['current_class'] != class_filter:
+            match = False
+        if stream_filter and s['stream'] != stream_filter:
+            match = False
+        if gender_filter and s.get('gender') != gender_filter:
+            match = False
+        if match:
+            matching_admissions.append(s['admission_number'])
+    
+    # Determine if any filter is active
+    has_filter = bool(class_filter or stream_filter or gender_filter)
+    
+    if has_filter:
         filtered_student_ids = Student.objects.filter(
             admission_number__in=matching_admissions, status='active'
         ).values_list('id', flat=True)
-        
         total = len(matching_admissions)
         attendance_list = Attendance.objects.filter(
             scan_date=today, student_id__in=filtered_student_ids
         ).select_related('student').order_by('time_in')
-        present = Attendance.objects.filter(scan_date=today, student_id__in=filtered_student_ids).count()
-        late = Attendance.objects.filter(scan_date=today, student_id__in=filtered_student_ids, time_in__gt=cutoff_time).count()
+        present = attendance_list.count()
+        late = Attendance.objects.filter(
+            scan_date=today, student_id__in=filtered_student_ids, time_in__gt=cutoff_time
+        ).count()
     else:
         total = Student.objects.filter(status='active').count()
         attendance_list = Attendance.objects.filter(scan_date=today).select_related('student').order_by('time_in')
-        present = Attendance.objects.filter(scan_date=today).count()
+        present = attendance_list.count()
         late = Attendance.objects.filter(scan_date=today, time_in__gt=cutoff_time).count()
     
     on_time = present - late
     absent = total - present
     
-    # Gender breakdown
-    if class_filter:
-        male_admissions = [s['admission_number'] for s in all_school 
-                          if s['current_class'] == class_filter 
-                          and (not stream_filter or s['stream'] == stream_filter)
-                          and s.get('gender') == 'M']
-        female_admissions = [s['admission_number'] for s in all_school 
-                            if s['current_class'] == class_filter 
-                            and (not stream_filter or s['stream'] == stream_filter)
-                            and s.get('gender') == 'F']
-        male_ids = Student.objects.filter(admission_number__in=male_admissions, status='active').values_list('id', flat=True)
-        female_ids = Student.objects.filter(admission_number__in=female_admissions, status='active').values_list('id', flat=True)
-        
-        males_present = Attendance.objects.filter(scan_date=today, student_id__in=male_ids).count()
-        females_present = Attendance.objects.filter(scan_date=today, student_id__in=female_ids).count()
-        males_total = len(male_admissions)
-        females_total = len(female_admissions)
-    else:
-        # Get gender from school DB for all students
-        from core.services import fetch_students_from_existing_db
-        all_students = fetch_students_from_existing_db()
-        male_admissions = [s['admission_number'] for s in all_students if s.get('gender') == 'M']
-        female_admissions = [s['admission_number'] for s in all_students if s.get('gender') == 'F']
-        male_ids = Student.objects.filter(admission_number__in=male_admissions, status='active').values_list('id', flat=True)
-        female_ids = Student.objects.filter(admission_number__in=female_admissions, status='active').values_list('id', flat=True)
-        
-        males_present = Attendance.objects.filter(scan_date=today, student_id__in=male_ids).count()
-        females_present = Attendance.objects.filter(scan_date=today, student_id__in=female_ids).count()
-        males_total = len(male_ids)
-        females_total = len(female_ids)
+    # Gender breakdown (always both for cards, respect class/stream filter only)
+    male_admissions = [s['admission_number'] for s in all_school 
+                       if s.get('gender') == 'M'
+                       and (not class_filter or s['current_class'] == class_filter)
+                       and (not stream_filter or s['stream'] == stream_filter)]
+    female_admissions = [s['admission_number'] for s in all_school 
+                         if s.get('gender') == 'F'
+                         and (not class_filter or s['current_class'] == class_filter)
+                         and (not stream_filter or s['stream'] == stream_filter)]
+    
+    male_ids = Student.objects.filter(admission_number__in=male_admissions, status='active').values_list('id', flat=True)
+    female_ids = Student.objects.filter(admission_number__in=female_admissions, status='active').values_list('id', flat=True)
+    
+    males_present = Attendance.objects.filter(scan_date=today, student_id__in=male_ids).count()
+    females_present = Attendance.objects.filter(scan_date=today, student_id__in=female_ids).count()
+    males_total = len(male_admissions)
+    females_total = len(female_admissions)
     
     gender_stats = {
         'males': {
@@ -149,7 +140,7 @@ def attendance_report(request):
     
     return render_mobile_or_desktop(request, 'reports/attendance.html', 'mobile/reports_attendance.html', {
         'attendance_list': attendance_list, 'stats': stats, 'gender_stats': gender_stats,
-        'class_filter': class_filter, 'stream_filter': stream_filter, 
+        'class_filter': class_filter, 'stream_filter': stream_filter,
         'gender_filter': gender_filter, 'cutoff_time': cutoff_time,
     })
 
@@ -190,6 +181,7 @@ def export_attendance(request):
         headers = ['Student ID', 'Admission #', 'Date', 'Time In', 'Location', 'Marked By']
         data = [[a.student.id, a.student.admission_number, str(a.scan_date), str(a.time_in), a.scan_location, a.marked_by] for a in records]
         return build_excel_response(f'attendance_report_{start}_{end}.xlsx', 'Attendance', headers, data)
+
 
 @login_required
 def export_fees(request):

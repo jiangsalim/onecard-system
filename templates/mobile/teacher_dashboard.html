@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
     <title>My Class - OneCard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 70px; }
@@ -17,18 +18,40 @@
         .stat-card { background: white; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
         .stat-card .value { font-size: 28px; font-weight: 700; color: #1a237e; }
         .stat-card .label { font-size: 12px; color: #888; margin-top: 4px; }
+        .gender-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px 16px; }
+        .gender-box { border-radius: 12px; padding: 16px; text-align: center; }
+        .gender-box.male { background: #e3f2fd; }
+        .gender-box.female { background: #fce4ec; }
+        .gender-box .g-label { font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+        .gender-box .g-count { font-size: 24px; font-weight: 700; }
         .section { margin: 0 16px 16px; }
         .section-title { font-size: 14px; font-weight: 600; color: #333; margin-bottom: 10px; }
-        .card { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .card { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 12px; }
+        .chart-box { height: 220px; }
         .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
         .list-item:last-child { border-bottom: none; }
-        .badge { padding: 3px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
-        .badge-present { background: #e8f5e9; color: #2e7d32; }
-        .badge-absent { background: #ffebee; color: #c62828; }
+        .badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .badge-warn { background: #fff3e0; color: #e65100; }
+        .badge-green { background: #e8f5e9; color: #2e7d32; }
+        .badge-gray { background: #f0f0f0; color: #888; }
+        .alert-success { background: #e8f5e9; color: #2e7d32; padding: 10px 14px; border-radius: 8px; margin-bottom: 10px; font-size: 13px; }
+        .alert-info { background: #e3f2fd; color: #1565c0; padding: 10px 14px; border-radius: 8px; margin-bottom: 10px; font-size: 13px; }
+        .dismiss-btn { font-size: 11px; color: #888; text-decoration: none; background: #f0f0f0; padding: 6px 12px; border-radius: 12px; font-weight: 500; }
+        .dismiss-btn:active { background: #e0e0e0; }
+        .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+        .toggle-row:last-child { border-bottom: none; }
+        .toggle-label { font-size: 13px; color: #333; flex: 1; padding-right: 8px; }
+        .toggle { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .3s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+        input:checked + .slider { background-color: #2e7d32; }
+        .btn-save { width: 100%; padding: 12px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 14px; margin-top: 10px; cursor: pointer; }
         .lookup-box { display: flex; gap: 8px; }
         .lookup-box input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
         .lookup-box button { padding: 12px 20px; background: #1a237e; color: white; border: none; border-radius: 8px; font-weight: 600; }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; border-top: 1px solid #e0e0e0; }
+        .empty-state { text-align: center; padding: 20px; color: #888; font-size: 13px; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; border-top: 1px solid #e0e0e0; z-index: 100; }
         .bottom-nav a { flex: 1; text-align: center; padding: 10px 0; color: #888; text-decoration: none; font-size: 11px; }
         .bottom-nav a.active { color: #1a237e; }
         .bottom-nav a svg { display: block; margin: 0 auto 3px; }
@@ -46,6 +69,11 @@
         </div>
     </div>
 
+    {% if messages %}
+    {% for m in messages %}<div style="padding:0 16px;"><div class="{% if 'dismissed' in m.message %}alert-info{% else %}alert-success{% endif %}">{{ m }}</div></div>{% endfor %}
+    {% endif %}
+
+    <!-- Stats -->
     <div class="stats-grid">
         <div class="stat-card">
             <div class="value">{{ stats.total }}</div>
@@ -65,6 +93,102 @@
         </div>
     </div>
 
+    <!-- Gender Cards -->
+    <div class="gender-row">
+        <div class="gender-box male">
+            <div class="g-label" style="color:#1565c0;">Males</div>
+            <div class="g-count" style="color:#1565c0;">{{ males_count }}</div>
+        </div>
+        <div class="gender-box female">
+            <div class="g-label" style="color:#c62828;">Females</div>
+            <div class="g-count" style="color:#c62828;">{{ females_count }}</div>
+        </div>
+    </div>
+
+    <!-- Weekly Chart -->
+    <div class="section">
+        <div class="section-title">Weekly Attendance</div>
+        <div class="card">
+            <div class="chart-box">
+                <canvas id="weeklyChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gender Chart -->
+    <div class="section">
+        <div class="section-title">Gender Distribution</div>
+        <div class="card">
+            <div class="chart-box">
+                <canvas id="genderChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Absent Streaks (Undismissed) -->
+    <div class="section">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+    <div class="section-title" style="margin-bottom:0;">⚠ Consecutive Absences (3+ Days)</div>
+    {% if absent_streaks %}
+    <a href="{% url 'dismiss_all_alerts' %}" style="font-size:11px; color:#c62828; text-decoration:none; background:#ffebee; padding:6px 12px; border-radius:6px; font-weight:600;">Dismiss All</a>
+    {% endif %}
+</div>
+        <div class="card">
+            {% if absent_streaks %}
+                {% for s in absent_streaks %}
+                <div class="list-item">
+                    <span><strong>{{ s.name }}</strong> ({{ s.admission }})</span>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="badge badge-warn">{{ s.days }} days</span>
+                        <a href="{% url 'dismiss_alert' s.id %}" class="dismiss-btn">✕ Dismiss</a>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    {% if dismissed_count > 0 %}
+                        ✅ All alerts dismissed today ({{ dismissed_count }} dismissed)
+                    {% else %}
+                        ✅ No students with 3+ consecutive absences
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Notification Settings -->
+    <div class="section">
+        <div class="section-title">🔔 Notification Preferences</div>
+        <div class="card">
+            <form method="post">
+                {% csrf_token %}
+                <div class="toggle-row">
+                    <span class="toggle-label">Alert on 3+ consecutive absences</span>
+                    <label class="toggle">
+                        <input type="checkbox" name="alert_3_consecutive" {% if notif_settings.alert_3_consecutive_absences %}checked{% endif %}>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="toggle-row">
+                    <span class="toggle-label">Alert when attendance below 75%</span>
+                    <label class="toggle">
+                        <input type="checkbox" name="alert_below_75" {% if notif_settings.alert_attendance_below_75 %}checked{% endif %}>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="toggle-row">
+                    <span class="toggle-label">Alert on 5+ absences this term</span>
+                    <label class="toggle">
+                        <input type="checkbox" name="alert_5_absences" {% if notif_settings.alert_5_absences_term %}checked{% endif %}>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <button type="submit" class="btn-save">Save Preferences</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Quick Lookup -->
     <div class="section">
         <div class="section-title">Quick Lookup</div>
         <div class="card">
@@ -76,15 +200,18 @@
         </div>
     </div>
 
+    <!-- Today's Summary -->
     <div class="section">
-        <div class="section-title">Today's Attendance</div>
+        <div class="section-title">Today's Summary</div>
         <div class="card">
-            <div class="list-item"><span>Present</span><span class="badge badge-present">{{ stats.present }}</span></div>
-            <div class="list-item"><span>Absent</span><span class="badge badge-absent">{{ stats.absent }}</span></div>
+            <div class="list-item"><span>Present</span><span class="badge badge-green">{{ stats.present }}</span></div>
+            <div class="list-item"><span>Absent</span><span class="badge badge-warn">{{ stats.absent }}</span></div>
+            <div class="list-item"><span>Outside</span><span class="badge" style="background:#e3f2fd;color:#1565c0;">{{ stats.outside }}</span></div>
             <div class="list-item"><span>Rate</span><strong>{{ stats.rate }}%</strong></div>
         </div>
     </div>
 
+    <!-- Bottom Nav -->
     <div class="bottom-nav">
         <a href="#" class="active">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
@@ -98,13 +225,67 @@
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
             Fees
         </a>
+        <div class="section-title">Communication</div>
+        <a href="{% url 'inbox' %}">Messages</a>
         <a href="{% url 'movement_history' %}?class={{ user.assigned_class|urlencode }}&stream={{ user.assigned_stream|urlencode }}">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></svg>
             Movement
         </a>
     </div>
 
+    <!-- Chart.js -->
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Weekly Bar Chart
+            const weeklyCtx = document.getElementById('weeklyChart');
+            if (weeklyCtx) {
+                new Chart(weeklyCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: {{ weekly_labels|safe }},
+                        datasets: [{
+                            label: 'Present',
+                            data: {{ weekly_present|safe }},
+                            backgroundColor: '#2e7d32',
+                            borderRadius: 4,
+                        }, {
+                            label: 'Absent',
+                            data: {{ weekly_absent|safe }},
+                            backgroundColor: '#c62828',
+                            borderRadius: 4,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } },
+                        scales: { y: { beginAtZero: true, stacked: true }, x: { stacked: true } }
+                    }
+                });
+            }
+
+            // Gender Doughnut
+            const genderCtx = document.getElementById('genderChart');
+            if (genderCtx) {
+                new Chart(genderCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Males', 'Females'],
+                        datasets: [{
+                            data: [{{ males_count }}, {{ females_count }}],
+                            backgroundColor: ['#1565c0', '#c62828'],
+                            borderWidth: 2,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } }
+                    }
+                });
+            }
+        });
+
         function quickLookup() {
             const q = document.getElementById('lookupInput').value.trim();
             if (!q) return;
@@ -132,4 +313,3 @@
     </script>
 </body>
 </html>
-

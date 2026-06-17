@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
     <title>My Class - OneCard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; }
@@ -29,43 +30,53 @@
         .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500; text-decoration: none; display: inline-block; }
         .btn-primary { background: #1a237e; color: white; }
         .btn-outline { background: white; color: #1a237e; border: 1px solid #1a237e; }
+        .btn-save { background: #2e7d32; color: white; padding: 10px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; }
         .quick-links { display: flex; gap: 10px; flex-wrap: wrap; }
+        .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .chart-box { max-height: 300px; }
+        .gender-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+        .gender-card { border-radius: 8px; padding: 16px; text-align: center; }
+        .gender-card.male { background: #e3f2fd; border: 2px solid #90caf9; }
+        .gender-card.female { background: #fce4ec; border: 2px solid #f48fb1; }
+        .gender-card .g-label { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+        .gender-card .g-count { font-size: 24px; font-weight: 700; }
+        .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+        .toggle-row:last-child { border-bottom: none; }
+        .toggle-label { font-size: 14px; color: #333; }
+        .toggle { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .3s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+        input:checked + .slider { background-color: #2e7d32; }
+        .alert-student { padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
+        .alert-student:last-child { border-bottom: none; }
+        .badge-warn { background: #fff3e0; color: #e65100; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .badge-green { background: #e8f5e9; color: #2e7d32; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .alert { padding: 12px 20px; border-radius: 6px; margin-bottom: 16px; }
+        .alert-success { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #4caf50; }
         /* Mobile Responsive */
-@media (max-width: 768px) {
-    .layout { flex-direction: column; }
-    .sidebar { 
-        width: 100%; min-height: auto; 
-        display: flex; flex-wrap: wrap; gap: 0;
-        padding: 5px 0; border-right: none; 
-        border-bottom: 1px solid #e0e0e0;
-    }
-    .sidebar .section-title { display: none; }
-    .sidebar a { 
-        padding: 8px 12px; font-size: 12px; 
-        border-left: none; border-bottom: 2px solid transparent;
-    }
-    .sidebar a:hover { border-bottom-color: #1a237e; border-left: none; }
-    .main-content { margin-left: 0; padding: 12px; }
-    .stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .stat-card { padding: 16px 10px; }
-    .stat-card .stat-value { font-size: 22px; }
-    .stat-card .stat-label { font-size: 11px; }
-    .grid-2 { grid-template-columns: 1fr; }
-    .action-grid { grid-template-columns: 1fr; }
-    .card { padding: 16px; }
-    .card h2 { font-size: 16px; }
-    table { font-size: 11px; }
-    th, td { padding: 6px 8px; }
-    .btn { padding: 8px 14px; font-size: 12px; }
-    .navbar { padding: 0 10px; }
-    .navbar .brand { font-size: 15px; }
-    .navbar .user-info { gap: 8px; font-size: 11px; }
-    .navbar .role-badge { padding: 2px 8px; font-size: 9px; }
-    .quick-links { flex-direction: column; }
-    .quick-links .btn { width: 100%; text-align: center; }
-    .filter-row { flex-direction: column; }
-    .filter-row select, .filter-row input { width: 100%; }
-}
+        @media (max-width: 768px) {
+            .layout { flex-direction: column; }
+            .sidebar { width: 100%; min-height: auto; display: flex; flex-wrap: wrap; gap: 0; padding: 5px 0; border-right: none; border-bottom: 1px solid #e0e0e0; }
+            .sidebar .section-title { display: none; }
+            .sidebar a { padding: 8px 12px; font-size: 12px; border-left: none; border-bottom: 2px solid transparent; }
+            .sidebar a:hover { border-bottom-color: #1a237e; border-left: none; }
+            .main-content { margin-left: 0; padding: 12px; }
+            .stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .stat-card { padding: 16px 10px; }
+            .stat-card .stat-value { font-size: 22px; }
+            .stat-card .stat-label { font-size: 11px; }
+            .chart-row { grid-template-columns: 1fr; }
+            .card { padding: 16px; }
+            .card h2 { font-size: 16px; }
+            .btn { padding: 8px 14px; font-size: 12px; }
+            .navbar { padding: 0 10px; }
+            .navbar .brand { font-size: 15px; }
+            .navbar .user-info { gap: 8px; font-size: 11px; }
+            .navbar .role-badge { padding: 2px 8px; font-size: 9px; }
+            .quick-links { flex-direction: column; }
+            .quick-links .btn { width: 100%; text-align: center; }
+        }
     </style>
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
@@ -87,6 +98,8 @@
             <div class="section-title">Reports ({{ user.assigned_class }} {{ user.assigned_stream }})</div>
             <a href="{% url 'attendance_report' %}?class={{ user.assigned_class|urlencode }}&stream={{ user.assigned_stream|urlencode }}">Attendance</a>
             <a href="{% url 'fee_report' %}?class={{ user.assigned_class|urlencode }}&stream={{ user.assigned_stream|urlencode }}">Fees</a>
+            <div class="section-title">Communication</div>
+            <a href="{% url 'inbox' %}">Messages</a>
             <a href="{% url 'movement_history' %}?class={{ user.assigned_class|urlencode }}&stream={{ user.assigned_stream|urlencode }}">Movement</a>
             <a href="{% url 'meal_report' %}">Meals</a>
         </div>
@@ -94,6 +107,11 @@
             <h1 style="color:#1a237e; margin-bottom:4px;">My Class Dashboard</h1>
             <p style="color:#888; margin-bottom:20px; font-size:14px;">{{ stats.class_name|default:"Not Assigned" }}</p>
 
+            {% if messages %}
+            {% for m in messages %}<div class="alert alert-success">{{ m }}</div>{% endfor %}
+            {% endif %}
+
+            <!-- Stats Row -->
             <div class="stats-row">
                 <div class="stat-card">
                     <div class="stat-value">{{ stats.total }}</div>
@@ -113,9 +131,95 @@
                 </div>
             </div>
 
+            <!-- Gender Cards -->
+            <div class="gender-cards">
+                <div class="gender-card male">
+                    <div class="g-label" style="color:#1565c0;">Males</div>
+                    <div class="g-count" style="color:#1565c0;">{{ males_count }}</div>
+                </div>
+                <div class="gender-card female">
+                    <div class="g-label" style="color:#c62828;">Females</div>
+                    <div class="g-count" style="color:#c62828;">{{ females_count }}</div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="chart-row">
+                <div class="card">
+                    <h2>Weekly Attendance</h2>
+                    <div class="chart-box">
+                        <canvas id="weeklyChart"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <h2>Gender Distribution</h2>
+                    <div class="chart-box">
+                        <canvas id="genderChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Absent Streaks Alert -->
+<div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <h2 style="margin:0;">⚠ Consecutive Absences (3+ Days)</h2>
+    {% if absent_streaks %}
+    <a href="{% url 'dismiss_all_alerts' %}" style="font-size:12px; color:#c62828; text-decoration:none; background:#ffebee; padding:6px 14px; border-radius:6px; font-weight:600;">Dismiss All</a>
+    {% endif %}
+</div>
+    {% if absent_streaks %}
+        {% for s in absent_streaks %}
+        <div class="alert-student">
+            <span><strong>{{ s.name }}</strong> ({{ s.admission }})</span>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span class="badge-warn">{{ s.days }} days absent</span>
+                <a href="{% url 'dismiss_alert' s.id %}" style="font-size:11px; color:#888; text-decoration:none; background:#f0f0f0; padding:4px 10px; border-radius:10px;">Dismiss</a>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p style="color:#888; font-size:13px; text-align:center; padding:16px;">
+            {% if dismissed_count > 0 %}
+                ✅ All alerts dismissed today ({{ dismissed_count }} dismissed)
+            {% else %}
+                ✅ No students with 3+ consecutive absences
+            {% endif %}
+        </p>
+    {% endif %}
+</div>
+            <!-- Notification Settings -->
             <div class="card">
-                <h2>Class Overview — {{ stats.class_name|default:"Not Assigned" }}</h2>
-                <p style="color:#666; margin-bottom:16px; font-size:14px;">View attendance, fee status, meals, and movement history filtered to your class.</p>
+                <h2>🔔 Notification Preferences</h2>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="toggle-row">
+                        <span class="toggle-label">Alert when student absent 3+ consecutive days</span>
+                        <label class="toggle">
+                            <input type="checkbox" name="alert_3_consecutive" {% if notif_settings.alert_3_consecutive_absences %}checked{% endif %}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-row">
+                        <span class="toggle-label">Alert when class attendance drops below 75%</span>
+                        <label class="toggle">
+                            <input type="checkbox" name="alert_below_75" {% if notif_settings.alert_attendance_below_75 %}checked{% endif %}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-row">
+                        <span class="toggle-label">Alert when student has 5+ absences this term</span>
+                        <label class="toggle">
+                            <input type="checkbox" name="alert_5_absences" {% if notif_settings.alert_5_absences_term %}checked{% endif %}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <button type="submit" class="btn-save" style="margin-top:16px;">Save Preferences</button>
+                </form>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="card">
+                <h2>Quick Reports — {{ stats.class_name|default:"Not Assigned" }}</h2>
                 <div class="quick-links">
                     <a href="{% url 'attendance_report' %}?class={{ user.assigned_class|urlencode }}&stream={{ user.assigned_stream|urlencode }}" class="btn btn-primary">Attendance</a>
                     <a href="{% url 'fee_report' %}?class={{ user.assigned_class|urlencode }}&stream={{ user.assigned_stream|urlencode }}" class="btn btn-outline">Fees</a>
@@ -125,7 +229,62 @@
             </div>
         </div>
     </div>
+
+    <!-- Chart.js -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Weekly Attendance Bar Chart
+            const weeklyCtx = document.getElementById('weeklyChart');
+            if (weeklyCtx) {
+                new Chart(weeklyCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: {{ weekly_labels|safe }},
+                        datasets: [
+                            {
+                                label: 'Present',
+                                data: {{ weekly_present|safe }},
+                                backgroundColor: '#2e7d32',
+                                borderRadius: 4,
+                            },
+                            {
+                                label: 'Absent',
+                                data: {{ weekly_absent|safe }},
+                                backgroundColor: '#c62828',
+                                borderRadius: 4,
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } },
+                        scales: { y: { beginAtZero: true, stacked: true }, x: { stacked: true } }
+                    }
+                });
+            }
+
+            // Gender Pie Chart
+            const genderCtx = document.getElementById('genderChart');
+            if (genderCtx) {
+                new Chart(genderCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Males', 'Females'],
+                        datasets: [{
+                            data: [{{ males_count }}, {{ females_count }}],
+                            backgroundColor: ['#1565c0', '#c62828'],
+                            borderWidth: 2,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>
-
-

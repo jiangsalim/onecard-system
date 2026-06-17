@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
+    <title>Meal Violations - OneCard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 20px; }
+        .header { background: #1a237e; color: white; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; }
+        .header .title { font-size: 16px; font-weight: 600; }
+        .header .back { color: white; text-decoration: none; font-size: 13px; }
+        .section { margin: 12px 16px; }
+        .section-title { font-size: 14px; font-weight: 600; color: #333; margin-bottom: 8px; }
+        .card { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 12px; }
+        .violation-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+        .violation-item:last-child { border-bottom: none; }
+        .violation-item .info { flex: 1; }
+        .violation-item .name { font-weight: 600; font-size: 14px; }
+        .violation-item .detail { font-size: 11px; color: #888; margin-top: 2px; }
+        .badge { padding: 3px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+        .badge-double { background: #ffebee; color: #c62828; }
+        .badge-day { background: #fff3e0; color: #e65100; }
+        .badge-balance { background: #fce4ec; color: #880e4f; }
+        .btn-resolve { background: #2e7d32; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-size: 12px; text-decoration: none; font-weight: 500; }
+        .btn-resolve-all { display: block; text-align: center; background: #c62828; color: white; padding: 10px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 13px; margin-top: 8px; }
+        .empty-state { text-align: center; padding: 20px; color: #888; font-size: 13px; }
+        .alert { padding: 10px 14px; border-radius: 8px; margin-bottom: 10px; font-size: 13px; }
+        .alert-success { background: #e8f5e9; color: #2e7d32; }
+        .resolved-item { padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 12px; display: flex; justify-content: space-between; }
+        .resolved-item:last-child { border-bottom: none; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">Meal Violations</div>
+        <a href="{% url 'dashboard' %}" class="back">← Back</a>
+    </div>
+
+    {% if messages %}
+    {% for m in messages %}<div style="padding:0 16px;"><div class="alert alert-success">{{ m }}</div></div>{% endfor %}
+    {% endif %}
+
+    <div class="section">
+        <div class="section-title">⚠ Unresolved ({{ unresolved_count }})</div>
+        <div class="card">
+            {% if violations %}
+                {% for v in violations %}
+                <div class="violation-item">
+                    <div class="info">
+                        <div class="name">{{ v.student.id }}</div>
+                        <div class="detail">
+                            {% if v.violation_type == 'double_serving' %}
+                                <span class="badge badge-double">Double Serving</span>
+                            {% elif v.violation_type == 'day_supper' or v.violation_type == 'day_breakfast' %}
+                                <span class="badge badge-day">Day Scholar</span>
+                            {% elif v.violation_type == 'balance_high' %}
+                                <span class="badge badge-balance">Balance High</span>
+                            {% else %}
+                                {{ v.get_violation_type_display }}
+                            {% endif %}
+                            | {{ v.meal_type|title }} | {{ v.occurred_at|time:"H:i" }}
+                        </div>
+                    </div>
+                    <a href="{% url 'resolve_violation' v.id %}" class="btn-resolve">Resolve</a>
+                </div>
+                {% endfor %}
+                <a href="{% url 'resolve_all_violations' %}" class="btn-resolve-all" onclick="return confirm('Resolve ALL?')">Resolve All ({{ unresolved_count }})</a>
+            {% else %}
+                <div class="empty-state">✅ No unresolved violations</div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if resolved %}
+    <div class="section">
+        <div class="section-title">✅ Recently Resolved</div>
+        <div class="card">
+            {% for v in resolved %}
+            <div class="resolved-item">
+                <span><strong>{{ v.student.id }}</strong> — {{ v.get_violation_type_display }}</span>
+                <span style="color:#888; font-size:11px;">{{ v.resolved_at|date:"M d, H:i" }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</body>
+</html>

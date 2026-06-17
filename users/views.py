@@ -21,7 +21,6 @@ def login_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
     
-    # Check if rate limited by middleware
     if hasattr(request, 'rate_limited') and request.rate_limited:
         retry_after = getattr(request, 'rate_limit_retry_after', 300)
         return render_mobile_or_desktop(request, 'auth/login.html', 'mobile/login.html', {
@@ -56,9 +55,9 @@ def logout_view(request):
 
 @login_required
 def dashboard(request):
-    """Role-based dashboard routing with live stats and auto-alerts."""
+    """Role-based dashboard routing with live stats, alerts, and meal violations."""
     from core.models import Student
-    from attendance.models import Attendance
+    from attendance.models import Attendance, MealViolation
     from movement.models import MovementLog
     from core.services import get_payment_balance, get_student_info_from_existing_db
     from fees.models import FeeStructure
@@ -98,6 +97,11 @@ def dashboard(request):
         'not_cleared': not_cleared,
     }
 
+    # Get unresolved meal violations
+    meal_violations = MealViolation.objects.filter(
+        resolved=False
+    ).select_related('student').order_by('-occurred_at')[:5]
+
     try:
         from notifications.views import auto_check_alerts
         alerts = auto_check_alerts()
@@ -108,14 +112,20 @@ def dashboard(request):
 
     role = request.user.role
     if role in ['super_admin', 'admin']:
-        return render_mobile_or_desktop(request, 'admin_dashboard/home.html', 'mobile/admin_dashboard.html', {'stats': stats})
+        return render_mobile_or_desktop(request, 'admin_dashboard/home.html', 'mobile/admin_dashboard.html', {
+            'stats': stats,
+            'meal_violations': meal_violations,
+        })
     elif role == 'bursar':
         return redirect('bursar_dashboard')
     elif role == 'gate_staff':
         return redirect('gate_dashboard')
     elif role == 'class_teacher':
         return redirect('teacher_dashboard')
-    return render_mobile_or_desktop(request, 'admin_dashboard/home.html', 'mobile/admin_dashboard.html', {'stats': stats})
+    return render_mobile_or_desktop(request, 'admin_dashboard/home.html', 'mobile/admin_dashboard.html', {
+        'stats': stats,
+        'meal_violations': meal_violations,
+    })
 
 
 @login_required
@@ -148,11 +158,14 @@ def gate_dashboard(request):
 
 @login_required
 def teacher_dashboard(request):
-    """Class teacher dashboard with live stats filtered to assigned class."""
+    """Class teacher dashboard with charts, gender stats, absent alerts & notification prefs."""
     from core.models import Student
     from attendance.models import Attendance
     from movement.models import MovementLog
     from core.services import fetch_students_from_existing_db
+    from notifications.models import TeacherNotificationSetting, DismissedAlert
+    import json
+    from datetime import timedelta
     
     today = date.today()
     assigned_class = request.user.assigned_class
@@ -170,6 +183,70 @@ def teacher_dashboard(request):
     total_students = class_students.count()
     present_today = Attendance.objects.filter(student_id__in=class_student_ids, scan_date=today).count()
     
+    # Gender breakdown
+    male_admissions = [s['admission_number'] for s in all_school
+                       if s['current_class'] == assigned_class
+                       and (not assigned_stream or s['stream'] == assigned_stream)
+                       and s.get('gender') == 'M']
+    female_admissions = [s['admission_number'] for s in all_school
+                         if s['current_class'] == assigned_class
+                         and (not assigned_stream or s['stream'] == assigned_stream)
+                         and s.get('gender') == 'F']
+    males_count = len(male_admissions)
+    females_count = len(female_admissions)
+    
+    # Weekly attendance for bar chart (last 7 days)
+    weekly_labels = []
+    weekly_present = []
+    weekly_absent = []
+    for i in range(6, -1, -1):
+        d = today - timedelta(days=i)
+        count = Attendance.objects.filter(student_id__in=class_student_ids, scan_date=d).count()
+        weekly_labels.append(d.strftime('%a'))
+        weekly_present.append(count)
+        weekly_absent.append(total_students - count if total_students > count else 0)
+    
+    # Students with 3+ consecutive absences (only undismissed)
+    already_dismissed = DismissedAlert.objects.filter(
+        user=request.user, alert_date=today
+    ).values_list('student_id', flat=True)
+    
+    absent_streaks = []
+    for student in class_students:
+        # Skip if already dismissed today
+        if student.id in already_dismissed:
+            continue
+        
+        recent_days = [today - timedelta(days=i) for i in range(3)]
+        absences = 0
+        for d in recent_days:
+            if not Attendance.objects.filter(student=student, scan_date=d).exists():
+                absences += 1
+        if absences >= 3:
+            info = next((s for s in all_school if s['admission_number'] == student.admission_number), None)
+            absent_streaks.append({
+                'id': student.id,
+                'name': info['full_name'] if info else str(student.id),
+                'admission': student.admission_number,
+                'days': absences,
+            })
+    
+    # Count dismissed today (for the "previously dismissed" section)
+    dismissed_count = DismissedAlert.objects.filter(
+        user=request.user, alert_date=today
+    ).count()
+    
+    # Notification settings (get or create)
+    notif_settings, _ = TeacherNotificationSetting.objects.get_or_create(user=request.user)
+    
+    # Handle POST for saving notification preferences
+    if request.method == 'POST':
+        notif_settings.alert_3_consecutive_absences = request.POST.get('alert_3_consecutive') == 'on'
+        notif_settings.alert_attendance_below_75 = request.POST.get('alert_below_75') == 'on'
+        notif_settings.alert_5_absences_term = request.POST.get('alert_5_absences') == 'on'
+        notif_settings.save()
+        messages.success(request, 'Notification preferences saved!')
+    
     stats = {
         'total': total_students,
         'present': present_today,
@@ -178,7 +255,78 @@ def teacher_dashboard(request):
         'rate': round((present_today / total_students * 100) if total_students > 0 else 0, 1),
         'class_name': f"{assigned_class} {assigned_stream}",
     }
-    return render_mobile_or_desktop(request, 'admin_dashboard/teacher.html', 'mobile/teacher_dashboard.html', {'stats': stats})
+    
+    return render_mobile_or_desktop(request, 'admin_dashboard/teacher.html', 'mobile/teacher_dashboard.html', {
+        'stats': stats,
+        'males_count': males_count,
+        'females_count': females_count,
+        'weekly_labels': json.dumps(weekly_labels),
+        'weekly_present': json.dumps(weekly_present),
+        'weekly_absent': json.dumps(weekly_absent),
+        'absent_streaks': absent_streaks,
+        'dismissed_count': dismissed_count,
+        'notif_settings': notif_settings,
+    })
+
+
+@login_required
+def dismiss_alert(request, student_id):
+    """Teacher dismisses an absence alert for today."""
+    from core.models import Student
+    from notifications.models import DismissedAlert
+    
+    try:
+        student = Student.objects.get(id=student_id)
+        DismissedAlert.objects.get_or_create(
+            user=request.user,
+            student=student,
+            alert_date=date.today()
+        )
+        messages.success(request, f'Alert for {student.id} dismissed.')
+    except Student.DoesNotExist:
+        messages.error(request, 'Student not found.')
+    
+    return redirect('teacher_dashboard')
+
+@login_required
+def dismiss_all_alerts(request):
+    """Teacher dismisses ALL absence alerts for today at once."""
+    from core.models import Student
+    from core.services import fetch_students_from_existing_db
+    from attendance.models import Attendance
+    from notifications.models import DismissedAlert
+    from datetime import date, timedelta
+    
+    today = date.today()
+    assigned_class = request.user.assigned_class
+    assigned_stream = request.user.assigned_stream
+    
+    all_school = fetch_students_from_existing_db()
+    class_admissions = [
+        s['admission_number'] for s in all_school 
+        if s['current_class'] == assigned_class 
+        and (not assigned_stream or s['stream'] == assigned_stream)
+    ]
+    class_students = Student.objects.filter(admission_number__in=class_admissions, status='active')
+    
+    dismissed_count = 0
+    for student in class_students:
+        recent_days = [today - timedelta(days=i) for i in range(3)]
+        absences = 0
+        for d in recent_days:
+            if not Attendance.objects.filter(student=student, scan_date=d).exists():
+                absences += 1
+        if absences >= 3:
+            _, created = DismissedAlert.objects.get_or_create(
+                user=request.user,
+                student=student,
+                alert_date=today
+            )
+            if created:
+                dismissed_count += 1
+    
+    messages.success(request, f'{dismissed_count} alert(s) dismissed!')
+    return redirect('teacher_dashboard')
 
 
 @login_required
@@ -232,27 +380,46 @@ def add_user(request):
 
 @login_required
 def edit_user(request, user_id):
-    """Super Admin: Edit existing user."""
-    if request.user.role != 'super_admin':
-        messages.error(request, 'Access denied.'); return redirect('dashboard')
+    """Super Admin: Edit existing user. Users can also edit their own profile."""
     target_user = get_object_or_404(User, id=user_id)
+    
+    # Allow users to edit their own profile, or super_admin to edit anyone
+    if request.user.role != 'super_admin' and request.user.id != target_user.id:
+        messages.error(request, 'Access denied.')
+        return redirect('dashboard')
+    
     if request.method == 'POST':
         target_user.username = request.POST.get('username', target_user.username)
         target_user.email = request.POST.get('email', '')
         target_user.first_name = request.POST.get('first_name', '')
         target_user.last_name = request.POST.get('last_name', '')
-        target_user.role = request.POST.get('role', target_user.role)
-        target_user.assigned_location = request.POST.get('assigned_location', '')
-        target_user.assigned_class = request.POST.get('assigned_class', '')
-        target_user.assigned_stream = request.POST.get('assigned_stream', '')
+        
+        # Only super_admin can change role and assignments
+        if request.user.role == 'super_admin':
+            target_user.role = request.POST.get('role', target_user.role)
+            target_user.assigned_location = request.POST.get('assigned_location', '')
+            target_user.assigned_class = request.POST.get('assigned_class', '')
+            target_user.assigned_stream = request.POST.get('assigned_stream', '')
+        
+        # Handle profile photo upload
+        if 'profile_photo' in request.FILES:
+            target_user.profile_photo = request.FILES['profile_photo']
+        
         new_password = request.POST.get('password')
         if new_password:
             target_user.set_password(new_password)
         target_user.save()
-        messages.success(request, f'User "{target_user.username}" updated!')
-        return redirect('user_management')
-    return render_mobile_or_desktop(request, 'users/form.html', 'mobile/users_form.html', {'edit_mode': True, 'target_user': target_user})
-
+        messages.success(request, f'Profile updated!')
+        
+        if request.user.role == 'super_admin':
+            return redirect('user_management')
+        return redirect('dashboard')
+    
+    return render_mobile_or_desktop(request, 'users/form.html', 'mobile/users_form.html', {
+        'edit_mode': True,
+        'target_user': target_user,
+        'is_own_profile': request.user.id == target_user.id,
+    })
 
 @login_required
 def delete_user(request, user_id):

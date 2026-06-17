@@ -24,7 +24,7 @@ def fetch_students_from_existing_db():
     try:
         with connections['school_db'].cursor() as cursor:
             cursor.execute("""
-                SELECT admission_number, full_name, payment_code, current_class, stream, category
+                SELECT admission_number, full_name, payment_code, current_class, stream, category, gender
                 FROM students WHERE status = 'active'
             """)
             columns = [col[0] for col in cursor.description]
@@ -39,14 +39,14 @@ def get_student_info_from_existing_db(admission_number):
     try:
         with connections['school_db'].cursor() as cursor:
             cursor.execute("""
-                SELECT full_name, current_class, stream, photo_path, status
+                SELECT full_name, current_class, stream, photo_path, status, gender
                 FROM students WHERE admission_number = %s
             """, [admission_number])
             row = cursor.fetchone()
             if row:
                 return {
                     'name': row[0], 'class': row[1], 'stream': row[2],
-                    'photo': row[3], 'status': row[4]
+                    'photo': row[3], 'status': row[4], 'gender': row[5]
                 }
     except Exception as e:
         logger.warning(f"School DB unavailable for {admission_number}: {e}")

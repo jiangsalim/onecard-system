@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
+    <title>Messages - OneCard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 20px; }
+        .header { background: #1a237e; color: white; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; }
+        .header .title { font-size: 16px; font-weight: 600; }
+        .header .new-btn { color: white; text-decoration: none; font-size: 22px; font-weight: 700; }
+        .conv-list { padding: 8px 12px; }
+        .conv-card { background: white; border-radius: 12px; padding: 14px; margin-bottom: 6px; display: flex; align-items: center; gap: 12px; text-decoration: none; color: #333; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+        .conv-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+        .conv-avatar-letter { width: 44px; height: 44px; border-radius: 50%; background: #1a237e; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0; }
+        .conv-card .info { flex: 1; min-width: 0; }
+        .conv-card .name { font-weight: 600; font-size: 14px; }
+        .conv-card .preview { font-size: 12px; color: #888; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .conv-card .meta { text-align: right; flex-shrink: 0; }
+        .conv-card .time { font-size: 10px; color: #aaa; }
+        .unread-badge { background: #c62828; color: white; padding: 2px 7px; border-radius: 10px; font-size: 10px; font-weight: 600; margin-top: 4px; display: inline-block; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #888; }
+        .empty-state a { color: #1a237e; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">Messages {% if total_unread %}<span style="background:#c62828;padding:2px 8px;border-radius:10px;font-size:11px;">{{ total_unread }}</span>{% endif %}</div>
+        <a href="{% url 'start_conversation' %}" class="new-btn">+</a>
+    </div>
+
+    <div class="conv-list">
+        {% if conversations %}
+            {% for conv in conversations %}
+                {% for participant in conv.participants.all %}
+                    {% if participant != request.user %}
+                    <a href="{% url 'chat' conv.id %}" class="conv-card">
+                        {% if participant.profile_photo %}
+                        <img src="{{ participant.profile_photo.url }}" class="conv-avatar" alt="{{ participant.get_full_name }}">
+                        {% else %}
+                        <div class="conv-avatar-letter">{{ participant.get_full_name|default:participant.username|slice:":1"|upper }}</div>
+                        {% endif %}
+                        <div class="info">
+                            <div class="name">{{ participant.get_full_name|default:participant.username }}</div>
+                            <div class="preview">{{ conv.last_msg.content|default:"No messages yet" }}</div>
+                        </div>
+                        <div class="meta">
+                            {% if conv.last_msg %}
+                            <div class="time">{{ conv.last_msg.created_at|date:"d/m" }}</div>
+                            {% endif %}
+                            {% if conv.unread > 0 %}
+                            <div class="unread-badge">{{ conv.unread }}</div>
+                            {% endif %}
+                        </div>
+                    </a>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <p>No messages yet</p>
+                <a href="{% url 'start_conversation' %}">Start a conversation</a>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

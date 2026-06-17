@@ -20,20 +20,58 @@
         .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
         .btn-primary { background: #1a237e; color: white; }
         .btn-cancel { background: #e0e0e0; color: #333; margin-top: 8px; display: block; text-align: center; text-decoration: none; }
+        .btn-upload { background: #1a237e; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px; }
+        .photo-preview { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 2px solid #1a237e; }
+        .photo-letter { width: 70px; height: 70px; border-radius: 50%; background: #1a237e; color: white; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; }
+        .photo-wrapper { position: relative; cursor: pointer; display: inline-block; }
+        .photo-camera { position: absolute; bottom: 0; right: 0; background: #1a237e; color: white; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; border: 2px solid white; }
+        .alert { padding: 10px 14px; border-radius: 8px; margin: 0 16px 12px; font-size: 13px; }
+        .alert-success { background: #e8f5e9; color: #2e7d32; }
+        .alert-error { background: #ffebee; color: #c62828; }
     </style>
 </head>
 <body>
-    <div class="header"><div class="title">{% if edit_mode %}Edit{% else %}Add{% endif %} User</div></div>
+    <div class="header">
+        <div class="title">{% if is_own_profile %}My Profile{% elif edit_mode %}Edit User{% else %}Add User{% endif %}</div>
+    </div>
+
+    {% if messages %}
+    {% for m in messages %}<div class="alert {% if 'error' in m.tags %}alert-error{% else %}alert-success{% endif %}">{{ m }}</div>{% endfor %}
+    {% endif %}
+
     <div class="card-white">
-        <form method="post">
+        <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
+
+            <!-- Profile Photo Section -->
+            <div class="form-group" style="text-align:center;">
+                <label>Profile Photo</label>
+                <div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
+                    <div class="photo-wrapper" onclick="document.getElementById('photoInput').click()" title="Tap to upload photo">
+                        {% if target_user.profile_photo %}
+                        <img src="{{ target_user.profile_photo.url }}" id="photoPreview" class="photo-preview" alt="Profile Photo">
+                        {% else %}
+                        <div id="photoPreview" class="photo-letter">
+                            {{ target_user.get_full_name|default:target_user.username|slice:":1"|upper }}
+                        </div>
+                        {% endif %}
+                        <div class="photo-camera">📷</div>
+                    </div>
+                    <button type="button" onclick="document.getElementById('photoInput').click()" class="btn-upload">Upload Photo</button>
+                    <small style="color:#888; font-size:11px;">Tap avatar or button to select photo</small>
+                </div>
+                <input type="file" id="photoInput" name="profile_photo" accept="image/*" style="display:none;" onchange="previewPhoto(event)">
+            </div>
+
             <div class="form-row">
                 <div class="form-group"><label>First Name</label><input type="text" name="first_name" value="{{ target_user.first_name|default:'' }}" required></div>
                 <div class="form-group"><label>Last Name</label><input type="text" name="last_name" value="{{ target_user.last_name|default:'' }}" required></div>
             </div>
             <div class="form-group"><label>Username</label><input type="text" name="username" value="{{ target_user.username|default:'' }}" required></div>
             <div class="form-group"><label>Email</label><input type="email" name="email" value="{{ target_user.email|default:'' }}"></div>
-            <div class="form-group"><label>Password {% if edit_mode %}(leave blank to keep){% endif %}</label><input type="password" name="password" {% if not edit_mode %}required{% endif %}></div>
+            <div class="form-group"><label>Password {% if edit_mode %}(leave blank to keep){% endif %}</label><input type="password" name="password" {% if not edit_mode %}required{% endif %} placeholder="{% if edit_mode %}New password (optional){% else %}Enter password{% endif %}"></div>
+
+            {% if request.user.role == 'super_admin' %}
             <div class="form-group">
                 <label>Role</label>
                 <select name="role" id="roleSelect" onchange="toggleFields()">
@@ -44,13 +82,77 @@
                     <option value="class_teacher" {% if target_user.role == 'class_teacher' %}selected{% endif %}>Class Teacher</option>
                 </select>
             </div>
-            <div class="extra-fields" id="gateFields"><div class="form-group"><label>Location</label><select name="assigned_location"><option value="Main Gate">Main Gate</option><option value="Side Gate">Side Gate</option><option value="Dining Hall">Dining Hall</option></select></div></div>
-            <div class="extra-fields" id="teacherFields"><div class="form-row"><div class="form-group"><label>Class</label><select name="assigned_class"><option value="">--</option><option value="Senior 1">S.1</option><option value="Senior 2">S.2</option><option value="Senior 3">S.3</option><option value="Senior 4">S.4</option><option value="Senior 5">S.5</option><option value="Senior 6">S.6</option></select></div><div class="form-group"><label>Stream</label><select name="assigned_stream"><option value="">--</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option></select></div></div></div>
-            <button type="submit" class="btn btn-primary">{% if edit_mode %}Save{% else %}Create{% endif %}</button>
-            <a href="{% url 'user_management' %}" class="btn btn-cancel">Cancel</a>
+            <div class="extra-fields" id="gateFields">
+                <div class="form-group">
+                    <label>Location</label>
+                    <select name="assigned_location">
+                        <option value="">-- Select --</option>
+                        <option value="Main Gate" {% if target_user.assigned_location == 'Main Gate' %}selected{% endif %}>Main Gate</option>
+                        <option value="Side Gate" {% if target_user.assigned_location == 'Side Gate' %}selected{% endif %}>Side Gate</option>
+                        <option value="Dining Hall" {% if target_user.assigned_location == 'Dining Hall' %}selected{% endif %}>Dining Hall</option>
+                        <option value="Bursar Office" {% if target_user.assigned_location == 'Bursar Office' %}selected{% endif %}>Bursar Office</option>
+                    </select>
+                </div>
+            </div>
+            <div class="extra-fields" id="teacherFields">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Class</label>
+                        <select name="assigned_class">
+                            <option value="">--</option>
+                            <option value="Senior 1" {% if target_user.assigned_class == 'Senior 1' %}selected{% endif %}>S.1</option>
+                            <option value="Senior 2" {% if target_user.assigned_class == 'Senior 2' %}selected{% endif %}>S.2</option>
+                            <option value="Senior 3" {% if target_user.assigned_class == 'Senior 3' %}selected{% endif %}>S.3</option>
+                            <option value="Senior 4" {% if target_user.assigned_class == 'Senior 4' %}selected{% endif %}>S.4</option>
+                            <option value="Senior 5" {% if target_user.assigned_class == 'Senior 5' %}selected{% endif %}>S.5</option>
+                            <option value="Senior 6" {% if target_user.assigned_class == 'Senior 6' %}selected{% endif %}>S.6</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Stream</label>
+                        <select name="assigned_stream">
+                            <option value="">--</option>
+                            <option value="A" {% if target_user.assigned_stream == 'A' %}selected{% endif %}>A</option>
+                            <option value="B" {% if target_user.assigned_stream == 'B' %}selected{% endif %}>B</option>
+                            <option value="C" {% if target_user.assigned_stream == 'C' %}selected{% endif %}>C</option>
+                            <option value="D" {% if target_user.assigned_stream == 'D' %}selected{% endif %}>D</option>
+                            <option value="E" {% if target_user.assigned_stream == 'E' %}selected{% endif %}>E</option>
+                            <option value="F" {% if target_user.assigned_stream == 'F' %}selected{% endif %}>F</option>
+                            <option value="G" {% if target_user.assigned_stream == 'G' %}selected{% endif %}>G</option>
+                            <option value="H" {% if target_user.assigned_stream == 'H' %}selected{% endif %}>H</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <button type="submit" class="btn btn-primary">{% if edit_mode %}Save Changes{% else %}Create User{% endif %}</button>
+            <a href="{% if request.user.role == 'super_admin' %}{% url 'user_management' %}{% else %}{% url 'dashboard' %}{% endif %}" class="btn btn-cancel">Cancel</a>
         </form>
     </div>
+
     <script>
+        function previewPhoto(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('photoPreview');
+                if (preview.tagName === 'IMG') {
+                    preview.src = e.target.result;
+                } else {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.id = 'photoPreview';
+                    img.className = 'photo-preview';
+                    img.alt = 'Profile Photo';
+                    preview.parentNode.replaceChild(img, preview);
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
         function toggleFields() {
             const role = document.getElementById('roleSelect').value;
             document.getElementById('gateFields').classList.toggle('show', role === 'gate_staff');
