@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import HttpResponse
+from django.conf import settings
 from datetime import date
 from .models import CardTemplate, ClassTemplateAssignment, CardReprint
 from core.models import Student
@@ -213,12 +214,13 @@ def download_cards_pdf(request):
             cat_bg = '#78909C'; cat_text = '#FFF'; cat_icon_text = '[D]'
             if not tmpl: border_color = '#78909C'; bg_color = '#FAFAFA'
         
+        # PHOTO: Check OneCard photo first, then school DB photo_path
         if s.photo:
             photo_url = request.build_absolute_uri(s.photo.url)
         else:
             school_photo = school_info.get('photo_path', '')
             if school_photo:
-                photo_url = request.build_absolute_uri('/media/' + school_photo) if school_photo.startswith('/') else school_photo
+                photo_url = request.build_absolute_uri(settings.MEDIA_URL + school_photo)
             else:
                 name_encoded = quote(name_front)
                 photo_url = f"https://ui-avatars.com/api/?name={name_encoded}&size=150&background=1a237e&color=fff"

@@ -17,6 +17,8 @@
         .result-card { background: #16213e; border-radius: 12px; padding: 20px; display: none; border: 1px solid #2a2a4a; margin-bottom: 12px; }
         .result-card.show { display: block; }
         .result-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+        .result-photo { width: 50px; height: 65px; border-radius: 8px; object-fit: cover; border: 2px solid #3f51b5; flex-shrink: 0; }
+        .result-photo-placeholder { width: 50px; height: 65px; border-radius: 8px; background: #1a237e; color: white; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; flex-shrink: 0; border: 2px solid #3f51b5; }
         .result-icon svg { width: 36px; height: 36px; }
         .result-name { font-size: 18px; font-weight: 700; }
         .result-detail { font-size: 12px; color: #8899aa; }
@@ -55,7 +57,12 @@
 
     <div id="result" class="result-card">
         <div style="text-align:right; margin-bottom:8px;"><button class="close-btn" onclick="closeResult()">Close</button></div>
-        <div class="result-header"><div class="result-icon" id="resultIcon"></div><div><div class="result-name" id="resultName"></div><div class="result-detail" id="resultDetail"></div></div></div>
+        <div class="result-header">
+            <img id="resultPhoto" class="result-photo" src="" alt="Photo" style="display:none;">
+            <div id="resultPhotoPlaceholder" class="result-photo-placeholder" style="display:none;"></div>
+            <div class="result-icon" id="resultIcon"></div>
+            <div><div class="result-name" id="resultName"></div><div class="result-detail" id="resultDetail"></div></div>
+        </div>
         <div id="feesContainer"><div class="fees-box"><div class="fees-row"><span>Total</span><span id="feesTotal"></span></div><div class="fees-row"><span>Paid</span><span id="feesPaid"></span></div><div class="fees-row fees-total"><span>Balance</span><span id="feesBalance"></span></div></div><div style="text-align:center;" id="feesStatus"></div></div>
         <div id="passoutContainer" style="display:none;"><div id="passoutForm"></div></div>
         <div id="returnContainer" style="display:none;"></div>
@@ -78,6 +85,24 @@
         let cameraActive = false;
         const html5QrCode = new Html5Qrcode("reader");
         function setIcon(id) { const d = document.getElementById('resultIcon'); d.innerHTML = ''; d.appendChild(document.getElementById(id).content.cloneNode(true)); }
+        
+        function setPhoto(photoUrl, name) {
+            const img = document.getElementById('resultPhoto');
+            const placeholder = document.getElementById('resultPhotoPlaceholder');
+            if (photoUrl) {
+                img.src = photoUrl;
+                img.style.display = 'block';
+                placeholder.style.display = 'none';
+            } else if (name) {
+                img.style.display = 'none';
+                placeholder.textContent = name.charAt(0).toUpperCase();
+                placeholder.style.display = 'flex';
+            } else {
+                img.style.display = 'none';
+                placeholder.style.display = 'none';
+            }
+        }
+
         function onModeChange() { document.getElementById('statusText').textContent = 'Enter Student ID below'; }
         function toggleCamera() {
             if (cameraActive) { html5QrCode.stop().then(() => { cameraActive = false; document.getElementById('reader').style.display = 'none'; }).catch(()=>{}); }
@@ -85,20 +110,24 @@
         }
         function onScanSuccess(decodedText) { html5QrCode.pause(); processScan(decodedText); }
         function onScanFailure(err) {}
-        function showLoading() { setIcon('icon-warning'); document.getElementById('resultName').textContent='Processing...'; document.getElementById('resultDetail').textContent=''; document.getElementById('feesContainer').style.display='none'; document.getElementById('result').classList.add('show'); }
+        function showLoading() { setIcon('icon-warning'); document.getElementById('resultName').textContent='Processing...'; document.getElementById('resultDetail').textContent=''; document.getElementById('feesContainer').style.display='none'; setPhoto('', ''); document.getElementById('result').classList.add('show'); }
         function processScan(studentId) {
             const mode = document.getElementById('mode').value, location = document.getElementById('location').value;
             fetch('/api/scan/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},body:JSON.stringify({student_id:studentId,location:location,mode:mode})})
             .then(r=>r.json()).then(data=>{
                 if(data.success) showBalanceResult(data);
-                else { setIcon('icon-error'); document.getElementById('resultName').textContent='Error'; document.getElementById('resultDetail').textContent=data.error; document.getElementById('result').classList.add('show'); }
-            }).catch(()=>{ setIcon('icon-error'); document.getElementById('resultName').textContent='Error'; document.getElementById('resultDetail').textContent='Connection failed'; document.getElementById('result').classList.add('show'); });
+                else { setIcon('icon-error'); document.getElementById('resultName').textContent='Error'; document.getElementById('resultDetail').textContent=data.error; setPhoto('', ''); document.getElementById('result').classList.add('show'); }
+            }).catch(()=>{ setIcon('icon-error'); document.getElementById('resultName').textContent='Error'; document.getElementById('resultDetail').textContent='Connection failed'; setPhoto('', ''); document.getElementById('result').classList.add('show'); });
         }
         function showBalanceResult(data) {
             const s=data.student,f=data.fees;
             document.getElementById('feesContainer').style.display='block'; document.getElementById('passoutContainer').style.display='none'; document.getElementById('returnContainer').style.display='none'; document.getElementById('mealContainer').style.display='none';
             setIcon(f.status==='CLEARED'?'icon-success':'icon-warning');
             document.getElementById('resultName').textContent=s.name; document.getElementById('resultDetail').textContent=`${s.class} ${s.stream} | ${s.admission}`;
+            
+            // Show photo
+            setPhoto(s.photo || '', s.name);
+            
             document.getElementById('feesTotal').textContent=f.total.toLocaleString()+' UGX'; document.getElementById('feesPaid').textContent=f.paid.toLocaleString()+' UGX'; document.getElementById('feesBalance').textContent=f.balance.toLocaleString()+' UGX';
             document.getElementById('feesStatus').innerHTML=f.status==='CLEARED'?'<span class="badge badge-success">CLEARED</span>':'<span class="badge badge-warning">NOT CLEARED</span>';
             if(data.attendance&&data.attendance.marked){document.getElementById('attendanceConfirm').textContent='Attendance Recorded'; document.getElementById('attendanceConfirm').style.display='block'; document.getElementById('attendanceConfirm').style.background='#1b5e20'; document.getElementById('attendanceConfirm').style.color='#a5d6a7';}
@@ -111,4 +140,3 @@
     </script>
 </body>
 </html>
-

@@ -1,6 +1,8 @@
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
+from django.conf import settings
+from django.core.cache import cache
 from .models import Student
 from .services import get_student_info_from_existing_db, get_payment_balance, fetch_students_from_existing_db, generate_qr_for_student, get_next_student_id
 from attendance.models import Attendance, MealLog, MealAccessRule, MealTimeSettings, MealViolation
@@ -11,6 +13,13 @@ import json
 import logging
 
 logger = logging.getLogger('onecard')
+
+
+def build_photo_url(request, photo_path):
+    """Convert a photo path to a full URL, or return empty string."""
+    if not photo_path:
+        return ''
+    return request.build_absolute_uri(settings.MEDIA_URL + photo_path)
 
 
 @login_required
@@ -26,7 +35,6 @@ def process_scan(request):
         if not student_id:
             return JsonResponse({'success': False, 'error': 'No student ID provided'}, status=400)
         
-        # Parse QR data: "STU-001:v1" or just "STU-001"
         qr_version = 1
         if ':v' in student_id:
             parts = student_id.split(':v')
@@ -34,13 +42,11 @@ def process_scan(request):
             try: qr_version = int(parts[1])
             except (ValueError, IndexError): qr_version = 1
         
-        # Get student from OneCard DB
         try:
             student = Student.objects.select_related('template').get(id=student_id, status='active')
         except Student.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Student not found or inactive'})
         
-        # Check card version
         if qr_version < student.card_version:
             return JsonResponse({
                 'success': False,
@@ -48,12 +54,12 @@ def process_scan(request):
                 'error_code': 'CARD_REPLACED',
             }, status=410)
         
-        # Get student info from school DB
         info = get_student_info_from_existing_db(student.admission_number)
         if not info:
             return JsonResponse({'success': False, 'error': 'Cannot fetch student data.', 'error_code': 'DB_UNAVAILABLE'}, status=503)
         
-        # ========== AUTO-ATTENDANCE ON ALL SCANS ==========
+        photo_url = build_photo_url(request, info.get('photo', ''))
+        
         today = date.today()
         already_marked = Attendance.objects.filter(student=student, scan_date=today).exists()
         if not already_marked:
@@ -64,7 +70,6 @@ def process_scan(request):
             )
         attendance_marked = not already_marked
         
-        # ========== PASS OUT MODE ==========
         if mode == 'pass_out':
             existing = MovementLog.objects.filter(student=student, exit_date=today, time_in__isnull=True).first()
             
@@ -80,21 +85,19 @@ def process_scan(request):
                 
                 return JsonResponse({
                     'success': True,
-                    'student': {'id': student.id, 'name': info['name'], 'class': info['class'], 'stream': info['stream'], 'admission': student.admission_number},
+                    'student': {'id': student.id, 'name': info['name'], 'class': info['class'], 'stream': info['stream'], 'admission': student.admission_number, 'photo': photo_url},
                     'movement': {'action': 'return', 'time_out': str(existing.time_out), 'time_in': str(now_time), 'duration': f'{hours}h {minutes}m'},
                     'attendance': {'marked': attendance_marked, 'already_marked': already_marked}
                 })
             else:
                 return JsonResponse({
                     'success': True,
-                    'student': {'id': student.id, 'name': info['name'], 'class': info['class'], 'stream': info['stream'], 'admission': student.admission_number},
+                    'student': {'id': student.id, 'name': info['name'], 'class': info['class'], 'stream': info['stream'], 'admission': student.admission_number, 'photo': photo_url},
                     'movement': {'action': 'exit'},
                     'attendance': {'marked': attendance_marked, 'already_marked': already_marked}
                 })
         
-        # ========== MEAL TRACKING MODE ==========
         if mode == 'meal_tracking':
-            # Get meal time settings (admin-configurable)
             meal_settings, _ = MealTimeSettings.objects.get_or_create(id=1)
             now = datetime.now().time()
             meal_type = meal_settings.get_current_meal()
@@ -108,9 +111,7 @@ def process_scan(request):
             
             student_category = student.category if hasattr(student, 'category') else 'day'
             
-            # Day scholars only get lunch
             if student_category == 'day' and meal_type != 'lunch':
-                # Log violation
                 violation_type = 'day_supper' if meal_type == 'supper' else 'day_breakfast'
                 MealViolation.objects.create(
                     student=student, meal_type=meal_type,
@@ -122,10 +123,8 @@ def process_scan(request):
                     'error_code': 'MEAL_NOT_ALLOWED',
                 })
             
-            # Check if already eaten
             already_eaten = MealLog.objects.filter(student=student, meal_date=today, meal_type=meal_type).first()
             if already_eaten:
-                # Log violation
                 MealViolation.objects.create(
                     student=student, meal_type=meal_type,
                     violation_type='double_serving', location=location
@@ -136,7 +135,6 @@ def process_scan(request):
                     'error_code': 'ALREADY_SERVED',
                 })
             
-            # Check meal access rule based on fee balance
             student_class = info.get('class', '')
             rule = MealAccessRule.objects.filter(
                 class_name=student_class, category=student_category,
@@ -150,20 +148,16 @@ def process_scan(request):
                 balance = total_fees - float(total_paid)
                 
                 if balance > float(rule.max_balance):
-                    # Log violation
                     MealViolation.objects.create(
                         student=student, meal_type=meal_type,
                         violation_type='balance_high', location=location
                     )
                     return JsonResponse({
                         'success': False,
-                        'error': f'MEAL DENIED — Balance: {balance:,.0f} UGX. Max allowed: {float(rule.max_balance):,.0f} UGX. Clear {balance - float(rule.max_balance):,.0f} UGX to eat.',
+                        'error': f'MEAL DENIED — Balance: {balance:,.0f} UGX. Max allowed: {float(rule.max_balance):,.0f} UGX.',
                         'error_code': 'BALANCE_TOO_HIGH',
-                        'balance': balance,
-                        'max_allowed': float(rule.max_balance),
                     })
             
-            # Mark meal
             MealLog.objects.create(
                 student=student, meal_date=today, meal_type=meal_type,
                 time_scanned=now, location=location,
@@ -173,11 +167,11 @@ def process_scan(request):
             return JsonResponse({
                 'success': True,
                 'meal': {'type': meal_type, 'category': student_category, 'time': str(now)},
-                'student': {'id': student.id, 'name': info['name'], 'class': info['class'], 'stream': info['stream']},
+                'student': {'id': student.id, 'name': info['name'], 'class': info['class'], 'stream': info['stream'], 'photo': photo_url},
                 'attendance': {'marked': attendance_marked, 'already_marked': already_marked}
             })
         
-        # ========== ATTENDANCE / BALANCE MODE ==========
+        # Attendance / Balance mode
         total_paid = get_payment_balance(student.payment_code)
         student_category = student.category if hasattr(student, 'category') else 'day'
         fee = FeeStructure.objects.filter(class_name=info['class'], category=student_category).first()
@@ -195,7 +189,7 @@ def process_scan(request):
         
         return JsonResponse({
             'success': True,
-            'student': {'id': student.id, 'name': info['name'], 'class': info['class'], 'stream': info['stream'], 'admission': student.admission_number, 'payment_code': student.payment_code},
+            'student': {'id': student.id, 'name': info['name'], 'class': info['class'], 'stream': info['stream'], 'admission': student.admission_number, 'payment_code': student.payment_code, 'photo': photo_url},
             'fees': {'total': total_fees, 'paid': float(total_paid), 'balance': balance, 'status': status},
             'attendance': {'marked': attendance_marked, 'already_marked': already_marked}
         })
@@ -236,13 +230,24 @@ def api_students_list(request):
 
 
 @login_required
+def api_import_progress(request):
+    """Get current import progress from cache."""
+    progress = cache.get('import_progress', {
+        'total': 0, 'imported': 0, 'skipped': 0, 'errors': 0,
+        'running': False, 'message': 'No import running'
+    })
+    return JsonResponse(progress)
+
+
+@login_required
 @require_POST
 def api_import_students(request):
-    """Import selected students via AJAX - optimized with batch processing."""
+    """Import selected students via AJAX with batch processing and progress tracking."""
     try:
         data = json.loads(request.body)
         selected = data.get('students', [])
         import_all = data.get('import_all', False)
+        batch_size = data.get('batch_size', 200)
         
         if import_all:
             all_school = fetch_students_from_existing_db()
@@ -252,12 +257,19 @@ def api_import_students(request):
         if not selected:
             return JsonResponse({'success': False, 'message': 'No students to import.'})
         
+        # Initialize progress
+        total = len(selected)
+        cache.set('import_progress', {
+            'total': total, 'imported': 0, 'skipped': 0, 'errors': 0,
+            'running': True, 'message': f'Starting import of {total} students...'
+        }, 600)
+        
         all_school_students = fetch_students_from_existing_db()
         school_dict = {s['admission_number']: s for s in all_school_students}
         
         imported = skipped = errors = 0
         
-        for admission_number in selected:
+        for i, admission_number in enumerate(selected):
             try:
                 if Student.objects.filter(admission_number=admission_number).exists():
                     skipped += 1; continue
@@ -279,12 +291,35 @@ def api_import_students(request):
             except Exception as e:
                 logger.error(f"Import error for {admission_number}: {e}")
                 errors += 1
+            
+            # Update progress every 50 students
+            if i % 50 == 0:
+                pct = round((i / total) * 100)
+                cache.set('import_progress', {
+                    'total': total, 'imported': imported, 'skipped': skipped, 'errors': errors,
+                    'running': True, 'percent': pct,
+                    'message': f'Importing... {imported}/{total} ({pct}%)'
+                }, 600)
+        
+        # Final progress
+        cache.set('import_progress', {
+            'total': total, 'imported': imported, 'skipped': skipped, 'errors': errors,
+            'running': False, 'percent': 100,
+            'message': f'Complete! Imported: {imported} | Skipped: {skipped} | Errors: {errors}'
+        }, 600)
         
         message = f'Imported: {imported}'
         if skipped > 0: message += f' | Skipped: {skipped}'
         if errors > 0: message += f' | Errors: {errors}'
         
-        return JsonResponse({'success': True, 'message': message, 'imported': Student.objects.filter(status='active').count()})
+        return JsonResponse({
+            'success': True, 'message': message,
+            'imported': Student.objects.filter(status='active').count(),
+            'total': total, 'imported_count': imported, 'skipped': skipped, 'errors': errors
+        })
     except Exception as e:
         logger.error(f"Import batch error: {str(e)}", exc_info=True)
+        cache.set('import_progress', {
+            'running': False, 'message': f'Error: {str(e)}'
+        }, 600)
         return JsonResponse({'success': False, 'message': str(e)})

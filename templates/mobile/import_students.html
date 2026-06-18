@@ -13,21 +13,24 @@
         .header a { color: white; text-decoration: none; font-size: 13px; }
         .filter-bar { padding: 10px 16px; background: white; display: flex; gap: 8px; border-bottom: 1px solid #e0e0e0; }
         .filter-bar select, .filter-bar input { padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; flex: 1; }
-        .stats { padding: 10px 16px; display: flex; gap: 16px; font-size: 13px; color: #666; }
+        .stats { padding: 10px 16px; display: flex; gap: 16px; font-size: 13px; color: #666; flex-wrap: wrap; }
         .stats strong { color: #1a237e; }
-        .action-bar { padding: 8px 16px; display: flex; gap: 8px; }
+        .action-bar { padding: 8px 16px; display: flex; gap: 8px; flex-wrap: wrap; }
         .btn { padding: 10px 16px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
         .btn-primary { background: #1a237e; color: white; }
         .btn-success { background: #2e7d32; color: white; }
         .btn-warning { background: #e65100; color: white; flex: 1; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .student-list { padding: 8px 16px; }
         .student-card { background: white; border-radius: 8px; padding: 12px; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .student-card input[type=checkbox] { width: 20px; height: 20px; }
         .student-card .info { flex: 1; }
         .student-card .name { font-weight: 600; font-size: 14px; }
         .student-card .detail { font-size: 11px; color: #888; }
-        .progress { height: 4px; background: #e0e0e0; margin: 0 16px; border-radius: 2px; }
-        .progress-bar { height: 100%; background: #2e7d32; border-radius: 2px; width: 0%; }
+        .progress-container { padding: 8px 16px; display: none; }
+        .progress { height: 16px; background: #e0e0e0; border-radius: 8px; overflow: hidden; }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, #2e7d32, #4caf50); border-radius: 8px; width: 0%; display: flex; align-items: center; justify-content: center; color: white; font-size: 10px; font-weight: 600; transition: width 0.5s ease; }
+        .progress-text { text-align: center; font-size: 12px; color: #666; margin-top: 4px; }
     </style>
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
@@ -45,7 +48,15 @@
         <span>Imported: <strong id="importedCount">0</strong></span>
         <span>Selected: <strong id="selectedCount">0</strong></span>
     </div>
-    <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+    
+    <!-- Live Progress Bar -->
+    <div class="progress-container" id="progressContainer">
+        <div class="progress">
+            <div class="progress-bar" id="progressBar">0%</div>
+        </div>
+        <div class="progress-text" id="progressText">Starting import...</div>
+    </div>
+    
     <div class="action-bar">
         <button class="btn btn-primary" onclick="selectAll()">All</button>
         <button class="btn btn-primary" onclick="deselectAll()">None</button>
@@ -55,7 +66,9 @@
     <div class="student-list" id="studentList"></div>
 
     <script>
-        const PER_PAGE = 30; let currentPage = 1, allStudents = [], selectedSet = new Set();
+        const PER_PAGE = 30;
+        let currentPage = 1, allStudents = [], selectedSet = new Set(), progressInterval = null;
+        
         function loadStudents(page) {
             currentPage = page;
             const cls = document.getElementById('filterClass').value, stream = document.getElementById('filterStream').value;
@@ -65,12 +78,17 @@
                 allStudents = data.students;
                 document.getElementById('totalCount').textContent = data.remaining_count;
                 document.getElementById('importedCount').textContent = data.imported_count;
+                selectedSet.clear();
                 renderList();
             });
         }
+        
         function renderList() {
             const list = document.getElementById('studentList');
-            if (allStudents.length === 0) { list.innerHTML = '<p style="text-align:center;color:#2e7d32;padding:30px;">All students imported!</p>'; return; }
+            if (allStudents.length === 0) { 
+                list.innerHTML = '<p style="text-align:center;color:#2e7d32;padding:30px;">All students imported!</p>'; 
+                return; 
+            }
             list.innerHTML = allStudents.map(s => `
                 <div class="student-card">
                     <input type="checkbox" value="${s.admission_number}" ${selectedSet.has(s.admission_number)?'checked':''} onchange="toggleStudent(this)">
@@ -81,24 +99,78 @@
                 </div>
             `).join('');
             document.getElementById('selectedCount').textContent = selectedSet.size;
-            document.getElementById('progressBar').style.width = (selectedSet.size / Math.max(1, allStudents.length) * 100) + '%';
         }
-        function toggleStudent(cb) { if(cb.checked) selectedSet.add(cb.value); else selectedSet.delete(cb.value); document.getElementById('selectedCount').textContent = selectedSet.size; }
+        
+        function toggleStudent(cb) { 
+            if(cb.checked) selectedSet.add(cb.value); 
+            else selectedSet.delete(cb.value); 
+            document.getElementById('selectedCount').textContent = selectedSet.size; 
+        }
         function selectAll() { allStudents.forEach(s => selectedSet.add(s.admission_number)); renderList(); }
         function deselectAll() { selectedSet.clear(); renderList(); }
+        
+        function showProgress() { document.getElementById('progressContainer').style.display = 'block'; }
+        function hideProgress() { document.getElementById('progressContainer').style.display = 'none'; }
+        
+        function startProgressPolling() {
+            showProgress();
+            if (progressInterval) clearInterval(progressInterval);
+            progressInterval = setInterval(() => {
+                fetch('/api/import-progress/')
+                    .then(r => r.json())
+                    .then(data => {
+                        const bar = document.getElementById('progressBar');
+                        const text = document.getElementById('progressText');
+                        const pct = data.percent || 0;
+                        bar.style.width = pct + '%';
+                        bar.textContent = pct > 5 ? pct + '%' : '';
+                        text.textContent = data.message || 'Importing...';
+                        
+                        if (!data.running) {
+                            clearInterval(progressInterval);
+                            progressInterval = null;
+                            if (pct >= 100) {
+                                setTimeout(() => {
+                                    hideProgress();
+                                    loadStudents(1);
+                                }, 2000);
+                            }
+                        }
+                    });
+            }, 500);
+        }
+        
         function importSelected() {
             if(selectedSet.size===0){alert('Select students first.');return;}
+            if(!confirm(`Import ${selectedSet.size} students?`)) return;
+            
+            document.getElementById('importBtn').disabled = true;
+            startProgressPolling();
+            
             fetch('/api/import-students/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},body:JSON.stringify({students:Array.from(selectedSet)})})
-            .then(r=>r.json()).then(data=>{alert(data.message);if(data.success){selectedSet.clear();loadStudents(currentPage);}});
+            .then(r=>r.json()).then(data=>{
+                if(data.success){selectedSet.clear();}
+            }).finally(()=>{ document.getElementById('importBtn').disabled = false; });
         }
+        
         function importAll() {
-            if(!confirm('Import ALL remaining students?')) return;
+            if(!confirm('Import ALL remaining students? This may take several minutes.')) return;
+            
+            document.getElementById('importAllBtn').disabled = true;
+            document.getElementById('importAllBtn').textContent = 'Importing...';
+            startProgressPolling();
+            
             fetch('/api/import-students/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},body:JSON.stringify({import_all:true})})
-            .then(r=>r.json()).then(data=>{alert(data.message);if(data.success){selectedSet.clear();loadStudents(1);}});
+            .then(r=>r.json()).then(data=>{
+                if(data.success){selectedSet.clear();}
+            }).finally(()=>{ 
+                document.getElementById('importAllBtn').disabled = false; 
+                document.getElementById('importAllBtn').textContent = 'Import All'; 
+            });
         }
+        
         function getCookie(name){let v=document.cookie.match('(^|;) ?'+name+'=([^;]*)(;|$)');return v?v[2]:null;}
         loadStudents(1);
     </script>
 </body>
 </html>
-

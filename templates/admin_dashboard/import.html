@@ -23,6 +23,7 @@
         .btn-primary { background: #1a237e; color: white; }
         .btn-success { background: #2e7d32; color: white; }
         .btn-danger { background: #c62828; color: white; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 14px; }
         th { background: #f5f5f5; font-weight: 600; }
@@ -33,49 +34,28 @@
         .pagination button { padding: 8px 16px; border: 1px solid #ccc; background: white; border-radius: 4px; cursor: pointer; }
         .pagination button.active { background: #1a237e; color: white; }
         .pagination select { padding: 8px; border-radius: 4px; }
-        .stats { display: flex; gap: 24px; margin-bottom: 16px; }
+        .stats { display: flex; gap: 24px; margin-bottom: 16px; flex-wrap: wrap; }
         .stats span { font-size: 14px; color: #666; }
         .stats strong { color: #1a237e; }
-        .progress { height: 8px; background: #e0e0e0; border-radius: 4px; margin: 12px 0; }
-        .progress-bar { height: 100%; background: #2e7d32; border-radius: 4px; transition: width 0.3s; }
+        .progress-container { margin: 12px 0; }
+        .progress { height: 20px; background: #e0e0e0; border-radius: 10px; overflow: hidden; position: relative; }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, #2e7d32, #4caf50); border-radius: 10px; transition: width 0.5s ease; width: 0%; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 600; min-width: 40px; }
+        .progress-text { text-align: center; font-size: 13px; color: #666; margin-top: 4px; }
         .filter-row { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
         .filter-row select, .filter-row input { padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; }
-        /* Mobile Responsive */
-@media (max-width: 768px) {
-    .layout { flex-direction: column; }
-    .sidebar { 
-        width: 100%; min-height: auto; 
-        display: flex; flex-wrap: wrap; gap: 0;
-        padding: 5px 0; border-right: none; 
-        border-bottom: 1px solid #e0e0e0;
-    }
-    .sidebar .section-title { display: none; }
-    .sidebar a { 
-        padding: 8px 12px; font-size: 12px; 
-        border-left: none; border-bottom: 2px solid transparent;
-    }
-    .sidebar a:hover { border-bottom-color: #1a237e; border-left: none; }
-    .main-content { margin-left: 0; padding: 12px; }
-    .stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .stat-card { padding: 16px 10px; }
-    .stat-card .stat-value { font-size: 22px; }
-    .stat-card .stat-label { font-size: 11px; }
-    .grid-2 { grid-template-columns: 1fr; }
-    .action-grid { grid-template-columns: 1fr; }
-    .card { padding: 16px; }
-    .card h2 { font-size: 16px; }
-    table { font-size: 11px; }
-    th, td { padding: 6px 8px; }
-    .btn { padding: 8px 14px; font-size: 12px; }
-    .navbar { padding: 0 10px; }
-    .navbar .brand { font-size: 15px; }
-    .navbar .user-info { gap: 8px; font-size: 11px; }
-    .navbar .role-badge { padding: 2px 8px; font-size: 9px; }
-    .quick-links { flex-direction: column; }
-    .quick-links .btn { width: 100%; text-align: center; }
-    .filter-row { flex-direction: column; }
-    .filter-row select, .filter-row input { width: 100%; }
-}
+        @media (max-width: 768px) {
+            .layout { flex-direction: column; }
+            .sidebar { width: 100%; min-height: auto; display: flex; flex-wrap: wrap; padding: 5px 0; border-right: none; border-bottom: 1px solid #e0e0e0; }
+            .sidebar .section-title { display: none; }
+            .sidebar a { padding: 8px 12px; font-size: 12px; border-left: none; border-bottom: 2px solid transparent; }
+            .main-content { padding: 12px; }
+            .card { padding: 16px; }
+            table { font-size: 11px; }
+            th, td { padding: 6px 8px; }
+            .btn { padding: 8px 14px; font-size: 12px; }
+            .filter-row { flex-direction: column; }
+            .filter-row select, .filter-row input { width: 100%; }
+        }
     </style>
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
@@ -114,7 +94,13 @@
                     <span>Selected: <strong id="selectedCount">0</strong></span>
                 </div>
                 
-                <div class="progress"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+                <!-- Live Progress Bar -->
+                <div class="progress-container" id="progressContainer" style="display:none;">
+                    <div class="progress">
+                        <div class="progress-bar" id="progressBar">0%</div>
+                    </div>
+                    <div class="progress-text" id="progressText">Starting import...</div>
+                </div>
                 
                 <div style="margin-bottom:12px;">
                     <button class="btn btn-primary" onclick="selectAll()">Select All Visible</button>
@@ -144,6 +130,7 @@
         let totalPages = 1;
         let allStudents = [];
         let selectedSet = new Set();
+        let progressInterval = null;
 
         function loadStudents(page) {
             currentPage = page;
@@ -185,15 +172,11 @@
                 </tr>
             `).join('');
             document.getElementById('selectedCount').textContent = selectedSet.size;
-            updateProgress();
         }
 
         function renderPagination() {
             const pag = document.getElementById('pagination');
-            if (totalPages <= 1) {
-                pag.innerHTML = '';
-                return;
-            }
+            if (totalPages <= 1) { pag.innerHTML = ''; return; }
             let html = `<span>Page ${currentPage} of ${totalPages}</span>`;
             if (currentPage > 1) html += `<button onclick="loadStudents(${currentPage - 1})">Prev</button>`;
             if (currentPage < totalPages) html += `<button onclick="loadStudents(${currentPage + 1})">Next</button>`;
@@ -209,7 +192,6 @@
             if (cb.checked) selectedSet.add(cb.value);
             else selectedSet.delete(cb.value);
             document.getElementById('selectedCount').textContent = selectedSet.size;
-            updateProgress();
         }
 
         function toggleAll(cb) {
@@ -230,10 +212,42 @@
             renderTable();
         }
 
-        function updateProgress() {
-            const total = parseInt(document.getElementById('totalCount').textContent) || 1;
-            const pct = Math.round((selectedSet.size / total) * 100);
-            document.getElementById('progressBar').style.width = pct + '%';
+        function showProgress() {
+            document.getElementById('progressContainer').style.display = 'block';
+        }
+
+        function hideProgress() {
+            document.getElementById('progressContainer').style.display = 'none';
+        }
+
+        function startProgressPolling() {
+            showProgress();
+            if (progressInterval) clearInterval(progressInterval);
+            progressInterval = setInterval(() => {
+                fetch('/api/import-progress/')
+                    .then(r => r.json())
+                    .then(data => {
+                        const bar = document.getElementById('progressBar');
+                        const text = document.getElementById('progressText');
+                        const pct = data.percent || 0;
+                        bar.style.width = pct + '%';
+                        bar.textContent = pct > 5 ? pct + '%' : '';
+                        text.textContent = data.message || 'Importing...';
+                        
+                        if (!data.running) {
+                            clearInterval(progressInterval);
+                            progressInterval = null;
+                            if (pct >= 100) {
+                                bar.style.background = 'linear-gradient(90deg, #2e7d32, #4caf50)';
+                                text.textContent = data.message;
+                                setTimeout(() => {
+                                    hideProgress();
+                                    loadStudents(1);
+                                }, 2000);
+                            }
+                        }
+                    });
+            }, 500);
         }
 
         function importSelected() {
@@ -244,6 +258,8 @@
             btn.disabled = true;
             btn.textContent = 'Importing...';
             
+            startProgressPolling();
+            
             fetch('/api/import-students/', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
@@ -251,13 +267,34 @@
             })
             .then(r => r.json())
             .then(data => {
-                alert(data.message);
                 if (data.success) {
                     selectedSet.clear();
-                    loadStudents(1);  // Reload â€” imported students will be gone
                 }
             })
             .finally(() => { btn.disabled = false; btn.textContent = 'Import Selected'; });
+        }
+
+        function importAll() {
+            if (!confirm('This will import ALL remaining students. This may take several minutes. Continue?')) return;
+            
+            const btn = document.getElementById('importAllBtn');
+            btn.disabled = true;
+            btn.textContent = 'Importing All...';
+            
+            startProgressPolling();
+            
+            fetch('/api/import-students/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
+                body: JSON.stringify({import_all: true})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    selectedSet.clear();
+                }
+            })
+            .finally(() => { btn.disabled = false; btn.textContent = 'Import All Students'; });
         }
 
         function getCookie(name) {
@@ -265,33 +302,8 @@
             return v ? v[2] : null;
         }
 
+        // Initial load
         loadStudents(1);
-
-            function importAll() {
-                if (!confirm('This will import ALL remaining students. Are you sure?')) return;
-                
-                const btn = document.getElementById('importAllBtn');
-                btn.disabled = true;
-                btn.textContent = 'Importing All...';
-                
-                fetch('/api/import-students/', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
-                    body: JSON.stringify({import_all: true})
-                })
-                .then(r => r.json())
-                .then(data => {
-                    alert(data.message);
-                    if (data.success) {
-                        selectedSet.clear();
-                        loadStudents(1);  // Reload â€” imported students will be gone
-                    }
-                })
-                .finally(() => { btn.disabled = false; btn.textContent = 'Import All Students'; });
-            }
     </script>
 </body>
 </html>
-
-
-
