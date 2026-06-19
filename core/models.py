@@ -32,3 +32,17 @@ class Student(models.Model):
 
     def __str__(self):
         return f"{self.id} - {self.admission_number}"
+    
+class APIClient(models.Model):
+    """External clients allowed to access public API (e.g., school website)."""
+    name = models.CharField(max_length=100)
+    api_key = models.CharField(max_length=64, unique=True)
+    allowed_ip = models.CharField(max_length=45, blank=True, help_text="IP address of the client server")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'api_clients'
+    
+    def __str__(self):
+        return self.name
