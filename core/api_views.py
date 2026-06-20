@@ -354,6 +354,129 @@ def public_statement_pdf(request):
     response['Content-Disposition'] = f'attachment; filename="statement_{payment_code}.pdf"'
     return response
 
+@csrf_exempt
+def public_statement_by_card_pdf(request):
+    """Public API: Download PDF statement by student card ID."""
+    api_key = request.GET.get('api_key', '')
+    student_id = request.GET.get('student_id', '').strip()
+    
+    if not api_key or not student_id:
+        return HttpResponse('Invalid request', status=400)
+    
+    try:
+        APIClient.objects.get(api_key=api_key, is_active=True)
+    except APIClient.DoesNotExist:
+        return HttpResponse('Unauthorized', status=403)
+    
+    # Clean QR data
+    if ':v' in student_id:
+        student_id = student_id.split(':v')[0]
+    
+    try:
+        student = Student.objects.get(id=student_id, status='active')
+    except Student.DoesNotExist:
+        return HttpResponse('Student not found', status=404)
+    
+    # Redirect to the payment_code version
+    return public_statement_pdf_internal(student.payment_code)
+
+
+def public_statement_pdf_internal(payment_code):
+    """Internal function to generate PDF statement."""
+    try:
+        student = Student.objects.get(payment_code=payment_code, status='active')
+    except Student.DoesNotExist:
+        return HttpResponse('Student not found', status=404)
+    
+    info = get_student_info_from_existing_db(student.admission_number)
+    if not info:
+        return HttpResponse('Student data unavailable', status=503)
+    
+    total_paid = get_payment_balance(student.payment_code)
+    student_category = student.category if hasattr(student, 'category') else 'day'
+    fee = FeeStructure.objects.filter(class_name=info['class'], category=student_category).first()
+    total_fees = float(fee.total_fees) if fee else 800000
+    balance = total_fees - float(total_paid)
+    
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    styles = getSampleStyleSheet()
+    elements = []
+    
+    elements.append(Paragraph("JINJA SENIOR SECONDARY SCHOOL", styles['Title']))
+    elements.append(Paragraph("Fee Statement", styles['Heading2']))
+    elements.append(Spacer(1, 12))
+    
+    elements.append(Paragraph(f"<b>Student:</b> {info['name']}", styles['Normal']))
+    elements.append(Paragraph(f"<b>Class:</b> {info['class']} {info['stream']} | <b>Category:</b> {student_category.title()}", styles['Normal']))
+    elements.append(Paragraph(f"<b>Payment Code:</b> {payment_code}", styles['Normal']))
+    elements.append(Paragraph(f"<b>Date:</b> {timezone.now().strftime('%d/%m/%Y')}", styles['Normal']))
+    elements.append(Spacer(1, 12))
+    
+    fee_data = [
+        ['Description', 'Amount (UGX)'],
+        ['Total Fees', f"{total_fees:,.0f}"],
+        ['Amount Paid', f"{float(total_paid):,.0f}"],
+        ['Balance', f"{balance:,.0f}"],
+    ]
+    fee_table = Table(fee_data, colWidths=[250, 150])
+    fee_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1a237e')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTSIZE', (0, 0), (-1, -1), 11),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+    ]))
+    elements.append(fee_table)
+    elements.append(Spacer(1, 18))
+    
+    elements.append(Paragraph("<b>Payment History</b>", styles['Heading3']))
+    elements.append(Spacer(1, 6))
+    
+    try:
+        from django.db import connections
+        with connections['school_db'].cursor() as cursor:
+            cursor.execute("""
+                SELECT payment_date, payment_method, amount_paid, term, academic_year
+                FROM payments WHERE payment_code = %s
+                ORDER BY payment_date DESC LIMIT 20
+            """, [student.payment_code])
+            rows = cursor.fetchall()
+            
+            if rows:
+                history_data = [['Date', 'Method', 'Amount (UGX)', 'Term']]
+                for row in rows:
+                    history_data.append([
+                        str(row[0])[:10],
+                        row[1] or 'N/A',
+                        f"{float(row[2]):,.0f}",
+                        f"{row[3]} {row[4]}"
+                    ])
+                
+                hist_table = Table(history_data, colWidths=[90, 140, 130, 100])
+                hist_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1a237e')),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                    ('FONTSIZE', (0, 0), (-1, -1), 10),
+                    ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                    ('ALIGN', (2, 0), (2, -1), 'RIGHT'),
+                ]))
+                elements.append(hist_table)
+            else:
+                elements.append(Paragraph("No payment records found.", styles['Normal']))
+    except Exception:
+        elements.append(Paragraph("Payment history unavailable.", styles['Normal']))
+    
+    elements.append(Spacer(1, 30))
+    elements.append(Paragraph(f"Generated: {timezone.now().strftime('%d/%m/%Y %H:%M')} | OneCard System", styles['Normal']))
+    
+    doc.build(elements)
+    buffer.seek(0)
+    
+    response = HttpResponse(buffer, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="statement_{payment_code}.pdf"'
+    return response
+
 
 # ============================================================
 # INTERNAL API (Login required)
@@ -655,3 +778,4 @@ def api_import_students(request):
         logger.error(f"Import batch error: {str(e)}", exc_info=True)
         cache.set('import_progress', {'running': False, 'message': f'Error: {str(e)}'}, 600)
         return JsonResponse({'success': False, 'message': str(e)})
+    

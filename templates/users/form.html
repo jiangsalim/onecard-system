@@ -74,11 +74,11 @@
                         <label>Profile Photo</label>
                         <div style="display:flex; align-items:center; gap:16px;">
                             <div class="photo-wrapper" onclick="document.getElementById('photoInput').click()" title="Tap to upload photo">
-                                {% if target_user.profile_photo %}
+                                {% if target_user and target_user.profile_photo %}
                                 <img src="{{ target_user.profile_photo.url }}" id="photoPreview" class="photo-preview" alt="Profile Photo">
                                 {% else %}
                                 <div id="photoPreview" class="photo-letter">
-                                    {{ target_user.get_full_name|default:target_user.username|slice:":1"|upper }}
+                                    {{ target_user.get_full_name|default:"U"|slice:":1"|upper }}
                                 </div>
                                 {% endif %}
                                 <div class="photo-camera">📷</div>

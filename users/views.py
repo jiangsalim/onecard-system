@@ -375,7 +375,11 @@ def add_user(request):
         )
         messages.success(request, f'User "{username}" created successfully!')
         return redirect('user_management')
-    return render_mobile_or_desktop(request, 'users/form.html', 'mobile/users_form.html', {'edit_mode': False})
+    return render_mobile_or_desktop(request, 'users/form.html', 'mobile/users_form.html', {
+    'edit_mode': False,
+    'target_user': None,
+    'is_own_profile': False,
+})
 
 
 @login_required

@@ -13,6 +13,7 @@ urlpatterns = [
     path('api/public/balance/', api_views.public_balance, name='public_balance'),
     path('api/public/statement/', api_views.public_statement_pdf, name='public_statement'),
     path('api/public/balance-by-card/', api_views.public_balance_by_card, name='public_balance_by_card'),
+    path('api/public/statement-by-card/', api_views.public_statement_by_card_pdf, name='public_statement_by_card'),
     path('test-404/', views.error_404, name='test_404'),
     path('test-500/', views.error_500, name='test_500'),
     path('backup/', views.backup_now, name='backup_now'),
