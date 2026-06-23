@@ -33,7 +33,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'core.middleware.RateLimitMiddleware',
+    'core.middleware.AccountLockoutMiddleware',
     'core.middleware.IPRestrictionMiddleware',
+    'core.middleware.SessionSecurityMiddleware',
 ]
 
 ROOT_URLCONF = 'onecard.urls'

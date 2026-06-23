@@ -7,6 +7,7 @@ from django.core.cache import cache
 import logging
 from .models import User
 from core.mobile_utils import render_mobile_or_desktop
+from core.decorators import reauth_required
 
 logger = logging.getLogger('onecard')
 
@@ -21,6 +22,7 @@ def login_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
     
+    # Check rate limiting
     if hasattr(request, 'rate_limited') and request.rate_limited:
         retry_after = getattr(request, 'rate_limit_retry_after', 300)
         return render_mobile_or_desktop(request, 'auth/login.html', 'mobile/login.html', {
@@ -32,8 +34,13 @@ def login_view(request):
         username = request.POST.get('username')
         password = request.POST.get('password')
         user = authenticate(request, username=username, password=password)
+        
         if user is not None:
             if user.is_active:
+                # Reset failed login counter on success
+                from core.middleware import reset_failed_logins
+                reset_failed_logins(user.username)
+                
                 login(request, user)
                 messages.success(request, f'Welcome, {user.get_full_name() or user.username}!')
                 next_url = request.GET.get('next', '')
@@ -43,9 +50,12 @@ def login_view(request):
             else:
                 messages.error(request, 'Account disabled. Contact admin.')
         else:
+            # Record failed login attempt
+            from core.middleware import record_failed_login
+            record_failed_login(username)
             messages.error(request, 'Invalid username or password.')
+    
     return render_mobile_or_desktop(request, 'auth/login.html', 'mobile/login.html')
-
 
 def logout_view(request):
     logout(request)
@@ -336,6 +346,7 @@ def scanner_view(request):
 
 
 @login_required
+@reauth_required
 def user_management(request):
     """Super Admin: Manage all users."""
     if request.user.role != 'super_admin':
@@ -426,6 +437,7 @@ def edit_user(request, user_id):
     })
 
 @login_required
+@reauth_required
 def delete_user(request, user_id):
     """Super Admin: Delete a user."""
     if request.user.role != 'super_admin':
@@ -445,6 +457,7 @@ def delete_user(request, user_id):
     return render_mobile_or_desktop(request, 'users/delete_confirm.html', 'mobile/users_delete.html', {'target_user': target_user})
 
 @login_required
+@reauth_required
 def reset_system_data(request):
     """Super Admin: FULL system reset — deletes everything except Super Admin users."""
     if request.user.role != 'super_admin':
