@@ -213,25 +213,27 @@
 
     <!-- Bottom Nav -->
     <div class="bottom-nav">
-        <a href="#" class="active">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-            Home
-        </a>
-        <a href="{% url 'attendance_report' %}?class={{ user.assigned_class|urlencode }}&stream={{ user.assigned_stream|urlencode }}">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
-            Attendance
-        </a>
-        <a href="{% url 'fee_report' %}?class={{ user.assigned_class|urlencode }}&stream={{ user.assigned_stream|urlencode }}">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            Fees
-        </a>
-        <div class="section-title">Communication</div>
-        <a href="{% url 'inbox' %}">Messages</a>
-        <a href="{% url 'movement_history' %}?class={{ user.assigned_class|urlencode }}&stream={{ user.assigned_stream|urlencode }}">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></svg>
-            Movement
-        </a>
-    </div>
+    <a href="{% url 'teacher_dashboard' %}" class="active">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Home
+    </a>
+    <a href="{% url 'attendance_report' %}?class={{ user.assigned_class|urlencode }}&stream={{ user.assigned_stream|urlencode }}">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+        Attendance
+    </a>
+    <a href="{% url 'fee_report' %}?class={{ user.assigned_class|urlencode }}&stream={{ user.assigned_stream|urlencode }}">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Fees
+    </a>
+    <a href="{% url 'inbox' %}">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Messages
+    </a>
+    <a href="{% url 'movement_history' %}?class={{ user.assigned_class|urlencode }}&stream={{ user.assigned_stream|urlencode }}">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></svg>
+        Movement
+    </a>
+</div>
 
     <!-- Chart.js -->
     <script>
