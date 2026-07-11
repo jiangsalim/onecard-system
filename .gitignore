@@ -1,0 +1,63 @@
+
+# Environment & Secrets
+.env
+*.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+*.so
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+/staticfiles/
+/media/
+
+# Virtual Environment
+venv/
+env/
+.venv/
+myenv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Database backups
+*.sql.gz
+*.dump
+
+# QR codes (generated)
+media/qrcodes/
+media/student_photos/
+media/profile_photos/
+media/school_logos/
+media/school_badges/
+
+# Templates cache
+*.pyc
+
+# Render
+render.yaml
+venv/
