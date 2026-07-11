@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: onecard-jinja-sss
+    env: python
+    buildCommand: |
+      pip install -r requirements.txt
+      python manage.py collectstatic --noinput
+      python manage.py migrate
+      python -c "import os; from dotenv import load_dotenv; load_dotenv(); import django; os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'onecard.settings'); django.setup(); from users.models import User; User.objects.filter(username='admin').exists() or User.objects.create_superuser('admin', 'admin@jinjasss.sc.ug', 'JinjaSSS@2026')"
+    startCommand: gunicorn onecard.wsgi:application
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: DB_NAME
+        value: onecard_db
+      - key: DB_USER
+        value: avnadmin
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_HOST
+        value: mysql-33c81946-jaingsalim.g.aivencloud.com
+      - key: DB_PORT
+        value: "26212"
+      - key: SCHOOL_DB_NAME
+        value: defaultdb
+      - key: SCHOOL_DB_USER
+        value: avnadmin
+      - key: SCHOOL_DB_PASSWORD
+        sync: false
+      - key: SCHOOL_DB_HOST
+        value: mysql-33c81946-jaingsalim.g.aivencloud.com
+      - key: SCHOOL_DB_PORT
+        value: "26212"
