@@ -19,7 +19,7 @@ services:
         value: onecard_db
       - key: DB_USER
         value: avnadmin
-      - key: AVNS_NCF8eA0SKfijBWFlN0S
+      - key: DB_PASSWORD
         sync: false
       - key: DB_HOST
         value: mysql-33c81946-jaingsalim.g.aivencloud.com
@@ -29,7 +29,7 @@ services:
         value: defaultdb
       - key: SCHOOL_DB_USER
         value: avnadmin
-      - key: AVNS_NCF8eA0SKfijBWFlN0S
+      - key: SCHOOL_DB_PASSWORD
         sync: false
       - key: SCHOOL_DB_HOST
         value: mysql-33c81946-jaingsalim.g.aivencloud.com
