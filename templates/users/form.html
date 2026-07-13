@@ -1,4 +1,5 @@
 ﻿{% load card_filters %}
+{% load school_tags %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -81,7 +82,12 @@
                                     {{ target_user.get_full_name|default:"U"|slice:":1"|upper }}
                                 </div>
                                 {% endif %}
-                                <div class="photo-camera">📷</div>
+                                <div class="photo-camera">
+                                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                                         <circle cx="12" cy="13" r="4"/>
+                                    </svg>
+                                </div>
                             </div>
                             <div>
                                 <button type="button" onclick="document.getElementById('photoInput').click()" class="btn-upload">Upload Photo</button>
@@ -155,21 +161,20 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Assigned Class</label>
+                                {% get_classes as classes %}
                                 <select name="assigned_class">
                                     <option value="">-- Select --</option>
-                                    <option value="Senior 1" {% if target_user.assigned_class == 'Senior 1' %}selected{% endif %}>Senior 1</option>
-                                    <option value="Senior 2" {% if target_user.assigned_class == 'Senior 2' %}selected{% endif %}>Senior 2</option>
-                                    <option value="Senior 3" {% if target_user.assigned_class == 'Senior 3' %}selected{% endif %}>Senior 3</option>
-                                    <option value="Senior 4" {% if target_user.assigned_class == 'Senior 4' %}selected{% endif %}>Senior 4</option>
-                                    <option value="Senior 5" {% if target_user.assigned_class == 'Senior 5' %}selected{% endif %}>Senior 5</option>
-                                    <option value="Senior 6" {% if target_user.assigned_class == 'Senior 6' %}selected{% endif %}>Senior 6</option>
+                                    {% for cls in classes %}
+                                    <option value="{{ cls }}" {% if target_user.assigned_class == cls %}selected{% endif %}>{{ cls }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label>Assigned Stream</label>
+                                {% get_streams as streams %}
                                 <select name="assigned_stream">
                                     <option value="">-- Select --</option>
-                                    {% for st in "ABCDEFGH" %}
+                                    {% for st in streams %}
                                     <option value="{{ st }}" {% if target_user.assigned_stream == st %}selected{% endif %}>{{ st }}</option>
                                     {% endfor %}
                                 </select>

@@ -118,7 +118,7 @@ def send_daily_report_email(to_email, name, html_content):
     api_key = getattr(settings, 'BREVO_API_KEY', '')
     
     if not api_key or api_key == 'your-brevo-api-key-here':
-        print(f"\n  DAILY REPORT sent to {to_email}\n")
+        print(f"\n  DAILY REPORT → {to_email} (no API key)\n")
         return True
     
     try:
@@ -138,12 +138,14 @@ def send_daily_report_email(to_email, name, html_content):
         send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
             to=[{"email": to_email, "name": name}],
             sender=sender,
-            subject=f"OneCard Daily Report - {timezone.now().strftime('%B %d, %Y')}",
+            subject=f"OneCard Daily Report - {__import__('django').utils.timezone.now().strftime('%B %d, %Y')}",
             html_content=html_content,
         )
         
         api_instance.send_transac_email(send_smtp_email)
+        print(f"  Email sent to {to_email}")
         return True
     except Exception as e:
-        print(f"\n  DAILY REPORT → {to_email} (console)\n")
+        print(f"  DAILY REPORT ERROR: {e}")
+        print(f"  DAILY REPORT → {to_email} (console fallback)\n")
         return True
