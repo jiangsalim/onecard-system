@@ -6,7 +6,7 @@ services:
       pip install -r requirements.txt
       python manage.py collectstatic --noinput
       python manage.py migrate
-      python -c "import os; from dotenv import load_dotenv; load_dotenv(); import django; os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'onecard.settings'); django.setup(); from users.models import User; User.objects.filter(username='admin').exists() or User.objects.create_superuser('admin', 'admin@jinjasss.sc.ug', 'JinjaSSS@2026')"
+      python -c "import os; from dotenv import load_dotenv; load_dotenv(); import django; os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'onecard.settings'); django.setup(); from users.models import User; User.objects.filter(username='jaing').exists() or User.objects.create_superuser('jaing', 'jaingsalim@gmail.com', 'herman1234'); User.objects.filter(username='admin').exists() or User.objects.create_superuser('admin', 'jaingsalim@gmail.com', 'JinjaSSS@2026'); print('Admins ready!')"
     startCommand: gunicorn onecard.wsgi:application
     envVars:
       - key: SECRET_KEY
@@ -19,7 +19,7 @@ services:
         value: onecard_db
       - key: DB_USER
         value: avnadmin
-      - key: DB_PASSWORD
+      - key: AVNS_NCF8eA0SKfijBWFlN0S
         sync: false
       - key: DB_HOST
         value: mysql-33c81946-jaingsalim.g.aivencloud.com
@@ -29,9 +29,15 @@ services:
         value: defaultdb
       - key: SCHOOL_DB_USER
         value: avnadmin
-      - key: SCHOOL_DB_PASSWORD
+      - key: AVNS_NCF8eA0SKfijBWFlN0S
         sync: false
       - key: SCHOOL_DB_HOST
         value: mysql-33c81946-jaingsalim.g.aivencloud.com
       - key: SCHOOL_DB_PORT
         value: "26212"
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_SENDER_EMAIL
+        value: infohermansoftware@gmail.com
+      - key: BREVO_SENDER_NAME
+        value: Herman Software Solutions
