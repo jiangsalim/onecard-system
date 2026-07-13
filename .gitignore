@@ -63,3 +63,9 @@ render.yaml
 venv/
 .env
 .env
+media/qrcodes/
+media/student_photos/
+media/profile_photos/
+media/school_logos/
+media/school_badges/
+media/photos/
