@@ -1,43 +1,28 @@
-services:
-  - type: web
-    name: onecard-jinja-sss
-    env: python
-    buildCommand: |
-      pip install -r requirements.txt
-      python manage.py collectstatic --noinput
-      python manage.py migrate
-      python -c "import os; from dotenv import load_dotenv; load_dotenv(); import django; os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'onecard.settings'); django.setup(); from users.models import User; User.objects.filter(username='jaing').exists() or User.objects.create_superuser('jaing', 'jaingsalim@gmail.com', 'herman1234'); User.objects.filter(username='admin').exists() or User.objects.create_superuser('admin', 'jaingsalim@gmail.com', 'JinjaSSS@2026'); print('Admins ready!')"
-    startCommand: gunicorn onecard.wsgi:application
-    envVars:
-      - key: SECRET_KEY
-        generateValue: true
-      - key: DEBUG
-        value: "False"
-      - key: ALLOWED_HOSTS
-        value: ".onrender.com"
-      - key: DB_NAME
-        value: onecard_db
-      - key: DB_USER
-        value: avnadmin
-      - key: DB_PASSWORD
-        sync: false
-      - key: DB_HOST
-        value: mysql-33c81946-jaingsalim.g.aivencloud.com
-      - key: DB_PORT
-        value: "26212"
-      - key: SCHOOL_DB_NAME
-        value: defaultdb
-      - key: SCHOOL_DB_USER
-        value: avnadmin
-      - key: SCHOOL_DB_PASSWORD
-        sync: false
-      - key: SCHOOL_DB_HOST
-        value: mysql-33c81946-jaingsalim.g.aivencloud.com
-      - key: SCHOOL_DB_PORT
-        value: "26212"
-      - key: BREVO_API_KEY
-        sync: false
-      - key: BREVO_SENDER_EMAIL
-        value: infohermansoftware@gmail.com
-      - key: BREVO_SENDER_NAME
-        value: Herman Software Solutions
+buildCommand: |
+  pip install -r requirements.txt
+  python manage.py collectstatic --noinput
+  python manage.py migrate
+  python -c "
+import os; from dotenv import load_dotenv; load_dotenv();
+import django; os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'onecard.settings'); django.setup();
+from users.models import User;
+
+# Create super admin
+if not User.objects.filter(username='jaing').exists():
+    u = User.objects.create_superuser('jaing', 'jaingsalim@gmail.com', 'herman1234')
+    u.role = 'super_admin'
+    u.save()
+    print('jaing created as super_admin')
+
+# Create school admin  
+if not User.objects.filter(username='admin').exists():
+    u = User.objects.create_superuser('admin', 'jaingsalim@gmail.com', 'JinjaSSS@2026')
+    u.role = 'admin'
+    u.save()
+    print('admin created as admin')
+
+# Fix any existing users with wrong roles
+User.objects.filter(username='jaing').update(role='super_admin', is_superuser=True, is_staff=True)
+User.objects.filter(username='admin').update(role='admin', is_superuser=True, is_staff=True)
+print('Roles fixed!')
+"
