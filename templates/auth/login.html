@@ -180,17 +180,23 @@
         <div class="divider"></div>
 
         {% if rate_limited %}
-        <!-- ========== RATE LIMITED VIEW ========== -->
+        <!-- RATE LIMITED VIEW -->
         <div class="rate-limit-box">
-            <div class="lock-icon">🔒</div>
+             <div class="lock-icon">
+                  <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#ffcc80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        <circle cx="12" cy="16" r="1"/>
+                  </svg>
+             </div>
             <h2>Too Many Login Attempts</h2>
             <p>For security reasons, login is temporarily locked.</p>
             <div class="countdown" id="countdown">--:--</div>
             <p>Please wait before trying again.</p>
             <p style="font-size:11px; margin-top:12px; opacity:0.6;">
-                If you need immediate access, contact the system administrator.
+             If you need immediate access, contact the system administrator.
             </p>
-        </div>
+         </div>
         {% else %}
         <!-- ========== NORMAL LOGIN FORM ========== -->
         {% if messages %}
