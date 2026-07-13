@@ -11,7 +11,7 @@ class User(AbstractUser):
         ('class_teacher', 'Class Teacher'),
     ]
 
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='gate_staff')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='admin')
     assigned_location = models.CharField(max_length=50, null=True, blank=True)
     assigned_class = models.CharField(max_length=20, null=True, blank=True)
     assigned_stream = models.CharField(max_length=20, null=True, blank=True)
@@ -44,3 +44,10 @@ class User(AbstractUser):
         if self.profile_photo:
             return self.profile_photo.url
         return None
+
+    @classmethod
+    def create_superuser(cls, username, email=None, password=None, **extra_fields):
+        extra_fields.setdefault('role', 'super_admin')
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        return cls._create_user(username, email, password, **extra_fields)
