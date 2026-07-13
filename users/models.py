@@ -18,6 +18,8 @@ class User(AbstractUser):
     profile_photo = models.ImageField(upload_to='profile_photos/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    verification_code = models.CharField(max_length=6, blank=True)
+    verification_code_expires = models.DateTimeField(null=True, blank=True)
 
     groups = models.ManyToManyField(
         'auth.Group', verbose_name='groups', blank=True,

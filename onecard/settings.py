@@ -137,6 +137,11 @@ CSRF_TRUSTED_ORIGINS = [
     'https://*.onrender.com',
 ]
 
+# Brevo Email Configuration
+BREVO_API_KEY = os.environ.get('BREVO_API_KEY', '')
+BREVO_SENDER_EMAIL = os.environ.get('BREVO_SENDER_EMAIL', 'infohermansoftware@gmail.com')
+BREVO_SENDER_NAME = os.environ.get('BREVO_SENDER_NAME', 'Herman Software Solutions')
+
 if not DEBUG:
     CSRF_COOKIE_SECURE = True
     SESSION_COOKIE_SECURE = True

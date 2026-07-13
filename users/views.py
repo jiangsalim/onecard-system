@@ -8,6 +8,10 @@ import logging
 from .models import User
 from core.mobile_utils import render_mobile_or_desktop
 from core.decorators import reauth_required
+import random
+from datetime import timedelta
+from django.utils import timezone
+
 
 logger = logging.getLogger('onecard')
 
@@ -339,6 +343,71 @@ def dismiss_all_alerts(request):
     return redirect('teacher_dashboard')
 
 
+
+@login_required
+def change_password_request(request):
+    """Step 1: Send verification code to user's email."""
+    if request.method == 'POST':
+        user = request.user
+        
+        # Generate 6-digit code
+        code = str(random.randint(100000, 999999))
+        user.verification_code = code
+        user.verification_code_expires = timezone.now() + timedelta(minutes=10)
+        user.save()
+        
+        # Send email
+        from core.email_service import send_password_change_code
+        send_password_change_code(user.email, code)
+        
+        messages.success(request, f'Verification code sent to {user.email}')
+        return redirect('change_password_verify')
+    
+    return render_mobile_or_desktop(request, 'users/change_password_request.html', 'mobile/change_password_request.html', {
+        'user_email': request.user.email,
+    })
+
+
+@login_required
+def change_password_verify(request):
+    """Step 2: Verify code and change password."""
+    user = request.user
+    
+    if request.method == 'POST':
+        entered_code = request.POST.get('code', '')
+        new_password = request.POST.get('new_password', '')
+        confirm_password = request.POST.get('confirm_password', '')
+        
+        if entered_code != user.verification_code:
+            messages.error(request, 'Invalid verification code.')
+            return redirect('change_password_verify')
+        
+        if user.verification_code_expires and timezone.now() > user.verification_code_expires:
+            messages.error(request, 'Verification code has expired. Request a new one.')
+            return redirect('change_password_request')
+        
+        if new_password != confirm_password:
+            messages.error(request, 'Passwords do not match.')
+            return redirect('change_password_verify')
+        
+        if len(new_password) < 8:
+            messages.error(request, 'Password must be at least 8 characters.')
+            return redirect('change_password_verify')
+        
+        user.set_password(new_password)
+        user.verification_code = ''
+        user.verification_code_expires = None
+        user.save()
+        
+        from django.contrib.auth import login
+        login(request, user)
+        
+        messages.success(request, 'Password changed successfully!')
+        return redirect('dashboard')
+    
+    return render_mobile_or_desktop(request, 'users/change_password_verify.html', 'mobile/change_password_verify.html', {})
+
+
 @login_required
 def scanner_view(request):
     """Scanner page for gate staff and bursar."""
@@ -358,8 +427,9 @@ def user_management(request):
 @login_required
 def add_user(request):
     """Super Admin: Add new user."""
-    if request.user.role != 'super_admin':
+    if request.user.role not in ['super_admin', 'admin']:
         messages.error(request, 'Access denied.'); return redirect('dashboard')
+    
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -384,13 +454,34 @@ def add_user(request):
             assigned_location=assigned_location, assigned_class=assigned_class,
             assigned_stream=assigned_stream, is_active=True, is_staff=True,
         )
-        messages.success(request, f'User "{username}" created successfully!')
+        
+        # Send credentials email
+        if email:
+            try:
+                from core.email_service import send_staff_credentials_email
+                school_name = 'Jinja Senior Secondary School'
+                login_url = request.build_absolute_uri('/login/')
+                
+                send_staff_credentials_email(
+                    to_email=email,
+                    username=username,
+                    password=password,
+                    full_name=f"{first_name} {last_name}".strip() or username,
+                    role=dict(User.ROLE_CHOICES).get(role, role),
+                    school_name=school_name,
+                    login_url=login_url,
+                )
+            except Exception as e:
+                logger.warning(f"Failed to send credentials email: {e}")
+        
+        messages.success(request, f'User "{username}" created successfully! Email sent to {email}.')
         return redirect('user_management')
+    
     return render_mobile_or_desktop(request, 'users/form.html', 'mobile/users_form.html', {
-    'edit_mode': False,
-    'target_user': None,
-    'is_own_profile': False,
-})
+        'edit_mode': False,
+        'target_user': None,
+        'is_own_profile': False,
+    })
 
 
 @login_required

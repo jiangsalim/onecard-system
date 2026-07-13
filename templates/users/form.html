@@ -109,10 +109,22 @@
                         <label>Email</label>
                         <input type="email" name="email" value="{{ target_user.email|default:'' }}">
                     </div>
+                    {% if edit_mode %}
                     <div class="form-group">
-                        <label>Password {% if edit_mode %}(leave blank to keep current){% endif %}</label>
-                        <input type="password" name="password" {% if not edit_mode %}required{% endif %} placeholder="{% if edit_mode %}New password (optional){% else %}Enter password{% endif %}">
+                          <label>Password</label>
+                          <p style="color:#666; font-size:13px; margin-top:4px;">
+                             For security, password changes require email verification.
+                          </p>
+                          <a href="{% url 'change_password' %}" class="btn btn-primary" style="display:inline-block; margin-top:8px;">
+                                 Change Password via Email Verification
+                          </a>
                     </div>
+                    {% else %}
+                   <div class="form-group">
+                       <label>Password</label>
+                      <input type="password" name="password" required placeholder="Enter password">
+                   </div>
+                   {% endif %}
 
                     {% if request.user.role == 'super_admin' %}
                     <div class="form-group">

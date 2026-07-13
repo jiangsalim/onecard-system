@@ -13,6 +13,7 @@ urlpatterns = [
     path('notifications/', include('notifications.urls')),
     path('reports/', include('reports.urls')),
     path('messaging/', include('messaging.urls')),
+    path('send-daily-reports/', lambda r: __import__('django.core.management').management.call_command('send_daily_reports') or __import__('django.http').HttpResponse('OK')),
 ]
 
 if settings.DEBUG:

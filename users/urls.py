@@ -18,4 +18,6 @@ urlpatterns = [
     path('dismiss-alert/<str:student_id>/', views.dismiss_alert, name='dismiss_alert'),
     path('dismiss-all-alerts/', views.dismiss_all_alerts, name='dismiss_all_alerts'),
     path('reset-system/', views.reset_system_data, name='reset_system_data'),
+    path('change-password/', views.change_password_request, name='change_password'),
+    path('change-password/verify/', views.change_password_verify, name='change_password_verify'),
 ]
