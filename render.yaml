@@ -2,27 +2,5 @@ buildCommand: |
   pip install -r requirements.txt
   python manage.py collectstatic --noinput
   python manage.py migrate
-  python -c "
-import os; from dotenv import load_dotenv; load_dotenv();
-import django; os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'onecard.settings'); django.setup();
-from users.models import User;
-
-# Create super admin
-if not User.objects.filter(username='jaing').exists():
-    u = User.objects.create_superuser('jaing', 'jaingsalim@gmail.com', 'herman1234')
-    u.role = 'super_admin'
-    u.save()
-    print('jaing created as super_admin')
-
-# Create school admin  
-if not User.objects.filter(username='admin').exists():
-    u = User.objects.create_superuser('admin', 'jaingsalim@gmail.com', 'JinjaSSS@2026')
-    u.role = 'admin'
-    u.save()
-    print('admin created as admin')
-
-# Fix any existing users with wrong roles
-User.objects.filter(username='jaing').update(role='super_admin', is_superuser=True, is_staff=True)
-User.objects.filter(username='admin').update(role='admin', is_superuser=True, is_staff=True)
-print('Roles fixed!')
-"
+  python manage.py fix_admin_roles
+  python -c "import os; from dotenv import load_dotenv; load_dotenv(); import django; os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'onecard.settings'); django.setup(); from users.models import User; User.objects.filter(username='jaing').exists() or User.objects.create_superuser('jaing', 'jaingsalim@gmail.com', 'herman1234'); User.objects.filter(username='admin').exists() or User.objects.create_superuser('admin', 'jaingsalim@gmail.com', 'JinjaSSS@2026'); print('Users ready!')"
