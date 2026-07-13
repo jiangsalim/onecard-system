@@ -2,6 +2,18 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import HttpResponse
+from django.core.management import call_command
+
+
+def trigger_daily_reports(request):
+    """Trigger daily email reports for all staff."""
+    try:
+        call_command('send_daily_reports')
+        return HttpResponse('Daily reports sent successfully!')
+    except Exception as e:
+        return HttpResponse(f'Error: {e}', status=500)
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -13,7 +25,7 @@ urlpatterns = [
     path('notifications/', include('notifications.urls')),
     path('reports/', include('reports.urls')),
     path('messaging/', include('messaging.urls')),
-    path('send-daily-reports/', lambda r: __import__('django.core.management').management.call_command('send_daily_reports') or __import__('django.http').HttpResponse('OK')),
+    path('send-daily-reports/', trigger_daily_reports, name='send_daily_reports'),
 ]
 
 if settings.DEBUG:
