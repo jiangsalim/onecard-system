@@ -22,6 +22,12 @@ def redirect_to_login(request):
         return redirect('dashboard')
     return redirect('login')
 
+def _get_school(request):
+    """Helper to get current user's school."""
+    if request.user.is_authenticated and hasattr(request.user, 'school'):
+        return request.user.school
+    return None
+
 
 def login_view(request):
     if request.user.is_authenticated:
@@ -73,6 +79,7 @@ from core.cache_utils import get_or_set, make_key
 @login_required
 def dashboard(request):
     """Role-based dashboard routing with cached stats."""
+    from core.cache_utils import get_or_set, make_key
     from core.models import Student
     from attendance.models import Attendance, MealViolation
     from movement.models import MovementLog
@@ -80,7 +87,12 @@ def dashboard(request):
     from fees.models import FeeStructure
 
     school = _get_school(request)
+    if not school:
+        messages.error(request, 'No school configured. Contact administrator.')
+        return redirect('login')
+
     today = date.today()
+
 
     # Cache: Total students (5 min)
     total = get_or_set(
