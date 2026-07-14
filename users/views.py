@@ -24,8 +24,12 @@ def redirect_to_login(request):
 
 def _get_school(request):
     """Helper to get current user's school."""
-    if request.user.is_authenticated and hasattr(request.user, 'school'):
-        return request.user.school
+    if request.user.is_authenticated:
+        if hasattr(request.user, 'school') and request.user.school:
+            return request.user.school
+        # Fallback to first school for super admin
+        from core.models import School
+        return School.objects.first()
     return None
 
 
