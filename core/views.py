@@ -5,7 +5,6 @@ from .models import Student
 from .services import generate_qr_for_student, get_next_student_id, fetch_students_from_existing_db
 from core.mobile_utils import render_mobile_or_desktop
 import logging
-from linecache import cache
 
 logger = logging.getLogger('onecard')
 
@@ -47,28 +46,20 @@ def handle_import(request):
     return redirect('view_students')
 
 
-from core.cache_utils import get_or_set, make_key
-
 @login_required
 def view_students(request):
     if request.user.role not in ['super_admin', 'admin', 'bursar']:
         messages.error(request, 'Access denied.'); return redirect('dashboard')
     
-    school = _get_school(request)
+    students = list(Student.objects.select_related('template').all())
     
-    # Cache: Student list (10 min - rarely changes)
-    def load_students():
-        students = list(Student.objects.filter(school=school).select_related('template').all())
-        students.sort(key=lambda s: int(s.id.replace('STU-', '')) if s.id.replace('STU-', '').isdigit() else 0)
-        return students
-    
-    students = get_or_set(
-        make_key('student_list', school.id),
-        load_students,
-        timeout=600
-    )
+    def sort_key(s):
+        try: return int(s.id.replace('STU-', ''))
+        except: return 0
+    students.sort(key=sort_key)
     
     return render_mobile_or_desktop(request, 'admin_dashboard/students.html', 'mobile/students.html', {'students': students})
+
 
 @login_required
 def edit_student(request, student_id):
@@ -112,3 +103,62 @@ def scan_redirect(request, student_id):
     url = f"/scanner/?id={student_id}"
     if mode: url += f"&mode={mode}"
     return redirect(url)
+
+
+@login_required
+def import_students_excel(request):
+    """Import students from Excel file (Standalone mode)."""
+    if request.user.role not in ['super_admin', 'admin']:
+        messages.error(request, 'Access denied.')
+        return redirect('dashboard')
+    
+    if request.method == 'POST' and request.FILES.get('file'):
+        import openpyxl
+        from io import BytesIO
+        
+        file = request.FILES['file']
+        try:
+            wb = openpyxl.load_workbook(BytesIO(file.read()))
+            ws = wb.active
+        except Exception:
+            messages.error(request, 'Invalid file format.')
+            return redirect('import_students_excel')
+        
+        imported = errors = skipped = 0
+        
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            if not row[0]: continue
+            try:
+                admission_number = str(row[0]).strip()
+                full_name = str(row[1]).strip() if row[1] else ''
+                current_class = str(row[2]).strip() if row[2] else ''
+                stream = str(row[3]).strip() if row[3] else ''
+                payment_code = str(row[4]).strip() if row[4] else ''
+                gender = str(row[5]).strip()[:1] if len(row) > 5 and row[5] else ''
+                category = str(row[6]).strip() if len(row) > 6 and row[6] else 'day'
+                
+                if Student.objects.filter(admission_number=admission_number).exists():
+                    skipped += 1; continue
+                
+                if not payment_code: payment_code = admission_number
+                
+                student_id = get_next_student_id()
+                qr_file = generate_qr_for_student(student_id)
+                
+                student = Student(
+                    id=student_id, admission_number=admission_number,
+                    payment_code=payment_code, full_name=full_name,
+                    current_class=current_class, stream=stream,
+                    gender=gender, category=category,
+                    status='active', card_version=1,
+                )
+                student.qr_code.save(f'{student_id}.png', qr_file, save=False)
+                student.save()
+                imported += 1
+            except Exception as e:
+                errors += 1
+        
+        messages.success(request, f'Imported: {imported} | Skipped: {skipped} | Errors: {errors}')
+        return redirect('view_students')
+    
+    return render(request, 'core/import_excel.html', {})

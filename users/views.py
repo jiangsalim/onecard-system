@@ -11,7 +11,7 @@ from core.decorators import reauth_required
 import random
 from datetime import timedelta
 from django.utils import timezone
-from linecache import cache
+from django.core.cache import cache
 
 
 logger = logging.getLogger('onecard')

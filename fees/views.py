@@ -1,5 +1,3 @@
-from linecache import cache
-
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -39,8 +37,7 @@ def fee_management(request):
     return render_mobile_or_desktop(request, 'fees/management.html', 'mobile/fees_management.html', {
         'classes': classes, 'categories': categories, 'term': term, 'year': year, 'existing_fees': existing_fees,
     })
-
-
+from django.core.cache import cache
 from core.cache_utils import get_or_set, make_key
 
 @login_required
@@ -52,7 +49,6 @@ def fee_report(request):
     from core.models import Student
     from core.services import get_payment_balance, get_student_info_from_existing_db, fetch_students_from_existing_db
     
-    school = _get_school(request) # type: ignore
     status_filter = request.GET.get('status', 'all')
     class_filter = request.GET.get('class', '')
     stream_filter = request.GET.get('stream', '')
@@ -66,7 +62,7 @@ def fee_report(request):
     
     # Cache only unfiltered full report
     if not has_filter:
-        cache_key = make_key('fee_report', school.id)
+        cache_key = make_key('fee_report')
         cached = cache.get(cache_key)
         if cached:
             return render_mobile_or_desktop(request, 'fees/report.html', 'mobile/fees_report.html', cached)
@@ -78,14 +74,14 @@ def fee_report(request):
             if s['current_class'] == class_filter 
             and (not stream_filter or s['stream'] == stream_filter)
         ]
-        students = Student.objects.filter(school=school, admission_number__in=matching_admissions, status='active')
+        students = Student.objects.filter(admission_number__in=matching_admissions, status='active')
     else:
-        students = Student.objects.filter(school=school, status='active')
+        students = Student.objects.filter(status='active')
     
     # Cache fee map
     fee_map = get_or_set(
-        make_key('fee_map', school.id),
-        lambda: {f"{f.class_name}_{f.category}": float(f.total_fees) for f in FeeStructure.objects.filter(school=school, term='Term 2', academic_year='2026')},
+        make_key('fee_map'),
+        lambda: {f"{f.class_name}_{f.category}": float(f.total_fees) for f in FeeStructure.objects.filter(term='Term 2', academic_year='2026')},
         timeout=600
     )
     
@@ -127,7 +123,7 @@ def fee_report(request):
         })
     
     classes = get_or_set(
-        make_key('class_list', school.id),
+        make_key('class_list'),
         lambda: ['Senior 1', 'Senior 2', 'Senior 3', 'Senior 4', 'Senior 5', 'Senior 6'],
         timeout=600
     )
@@ -141,7 +137,7 @@ def fee_report(request):
     
     # Cache unfiltered report for 5 minutes
     if not has_filter:
-        cache.set(make_key('fee_report', school.id), context, 300)
+        cache.set(make_key('fee_report'), context, 300)
     
     return render_mobile_or_desktop(request, 'fees/report.html', 'mobile/fees_report.html', context)
 
