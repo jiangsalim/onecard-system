@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
     <title>My Class - OneCard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -128,7 +128,7 @@
     <!-- Absent Streaks (Undismissed) -->
     <div class="section">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-    <div class="section-title" style="margin-bottom:0;">⚠ Consecutive Absences (3+ Days)</div>
+    <div class="section-title" style="margin-bottom:0;">? Consecutive Absences (3+ Days)</div>
     {% if absent_streaks %}
     <a href="{% url 'dismiss_all_alerts' %}" style="font-size:11px; color:#c62828; text-decoration:none; background:#ffebee; padding:6px 12px; border-radius:6px; font-weight:600;">Dismiss All</a>
     {% endif %}
@@ -140,16 +140,16 @@
                     <span><strong>{{ s.name }}</strong> ({{ s.admission }})</span>
                     <div style="display:flex; align-items:center; gap:8px;">
                         <span class="badge badge-warn">{{ s.days }} days</span>
-                        <a href="{% url 'dismiss_alert' s.id %}" class="dismiss-btn">✕ Dismiss</a>
+                        <a href="{% url 'dismiss_alert' s.id %}" class="dismiss-btn">? Dismiss</a>
                     </div>
                 </div>
                 {% endfor %}
             {% else %}
                 <div class="empty-state">
                     {% if dismissed_count > 0 %}
-                        ✅ All alerts dismissed today ({{ dismissed_count }} dismissed)
+                        ? All alerts dismissed today ({{ dismissed_count }} dismissed)
                     {% else %}
-                        ✅ No students with 3+ consecutive absences
+                        ? No students with 3+ consecutive absences
                     {% endif %}
                 </div>
             {% endif %}
@@ -158,7 +158,7 @@
 
     <!-- Notification Settings -->
     <div class="section">
-        <div class="section-title">🔔 Notification Preferences</div>
+        <div class="section-title">?? Notification Preferences</div>
         <div class="card">
             <form method="post">
                 {% csrf_token %}

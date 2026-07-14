@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
     <title>Reprint - OneCard</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -39,10 +39,10 @@
         <div style="font-size:13px;">Current Reprints: <span class="badge badge-info">{{ student.reprint_count }}</span></div>
         {% if reprints %}
         <div style="margin-top:10px;font-size:12px;color:#888;">
-            {% for r in reprints %}<div>#{{ r.reprint_number }}: {{ r.get_reason_display }} — {{ r.reprinted_at|date:"d M Y" }}</div>{% endfor %}
+            {% for r in reprints %}<div>#{{ r.reprint_number }}: {{ r.get_reason_display }} � {{ r.reprinted_at|date:"d M Y" }}</div>{% endfor %}
         </div>
         {% endif %}
-        <div class="warning-box">⚠ Reprinting deactivates the old card. The student's QR code stays the same.</div>
+        <div class="warning-box">? Reprinting deactivates the old card. The student's QR code stays the same.</div>
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="student_id" value="{{ student.id }}">
@@ -54,4 +54,5 @@
     {% endif %}
 </body>
 </html>
+
 

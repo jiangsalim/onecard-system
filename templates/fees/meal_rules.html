@@ -1,10 +1,10 @@
-﻿{% load card_filters %}
+{% load card_filters %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
     <title>Meal Access Rules - OneCard</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -65,8 +65,8 @@
             {% endif %}
 
             <div class="card">
-                <h2>Meal Access Rules â€” Maximum Balance Allowed</h2>
-                <p class="hint">Students with balance â‰¤ the set amount can access meals. Students with higher balances are denied.</p>
+                <h2>Meal Access Rules — Maximum Balance Allowed</h2>
+                <p class="hint">Students with balance ≤ the set amount can access meals. Students with higher balances are denied.</p>
                 
                 <form method="post">
                     {% csrf_token %}
@@ -125,4 +125,5 @@
     </div>
 </body>
 </html>
+
 

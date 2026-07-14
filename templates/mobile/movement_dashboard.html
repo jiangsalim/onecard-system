@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
     <title>Movement - OneCard</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -53,7 +53,7 @@
         {% for log in today_logs %}
         <div class="student-card">
             <div class="top">
-                <div><div class="name">{{ log.student.id }}</div><div class="reason">{{ log.time_out }}{% if log.time_in %} → {{ log.time_in }}{% else %} — Still Out{% endif %}</div></div>
+                <div><div class="name">{{ log.student.id }}</div><div class="reason">{{ log.time_out }}{% if log.time_in %} ? {{ log.time_in }}{% else %} � Still Out{% endif %}</div></div>
                 <span class="badge {% if log.is_active %}badge-outside{% else %}badge-returned{% endif %}">{% if log.is_active %}Out{% else %}In{% endif %}</span>
             </div>
         </div>
@@ -67,4 +67,5 @@
     </div>
 </body>
 </html>
+
 

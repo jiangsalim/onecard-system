@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
     <title>Print Cards - OneCard</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -45,7 +45,7 @@
     {% if students %}
     <div class="section">
         <div class="card-white">
-            <h3>{{ selected_class }} — {{ students.count }} cards</h3>
+            <h3>{{ selected_class }} � {{ students.count }} cards</h3>
             <form method="post" id="printForm">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="print_selected">
@@ -72,4 +72,5 @@
     </script>
 </body>
 </html>
+
 

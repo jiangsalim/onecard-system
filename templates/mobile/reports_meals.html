@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
     <title>Meals - OneCard</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -29,7 +29,7 @@
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
-    <div class="header"><div class="title">Meals — {{ today|date:"d M Y" }}</div></div>
+    <div class="header"><div class="title">Meals � {{ today|date:"d M Y" }}</div></div>
     <div class="meal-tabs">
         <a href="?meal=breakfast" class="meal-tab tab-breakfast {% if meal_type == 'breakfast' %}tab-active{% endif %}">Breakfast ({{ breakfast_count }})</a>
         <a href="?meal=lunch" class="meal-tab tab-lunch {% if meal_type == 'lunch' %}tab-active{% endif %}">Lunch ({{ lunch_count }})</a>
@@ -58,4 +58,5 @@
     </div>
 </body>
 </html>
+
 

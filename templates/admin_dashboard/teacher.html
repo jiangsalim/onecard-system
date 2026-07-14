@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
     <title>My Class - OneCard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -162,7 +162,7 @@
             <!-- Absent Streaks Alert -->
 <div class="card">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-    <h2 style="margin:0;">⚠ Consecutive Absences (3+ Days)</h2>
+    <h2 style="margin:0;">? Consecutive Absences (3+ Days)</h2>
     {% if absent_streaks %}
     <a href="{% url 'dismiss_all_alerts' %}" style="font-size:12px; color:#c62828; text-decoration:none; background:#ffebee; padding:6px 14px; border-radius:6px; font-weight:600;">Dismiss All</a>
     {% endif %}
@@ -180,16 +180,16 @@
     {% else %}
         <p style="color:#888; font-size:13px; text-align:center; padding:16px;">
             {% if dismissed_count > 0 %}
-                ✅ All alerts dismissed today ({{ dismissed_count }} dismissed)
+                ? All alerts dismissed today ({{ dismissed_count }} dismissed)
             {% else %}
-                ✅ No students with 3+ consecutive absences
+                ? No students with 3+ consecutive absences
             {% endif %}
         </p>
     {% endif %}
 </div>
             <!-- Notification Settings -->
             <div class="card">
-                <h2>🔔 Notification Preferences</h2>
+                <h2>?? Notification Preferences</h2>
                 <form method="post">
                     {% csrf_token %}
                     <div class="toggle-row">
@@ -219,7 +219,7 @@
 
             <!-- Quick Links -->
             <div class="card">
-                <h2>Quick Reports — {{ stats.class_name|default:"Not Assigned" }}</h2>
+                <h2>Quick Reports � {{ stats.class_name|default:"Not Assigned" }}</h2>
                 <div class="quick-links">
                     <a href="{% url 'attendance_report' %}?class={{ user.assigned_class|urlencode }}&stream={{ user.assigned_stream|urlencode }}" class="btn btn-primary">Attendance</a>
                     <a href="{% url 'fee_report' %}?class={{ user.assigned_class|urlencode }}&stream={{ user.assigned_stream|urlencode }}" class="btn btn-outline">Fees</a>

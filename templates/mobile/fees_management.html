@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
     <title>Fee Management - OneCard</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -36,11 +36,11 @@
             <div style="margin-bottom:10px;">
                 <strong style="font-size:13px;">{{ class_name }}</strong>
                 <div class="fee-row">
-                    <span class="cat-label">☀ Day</span>
+                    <span class="cat-label">? Day</span>
                     <input type="number" name="fees_{{ class_name }}_day" value="{{ existing_fees|get_item:class_name|add:'_day'|default:'' }}" placeholder="UGX">
                 </div>
                 <div class="fee-row">
-                    <span class="cat-label">🏠 Hostel</span>
+                    <span class="cat-label">?? Hostel</span>
                     <input type="number" name="fees_{{ class_name }}_hostel" value="{{ existing_fees|get_item:class_name|add:'_hostel'|default:'' }}" placeholder="UGX">
                 </div>
             </div>
@@ -50,4 +50,5 @@
     </div>
 </body>
 </html>
+
 
