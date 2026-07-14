@@ -5,6 +5,7 @@ from .models import Student
 from .services import generate_qr_for_student, get_next_student_id, fetch_students_from_existing_db
 from core.mobile_utils import render_mobile_or_desktop
 import logging
+from linecache import cache
 
 logger = logging.getLogger('onecard')
 
@@ -46,17 +47,28 @@ def handle_import(request):
     return redirect('view_students')
 
 
+from core.cache_utils import get_or_set, make_key
+
 @login_required
 def view_students(request):
     if request.user.role not in ['super_admin', 'admin', 'bursar']:
         messages.error(request, 'Access denied.'); return redirect('dashboard')
-    students = list(Student.objects.select_related('template').all())
-    def sort_key(s):
-        try: return int(s.id.replace('STU-', ''))
-        except: return 0
-    students.sort(key=sort_key)
+    
+    school = _get_school(request)
+    
+    # Cache: Student list (10 min - rarely changes)
+    def load_students():
+        students = list(Student.objects.filter(school=school).select_related('template').all())
+        students.sort(key=lambda s: int(s.id.replace('STU-', '')) if s.id.replace('STU-', '').isdigit() else 0)
+        return students
+    
+    students = get_or_set(
+        make_key('student_list', school.id),
+        load_students,
+        timeout=600
+    )
+    
     return render_mobile_or_desktop(request, 'admin_dashboard/students.html', 'mobile/students.html', {'students': students})
-
 
 @login_required
 def edit_student(request, student_id):

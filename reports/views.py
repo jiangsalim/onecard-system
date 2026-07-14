@@ -16,7 +16,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
-
+from linecache import cache
 
 def build_pdf_response(filename, elements):
     buffer = BytesIO()
@@ -47,22 +47,33 @@ def build_excel_response(filename, sheet_name, headers, data):
     return response
 
 
+from core.cache_utils import get_or_set, make_key
+
 @login_required
 def attendance_report(request):
-    """Attendance report with gender analytics — full filtering."""
+    """Attendance report with gender analytics — cached for speed."""
+    school = _get_school(request)
     today = date.today()
     
     class_filter = request.GET.get('class', '')
     stream_filter = request.GET.get('stream', '')
-    gender_filter = request.GET.get('gender', '')  # 'M', 'F', or ''
+    gender_filter = request.GET.get('gender', '')
     
-    notif_settings = NotificationSetting.objects.first()
+    has_filter = bool(class_filter or stream_filter or gender_filter)
+    
+    # Only cache unfiltered report
+    if not has_filter:
+        cache_key = make_key('attendance_report', school.id, today)
+        cached = cache.get(cache_key)
+        if cached:
+            return cached
+    
+    notif_settings = NotificationSetting.objects.filter(school=school).first()
     cutoff_time = notif_settings.late_cutoff_time if notif_settings else time(8, 0)
     
     from core.services import fetch_students_from_existing_db
     all_school = fetch_students_from_existing_db()
     
-    # Build matching admissions based on ALL filters (class, stream, gender)
     matching_admissions = []
     for s in all_school:
         match = True
@@ -75,31 +86,27 @@ def attendance_report(request):
         if match:
             matching_admissions.append(s['admission_number'])
     
-    # Determine if any filter is active
-    has_filter = bool(class_filter or stream_filter or gender_filter)
-    
     if has_filter:
         filtered_student_ids = Student.objects.filter(
-            admission_number__in=matching_admissions, status='active'
+            school=school, admission_number__in=matching_admissions, status='active'
         ).values_list('id', flat=True)
         total = len(matching_admissions)
         attendance_list = Attendance.objects.filter(
-            scan_date=today, student_id__in=filtered_student_ids
+            school=school, scan_date=today, student_id__in=filtered_student_ids
         ).select_related('student').order_by('time_in')
         present = attendance_list.count()
         late = Attendance.objects.filter(
-            scan_date=today, student_id__in=filtered_student_ids, time_in__gt=cutoff_time
+            school=school, scan_date=today, student_id__in=filtered_student_ids, time_in__gt=cutoff_time
         ).count()
     else:
-        total = Student.objects.filter(status='active').count()
-        attendance_list = Attendance.objects.filter(scan_date=today).select_related('student').order_by('time_in')
+        total = get_or_set(make_key('total_students', school.id), lambda: Student.objects.filter(school=school, status='active').count(), timeout=300)
+        attendance_list = Attendance.objects.filter(school=school, scan_date=today).select_related('student').order_by('time_in')
         present = attendance_list.count()
-        late = Attendance.objects.filter(scan_date=today, time_in__gt=cutoff_time).count()
+        late = Attendance.objects.filter(school=school, scan_date=today, time_in__gt=cutoff_time).count()
     
     on_time = present - late
-    absent = total - present
+    absent = total - present if total > present else 0
     
-    # Gender breakdown (always both for cards, respect class/stream filter only)
     male_admissions = [s['admission_number'] for s in all_school 
                        if s.get('gender') == 'M'
                        and (not class_filter or s['current_class'] == class_filter)
@@ -109,11 +116,11 @@ def attendance_report(request):
                          and (not class_filter or s['current_class'] == class_filter)
                          and (not stream_filter or s['stream'] == stream_filter)]
     
-    male_ids = Student.objects.filter(admission_number__in=male_admissions, status='active').values_list('id', flat=True)
-    female_ids = Student.objects.filter(admission_number__in=female_admissions, status='active').values_list('id', flat=True)
+    male_ids = Student.objects.filter(school=school, admission_number__in=male_admissions, status='active').values_list('id', flat=True)
+    female_ids = Student.objects.filter(school=school, admission_number__in=female_admissions, status='active').values_list('id', flat=True)
     
-    males_present = Attendance.objects.filter(scan_date=today, student_id__in=male_ids).count()
-    females_present = Attendance.objects.filter(scan_date=today, student_id__in=female_ids).count()
+    males_present = Attendance.objects.filter(school=school, scan_date=today, student_id__in=male_ids).count()
+    females_present = Attendance.objects.filter(school=school, scan_date=today, student_id__in=female_ids).count()
     males_total = len(male_admissions)
     females_total = len(female_admissions)
     
@@ -138,11 +145,19 @@ def attendance_report(request):
         'rate': round((present / total * 100) if total > 0 else 0, 1),
     }
     
-    return render_mobile_or_desktop(request, 'reports/attendance.html', 'mobile/reports_attendance.html', {
+    context = {
         'attendance_list': attendance_list, 'stats': stats, 'gender_stats': gender_stats,
         'class_filter': class_filter, 'stream_filter': stream_filter,
         'gender_filter': gender_filter, 'cutoff_time': cutoff_time,
-    })
+    }
+    
+    response = render_mobile_or_desktop(request, 'reports/attendance.html', 'mobile/reports_attendance.html', context)
+    
+    # Cache unfiltered report for 2 minutes
+    if not has_filter:
+        cache.set(make_key('attendance_report', school.id, today), response, 120)
+    
+    return response
 
 
 @login_required

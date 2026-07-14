@@ -1,3 +1,5 @@
+from linecache import cache
+
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -39,15 +41,18 @@ def fee_management(request):
     })
 
 
+from core.cache_utils import get_or_set, make_key
+
 @login_required
 def fee_report(request):
-    """View fee balances with Day/Hostel fee structure. Teachers see own class only."""
+    """View fee balances with caching."""
     if request.user.role not in ['super_admin', 'admin', 'bursar', 'class_teacher']:
         messages.error(request, 'Access denied.'); return redirect('dashboard')
     
     from core.models import Student
     from core.services import get_payment_balance, get_student_info_from_existing_db, fetch_students_from_existing_db
     
+    school = _get_school(request) # type: ignore
     status_filter = request.GET.get('status', 'all')
     class_filter = request.GET.get('class', '')
     stream_filter = request.GET.get('stream', '')
@@ -57,6 +62,15 @@ def fee_report(request):
         class_filter = request.user.assigned_class
         stream_filter = request.user.assigned_stream
     
+    has_filter = bool(class_filter or stream_filter or search_query or status_filter != 'all')
+    
+    # Cache only unfiltered full report
+    if not has_filter:
+        cache_key = make_key('fee_report', school.id)
+        cached = cache.get(cache_key)
+        if cached:
+            return render_mobile_or_desktop(request, 'fees/report.html', 'mobile/fees_report.html', cached)
+    
     if class_filter:
         all_school = fetch_students_from_existing_db()
         matching_admissions = [
@@ -64,19 +78,19 @@ def fee_report(request):
             if s['current_class'] == class_filter 
             and (not stream_filter or s['stream'] == stream_filter)
         ]
-        students = Student.objects.filter(admission_number__in=matching_admissions, status='active')
+        students = Student.objects.filter(school=school, admission_number__in=matching_admissions, status='active')
     else:
-        students = Student.objects.filter(status='active')
+        students = Student.objects.filter(school=school, status='active')
     
-    fee_map = {}
-    for f in FeeStructure.objects.filter(term='Term 2', academic_year='2026'):
-        key = f"{f.class_name}_{f.category}"
-        fee_map[key] = float(f.total_fees)
+    # Cache fee map
+    fee_map = get_or_set(
+        make_key('fee_map', school.id),
+        lambda: {f"{f.class_name}_{f.category}": float(f.total_fees) for f in FeeStructure.objects.filter(school=school, term='Term 2', academic_year='2026')},
+        timeout=600
+    )
     
     student_data = []
-    cleared_count = 0
-    not_cleared_count = 0
-    not_paid_count = 0
+    cleared_count = not_cleared_count = not_paid_count = 0
     
     for s in students:
         info = get_student_info_from_existing_db(s.admission_number)
@@ -87,7 +101,7 @@ def fee_report(request):
         student_stream = info.get('stream', '')
         student_category = s.category if hasattr(s, 'category') else 'day'
         
-        if search_query and search_query.lower() not in info.get('name', '').lower() and search_query.lower() not in s.admission_number.lower() and search_query.lower() not in s.id.lower():
+        if search_query and search_query.lower() not in info.get('name', '').lower() and search_query.lower() not in s.admission_number.lower():
             continue
         
         paid = get_payment_balance(s.payment_code)
@@ -96,17 +110,13 @@ def fee_report(request):
         balance = total_fee - float(paid)
         
         if balance <= 0 and float(paid) > 0:
-            status = 'CLEARED'
-            cleared_count += 1
+            status = 'CLEARED'; cleared_count += 1
         elif float(paid) == 0:
-            status = 'NOT PAID'
-            not_paid_count += 1
+            status = 'NOT PAID'; not_paid_count += 1
         else:
-            status = 'NOT CLEARED'
-            not_cleared_count += 1
+            status = 'NOT CLEARED'; not_cleared_count += 1
         
-        status_key = status.lower().replace(' ', '_')
-        if status_filter != 'all' and status_key != status_filter:
+        if status_filter != 'all' and status.lower().replace(' ', '_') != status_filter:
             continue
         
         student_data.append({
@@ -116,15 +126,24 @@ def fee_report(request):
             'balance': balance, 'status': status,
         })
     
-    classes = ['Senior 1', 'Senior 2', 'Senior 3', 'Senior 4', 'Senior 5', 'Senior 6']
+    classes = get_or_set(
+        make_key('class_list', school.id),
+        lambda: ['Senior 1', 'Senior 2', 'Senior 3', 'Senior 4', 'Senior 5', 'Senior 6'],
+        timeout=600
+    )
     
-    return render_mobile_or_desktop(request, 'fees/report.html', 'mobile/fees_report.html', {
+    context = {
         'students': student_data, 'classes': classes, 'status_filter': status_filter,
         'class_filter': class_filter, 'stream_filter': stream_filter, 'search_query': search_query,
         'cleared_count': cleared_count, 'not_cleared_count': not_cleared_count,
         'not_paid_count': not_paid_count, 'total_count': len(student_data),
-    })
-
+    }
+    
+    # Cache unfiltered report for 5 minutes
+    if not has_filter:
+        cache.set(make_key('fee_report', school.id), context, 300)
+    
+    return render_mobile_or_desktop(request, 'fees/report.html', 'mobile/fees_report.html', context)
 
 @login_required
 def meal_access_rules(request):
