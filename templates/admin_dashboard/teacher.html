@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ï»¿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -219,7 +219,7 @@
 
             <!-- Quick Links -->
             <div class="card">
-                <h2>Quick Reports — {{ stats.class_name|default:"Not Assigned" }}</h2>
+                <h2>Quick Reports ï¿½ {{ stats.class_name|default:"Not Assigned" }}</h2>
                 <div class="quick-links">
                     <a href="{% url 'attendance_report' %}?class={{ user.assigned_class|urlencode }}&stream={{ user.assigned_stream|urlencode }}" class="btn btn-primary">Attendance</a>
                     <a href="{% url 'fee_report' %}?class={{ user.assigned_class|urlencode }}&stream={{ user.assigned_stream|urlencode }}" class="btn btn-outline">Fees</a>
@@ -288,3 +288,4 @@
     </script>
 </body>
 </html>
+
