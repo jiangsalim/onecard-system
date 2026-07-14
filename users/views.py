@@ -27,9 +27,6 @@ def _get_school(request):
     if request.user.is_authenticated:
         if hasattr(request.user, 'school') and request.user.school:
             return request.user.school
-        # Fallback to first school for super admin
-        from core.models import School
-        return School.objects.first()
     return None
 
 
@@ -77,127 +74,64 @@ def logout_view(request):
     messages.info(request, 'Logged out.')
     return redirect('login')
 
-
-from core.cache_utils import get_or_set, make_key
-
 @login_required
 def dashboard(request):
-    """Role-based dashboard routing with cached stats."""
-    from core.cache_utils import get_or_set, make_key
+    """Role-based dashboard routing with live stats, alerts, and meal violations."""
     from core.models import Student
     from attendance.models import Attendance, MealViolation
     from movement.models import MovementLog
     from core.services import get_payment_balance, get_student_info_from_existing_db
     from fees.models import FeeStructure
 
-    school = _get_school(request)
-    if not school:
-        messages.error(request, 'No school configured. Contact administrator.')
-        return redirect('login')
-
     today = date.today()
+    total = Student.objects.filter(status='active').count()
+    present = Attendance.objects.filter(scan_date=today).count()
 
+    fee_structures = {}
+    for f in FeeStructure.objects.filter(term='Term 2', academic_year='2026'):
+        key = f"{f.class_name}_{f.category}"
+        fee_structures[key] = float(f.total_fees)
 
-    # Cache: Total students (5 min)
-    total = get_or_set(
-        make_key('total_students', school.id),
-        lambda: Student.objects.filter(school=school, status='active').count(),
-        timeout=300
-    )
-
-    # Cache: Present today (1 min)
-    present = get_or_set(
-        make_key('present', school.id, today),
-        lambda: Attendance.objects.filter(school=school, scan_date=today).count(),
-        timeout=60
-    )
-
-    # Cache: Outside now (30 sec)
-    outside = get_or_set(
-        make_key('outside', school.id, today),
-        lambda: MovementLog.objects.filter(school=school, exit_date=today, time_in__isnull=True).count(),
-        timeout=30
-    )
-
-    # Cache: Fee structures (10 min)
-    def calc_fee_structures():
-        fee_structures = {}
-        for f in FeeStructure.objects.filter(school=school, term='Term 2', academic_year='2026'):
-            key = f"{f.class_name}_{f.category}"
-            fee_structures[key] = float(f.total_fees)
-        return fee_structures
-
-    fee_structures = get_or_set(
-        make_key('fee_structures', school.id),
-        calc_fee_structures,
-        timeout=600
-    )
-
-    # Cache: Not cleared (5 min)
-    def calc_not_cleared():
-        if not fee_structures:
-            return 0
+    not_cleared = cache.get('not_cleared_count')
+    if not_cleared is None:
         not_cleared = 0
-        for s in Student.objects.filter(school=school, status='active').only('admission_number', 'payment_code', 'category'):
-            try:
-                info = get_student_info_from_existing_db(s.admission_number)
-                if info:
-                    class_name = info.get('class', '')
+        if total > 0 and fee_structures:
+            for s in Student.objects.filter(status='active'):
+                try:
+                    info = get_student_info_from_existing_db(s.admission_number)
+                    class_name = info['class'] if info else None
                     student_cat = getattr(s, 'category', 'day')
-                    fee_key = f"{class_name}_{student_cat}"
-                    total_fee = fee_structures.get(fee_key, 800000)
+                    fee_key = f"{class_name}_{student_cat}" if class_name else None
+                    total_fee = fee_structures.get(fee_key, 800000) if fee_key else 800000
                     paid = get_payment_balance(s.payment_code)
                     if float(paid) < total_fee:
                         not_cleared += 1
-            except Exception:
-                pass
-        return not_cleared
-
-    not_cleared = get_or_set(
-        make_key('not_cleared', school.id),
-        calc_not_cleared,
-        timeout=300
-    )
+                except Exception:
+                    pass
+        cache.set('not_cleared_count', not_cleared, 1800)
 
     stats = {
-        'total': total,
-        'present': present,
-        'outside': outside,
+        'total': total, 'present': present,
+        'outside': MovementLog.objects.filter(exit_date=today, time_in__isnull=True).count(),
         'absent': total - present if total > present else 0,
         'not_cleared': not_cleared,
     }
 
-    # Cache: Meal violations (1 min)
-    meal_violations = get_or_set(
-        make_key('meal_violations', school.id),
-        lambda: list(MealViolation.objects.filter(school=school, resolved=False).select_related('student').order_by('-occurred_at')[:5]),
-        timeout=60
-    )
-
-    try:
-        from notifications.views import auto_check_alerts
-        alerts = auto_check_alerts()
-        if alerts > 0:
-            logger.info(f"Auto-generated {alerts} notification(s)")
-    except Exception as e:
-        logger.warning(f"Auto-check alerts failed: {e}")
+    meal_violations = MealViolation.objects.filter(resolved=False).select_related('student').order_by('-occurred_at')[:5]
 
     role = request.user.role
     if role in ['super_admin', 'admin']:
         return render_mobile_or_desktop(request, 'admin_dashboard/home.html', 'mobile/admin_dashboard.html', {
-            'stats': stats,
-            'meal_violations': meal_violations,
+            'stats': stats, 'meal_violations': meal_violations,
         })
-    elif role == 'bursar':
-        return redirect('bursar_dashboard')
-    elif role == 'gate_staff':
-        return redirect('gate_dashboard')
-    elif role == 'class_teacher':
-        return redirect('teacher_dashboard')
+    elif role == 'bursar': return redirect('bursar_dashboard')
+    elif role == 'gate_staff': return redirect('gate_dashboard')
+    elif role == 'class_teacher': return redirect('teacher_dashboard')
     return render_mobile_or_desktop(request, 'admin_dashboard/home.html', 'mobile/admin_dashboard.html', {
-        'stats': stats,
-        'meal_violations': meal_violations,
+        'stats': stats, 'meal_violations': meal_violations,
     })
+
+
 
 
 @login_required
@@ -205,50 +139,22 @@ def bursar_dashboard(request):
     return render_mobile_or_desktop(request, 'admin_dashboard/bursar.html', 'mobile/bursar_dashboard.html')
 
 
-from core.cache_utils import get_or_set, make_key
-
 @login_required
 def gate_dashboard(request):
-    """Gate staff dashboard with cached live stats."""
     from core.models import Student
     from attendance.models import Attendance
     from movement.models import MovementLog
     
-    school = _get_school(request)
     today = date.today()
-
-    # Cache: Total students (5 min)
-    total = get_or_set(
-        make_key('total_students', school.id),
-        lambda: Student.objects.filter(school=school, status='active').count(),
-        timeout=300
-    )
-
-    # Cache: Present today (30 sec - gate needs fresher data)
-    present = get_or_set(
-        make_key('gate_present', school.id, today),
-        lambda: Attendance.objects.filter(school=school, scan_date=today).count(),
-        timeout=30
-    )
-
-    # Cache: Outside now (15 sec - changes most frequently)
-    outside = get_or_set(
-        make_key('gate_outside', school.id, today),
-        lambda: MovementLog.objects.filter(school=school, exit_date=today, time_in__isnull=True).count(),
-        timeout=15
-    )
-
-    # Last scan - not cached (needs to be real-time)
-    last_scan = Attendance.objects.filter(school=school, scan_date=today).order_by('-time_in').first()
+    total = Student.objects.filter(status='active').count()
+    present = Attendance.objects.filter(scan_date=today).count()
+    outside = MovementLog.objects.filter(exit_date=today, time_in__isnull=True).count()
+    last_scan = Attendance.objects.filter(scan_date=today).order_by('-time_in').first()
     last_scan_time = last_scan.time_in.strftime('%H:%M') if last_scan else '--:--'
-
-    stats = {
-        'present': present,
-        'outside': outside,
-        'absent': total - present if total > present else 0,
-        'last_scan': last_scan_time,
-    }
-    return render_mobile_or_desktop(request, 'admin_dashboard/gate.html', 'mobile/gate_dashboard.html', {'stats': stats})
+    
+    return render_mobile_or_desktop(request, 'admin_dashboard/gate.html', 'mobile/gate_dashboard.html', {
+        'stats': {'present': present, 'outside': outside, 'absent': total - present if total > present else 0, 'last_scan': last_scan_time}
+    })
 
 @login_required
 def teacher_dashboard(request):
