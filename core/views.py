@@ -89,13 +89,40 @@ def error_403(request, exception=None):
 def backup_now(request):
     if request.user.role not in ['super_admin', 'admin']:
         messages.error(request, 'Access denied.'); return redirect('dashboard')
+    
     from django.core.management import call_command
+    from django.http import HttpResponse
+    from io import StringIO
+    import os
+    from django.conf import settings
+    from datetime import datetime
+    
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    
+    # Try Django dumpdata (works everywhere, no mysqldump needed)
     try:
-        call_command('backup')
-        messages.success(request, 'Backup completed!')
+        backup_content = StringIO()
+        call_command('dumpdata',
+            '--exclude', 'auth.permission',
+            '--exclude', 'contenttypes',
+            '--exclude', 'sessions.session',
+            stdout=backup_content
+        )
+        
+        filename = f'onecard_backup_{timestamp}.json'
+        response = HttpResponse(backup_content.getvalue(), content_type='application/json')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        messages.success(request, f'Backup downloaded! ({filename})')
+        return response
     except Exception as e:
-        messages.error(request, f'Backup failed: {e}')
-    return redirect('dashboard')
+        # Fallback: try the management command
+        try:
+            call_command('backup')
+            messages.success(request, 'Backup saved to server backups folder!')
+        except Exception as e2:
+            messages.error(request, f'Backup failed: {e2}')
+        
+        return redirect('dashboard')
 
 
 def scan_redirect(request, student_id):
