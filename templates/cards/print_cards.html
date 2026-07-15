@@ -137,9 +137,7 @@
                             <div class="header">ONECARD SYSTEM</div>
                             <div style="text-align:center; font-size:10px; color:#888;">Student ID Card</div>
                             <div class="qr">
-                                {% if student.qr_code %}
-                                <img src="{{ student.qr_code.url }}" alt="QR">
-                                {% endif %}
+                               <img src="data:image/png;base64,{{ student.qr_base64 }}" alt="QR">
                             </div>
                             <div class="info">
                                 <strong>ID:</strong> {{ student.id }}<br>
