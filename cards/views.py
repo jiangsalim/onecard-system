@@ -109,7 +109,6 @@ def download_cards_pdf(request):
         if a.template:
             template_map[a.class_name] = a.template
     
-    # Generate QR codes for students that don't have them
     for s in students:
         if not s.qr_code:
             try:
@@ -129,7 +128,6 @@ def download_cards_pdf(request):
         except Exception:
             barcode_images[s.id] = ''
     
-    # Cloudinary URLs for production
     badge_url = 'https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg'
     school_name = 'JINJA SENIOR SECONDARY SCHOOL'
     school_address = 'P.O Box 255, Jinja'
@@ -140,40 +138,124 @@ def download_cards_pdf(request):
     <style>
         @page {{ size: 320px 220px; margin: 0; }}
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        body {{ font-family: Arial, sans-serif; background: white; }}
-        .no-print-btn {{ display: inline-block; background: #1a237e; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; margin: 5px; text-decoration: none; }}
-        .card, .card-back {{ width: 300px; height: 200px; margin: 0 auto; border: 3px solid #1a237e; border-radius: 6px; background: white; page-break-after: always; page-break-inside: avoid; overflow: hidden; }}
-        .card {{ padding: 8px 10px; display: flex; flex-direction: column; justify-content: space-between; }}
-        .card .top {{ display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #1a237e; padding-bottom: 4px; }}
-        .card .top .badge img {{ width: 45px; height: auto; max-height: 40px; border-radius: 4px; object-fit: contain; }}
-        .card .top .school {{ font-weight: bold; font-size: 9px; color: #1a237e; }}
-        .card .top .label {{ font-size: 7px; color: #888; }}
-        .card .top .badge-text {{ font-size: 7px; padding: 2px 6px; border-radius: 3px; color: white; white-space: nowrap; }}
-        .card .top .category-badge {{ font-size: 7px; padding: 2px 6px; border-radius: 3px; color: white; white-space: nowrap; margin-left: 2px; }}
-        .card .middle {{ display: flex; align-items: center; gap: 6px; flex: 1; margin: 4px 0; }}
-        .card .middle .photo-box {{ width: 55px; height: 70px; flex-shrink: 0; border: 1px solid #ddd; }}
+        body {{ font-family: 'Segoe UI', Arial, sans-serif; background: #e5e7eb; }}
+        
+        .toolbar {{
+            text-align: center; padding: 16px;
+            background: white; border-bottom: 1px solid #e5e7eb;
+            position: sticky; top: 0; z-index: 10;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }}
+        .btn {{
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 10px 20px; border: none; border-radius: 10px;
+            cursor: pointer; font-size: 13px; font-weight: 600;
+            text-decoration: none; font-family: inherit;
+            transition: all 0.15s ease; margin: 4px;
+        }}
+        .btn:hover {{ transform: translateY(-1px); }}
+        .btn-print {{ background: #0A1F3F; color: white; }}
+        .btn-print:hover {{ background: #132D52; box-shadow: 0 4px 12px rgba(10,31,63,0.25); }}
+        .btn-close {{ background: #dc2626; color: white; }}
+        .btn-close:hover {{ box-shadow: 0 4px 12px rgba(220,38,38,0.3); }}
+        .card-count {{
+            color: #6b7280; font-size: 12px; margin-top: 8px;
+        }}
+        
+        .card, .card-back {{
+            width: 300px; height: 200px; margin: 20px auto;
+            border: 3px solid #0A1F3F; border-radius: 10px;
+            background: white; page-break-after: always;
+            page-break-inside: avoid; overflow: hidden;
+        }}
+        .card {{
+            padding: 10px 12px; display: flex;
+            flex-direction: column; justify-content: space-between;
+        }}
+        .card .top {{
+            display: flex; align-items: center; gap: 8px;
+            border-bottom: 1.5px solid #0A1F3F; padding-bottom: 5px;
+        }}
+        .card .top .badge img {{
+            width: 42px; height: auto; max-height: 38px;
+            border-radius: 6px; object-fit: contain;
+        }}
+        .card .top .school {{ font-weight: 700; font-size: 9px; color: #0A1F3F; }}
+        .card .top .label {{ font-size: 7px; color: #6b7280; }}
+        .card .top .badge-text {{
+            font-size: 7px; padding: 2px 6px; border-radius: 4px;
+            color: white; white-space: nowrap; font-weight: 600;
+        }}
+        .card .top .category-badge {{
+            font-size: 7px; padding: 2px 6px; border-radius: 4px;
+            color: white; white-space: nowrap; font-weight: 600; margin-left: 2px;
+        }}
+        .card .middle {{
+            display: flex; align-items: center; gap: 6px;
+            flex: 1; margin: 5px 0;
+        }}
+        .card .middle .photo-box {{
+            width: 55px; height: 70px; flex-shrink: 0;
+            border: 1.5px solid #e5e7eb; border-radius: 6px;
+            overflow: hidden;
+        }}
         .card .middle .photo-box img {{ width: 55px; height: 70px; object-fit: cover; }}
-        .card .middle .qr {{ width: 65px; height: 65px; flex-shrink: 0; }}
-        .card .middle .qr img {{ width: 65px; height: 65px; }}
-        .card .middle .details {{ font-size: 8px; line-height: 1.3; flex: 1; }}
-        .card .middle .details strong {{ color: #1a237e; }}
-        .card .bottom {{ text-align: center; font-size: 6px; color: #888; border-top: 1px solid #ddd; padding-top: 2px; }}
-        .card-back {{ padding: 10px 14px; display: flex; flex-direction: column; justify-content: space-between; }}
-        .card-back .school-name {{ font-size: 10px; font-weight: bold; text-align: center; border-bottom: 2px solid #1a237e; padding-bottom: 4px; margin-bottom: 4px; }}
-        .card-back .info-section {{ font-size: 8px; line-height: 1.4; color: #333; }}
-        .card-back .info-section .row {{ display: flex; justify-content: space-between; margin-bottom: 1px; }}
-        .card-back .info-section strong {{ color: #1a237e; }}
-        .card-back .barcode-box {{ text-align: center; margin: 4px 0; }}
-        .card-back .barcode-box img {{ width: 250px; height: 40px; }}
-        .card-back .barcode-text {{ text-align: center; font-size: 7px; color: #666; font-family: 'Courier New', monospace; }}
-        .card-back .warning-box {{ background: #fff3e0; border: 1px solid #ffcc80; border-radius: 4px; padding: 4px 6px; font-size: 7px; color: #e65100; text-align: center; margin: 3px 0; }}
-        .card-back .contact {{ font-size: 7px; color: #666; text-align: center; }}
-        @media print {{ body {{ margin: 0; padding: 0; }} .no-print {{ display: none !important; }} }}
+        .card .middle .qr {{ width: 62px; height: 62px; flex-shrink: 0; }}
+        .card .middle .qr img {{ width: 62px; height: 62px; }}
+        .card .middle .details {{
+            font-size: 8px; line-height: 1.35; flex: 1;
+        }}
+        .card .middle .details strong {{ color: #0A1F3F; }}
+        .card .bottom {{
+            text-align: center; font-size: 6px; color: #9ca3af;
+            border-top: 1px solid #e5e7eb; padding-top: 3px;
+        }}
+        
+        .card-back {{
+            padding: 12px 14px; display: flex;
+            flex-direction: column; justify-content: space-between;
+        }}
+        .card-back .school-name {{
+            font-size: 11px; font-weight: 700; text-align: center;
+            border-bottom: 2px solid #0A1F3F; padding-bottom: 5px;
+            margin-bottom: 6px; color: #0A1F3F;
+        }}
+        .card-back .info-section {{ font-size: 8px; line-height: 1.5; color: #374151; }}
+        .card-back .info-section .row {{
+            display: flex; justify-content: space-between; margin-bottom: 1px;
+        }}
+        .card-back .info-section strong {{ color: #0A1F3F; }}
+        .card-back .barcode-box {{ text-align: center; margin: 5px 0; }}
+        .card-back .barcode-box img {{ width: 240px; height: 38px; }}
+        .card-back .barcode-text {{
+            text-align: center; font-size: 7px; color: #6b7280;
+            font-family: 'Courier New', monospace;
+        }}
+        .card-back .warning-box {{
+            background: #fff7ed; border: 1px solid #fed7aa;
+            border-radius: 6px; padding: 4px 6px;
+            font-size: 7px; color: #ea580c; text-align: center;
+            margin: 4px 0; font-weight: 600;
+        }}
+        .card-back .contact {{
+            font-size: 7px; color: #9ca3af; text-align: center;
+        }}
+        
+        @media print {{
+            body {{ margin: 0; padding: 0; background: white; }}
+            .no-print {{ display: none !important; }}
+        }}
     </style></head><body>
-    <div style="text-align:center; padding:10px;" class="no-print">
-        <button class="no-print-btn" onclick="window.print()">Print / Save as PDF</button>
-        <button class="no-print-btn" onclick="window.close()" style="background:#c62828;">Close</button>
-        <p style="color:#666; font-size:11px; margin:8px 0;">Total: {len(students)} cards (Front + Back)</p>
+    <div class="toolbar no-print">
+        <button class="btn btn-print" onclick="window.print()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 6,2 18,2 18,9"/><path d="M6 12H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Print / Save as PDF
+        </button>
+        <button class="btn btn-close" onclick="window.close()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Close
+        </button>
+        <p class="card-count">Total: {len(students)} cards (Front + Back)</p>
     </div>
     """
     
@@ -187,20 +269,20 @@ def download_cards_pdf(request):
         student_category = school_info.get('category', s.category if hasattr(s, 'category') else 'day')
         
         tmpl = template_map.get(student_class)
-        border_color = tmpl.border_color if tmpl else '#1a237e'
+        border_color = tmpl.border_color if tmpl else '#0A1F3F'
         bg_color = tmpl.background_color if tmpl else '#FFFFFF'
         badge_txt = tmpl.badge_text if tmpl else "STUDENT"
-        badge_clr = tmpl.badge_color if tmpl else '#1a237e'
+        badge_clr = tmpl.badge_color if tmpl else '#0A1F3F'
         color_name = tmpl.color_name if tmpl else ''
         
         if student_category == 'hostel':
             cat_badge = 'HOSTEL'
-            cat_bg = '#FF8F00'; cat_text = '#FFF'; cat_icon_text = '[H]'
-            if not tmpl: border_color = '#FF8F00'; bg_color = '#FFFDE7'
+            cat_bg = '#d97706'; cat_text = '#FFF'; cat_icon_text = '[H]'
+            if not tmpl: border_color = '#d97706'; bg_color = '#FFFDE7'
         else:
             cat_badge = 'DAY'
-            cat_bg = '#78909C'; cat_text = '#FFF'; cat_icon_text = '[D]'
-            if not tmpl: border_color = '#78909C'; bg_color = '#FAFAFA'
+            cat_bg = '#6b7280'; cat_text = '#FFF'; cat_icon_text = '[D]'
+            if not tmpl: border_color = '#6b7280'; bg_color = '#FAFAFA'
         
         if s.photo:
             photo_url = request.build_absolute_uri(s.photo.url)
@@ -212,7 +294,7 @@ def download_cards_pdf(request):
                 photo_url = request.build_absolute_uri(settings.MEDIA_URL + school_photo)
             else:
                 name_encoded = quote(name_front)
-                photo_url = f"https://ui-avatars.com/api/?name={name_encoded}&size=150&background=1a237e&color=fff"
+                photo_url = f"https://ui-avatars.com/api/?name={name_encoded}&size=150&background=0A1F3F&color=fff"
         
         html += f"""
         <div class="card" style="border-color: {border_color}; background: {bg_color};">
@@ -245,17 +327,17 @@ def download_cards_pdf(request):
         student_category = school_info.get('category', s.category if hasattr(s, 'category') else 'day')
         
         tmpl = template_map.get(student_class)
-        border_color = tmpl.border_color if tmpl else '#1a237e'
+        border_color = tmpl.border_color if tmpl else '#0A1F3F'
         bg_color = tmpl.background_color if tmpl else '#FFFFFF'
         badge_txt = tmpl.badge_text if tmpl else "STUDENT"
         color_name = tmpl.color_name if tmpl else ''
         
         if student_category == 'hostel':
-            cat_badge = 'HOSTEL'; cat_icon_text = '[H]'; cat_bg = '#FF8F00'
-            if not tmpl: border_color = '#FF8F00'; bg_color = '#FFFDE7'
+            cat_badge = 'HOSTEL'; cat_icon_text = '[H]'; cat_bg = '#d97706'
+            if not tmpl: border_color = '#d97706'; bg_color = '#FFFDE7'
         else:
-            cat_badge = 'DAY SCHOLAR'; cat_icon_text = '[D]'; cat_bg = '#78909C'
-            if not tmpl: border_color = '#78909C'; bg_color = '#FAFAFA'
+            cat_badge = 'DAY SCHOLAR'; cat_icon_text = '[D]'; cat_bg = '#6b7280'
+            if not tmpl: border_color = '#6b7280'; bg_color = '#FAFAFA'
         
         barcode_img = barcode_images.get(s.id, '')
         barcode_data = f"{s.id}|{s.payment_code}"
@@ -267,14 +349,14 @@ def download_cards_pdf(request):
                 <div class="row"><strong>Name:</strong> <span>{name}</span></div>
                 <div class="row"><strong>Level:</strong> <span>{badge_txt} {color_name}</span></div>
                 <div class="row"><strong>Stream:</strong> <span>{student_stream}</span></div>
-                <div class="row"><strong>Category:</strong> <span style="background:{cat_bg}; color:white; padding:1px 6px; border-radius:3px; font-size:7px;">{cat_icon_text} {cat_badge}</span></div>
+                <div class="row"><strong>Category:</strong> <span style="background:{cat_bg}; color:white; padding:1px 6px; border-radius:4px; font-size:7px;">{cat_icon_text} {cat_badge}</span></div>
                 <div class="row"><strong>Adm No:</strong> <span>{s.admission_number}</span></div>
                 <div class="row"><strong>Card ID:</strong> <span>{s.id} (v{s.card_version})</span></div>
                 <div class="row"><strong>Pay Code:</strong> <span>{s.payment_code}</span></div>
             </div>
             <div class="barcode-box"><img src="data:image/png;base64,{barcode_img}" alt="Barcode"></div>
             <div class="barcode-text">{barcode_data}</div>
-            <div class="warning-box">CARRY AT ALL TIMES &bull; REPORT LOSS IMMEDIATELY</div>
+            <div class="warning-box">CARRY AT ALL TIMES • REPORT LOSS IMMEDIATELY</div>
             <div class="contact">{school_address} | {school_phone}</div>
         </div>
         """
