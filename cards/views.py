@@ -100,7 +100,7 @@ def download_cards_pdf(request):
     
     students = Student.objects.filter(id__in=student_ids, status='active')
     
-    from core.services import fetch_students_from_existing_db, generate_qr_for_student
+    from core.services import fetch_students_from_existing_db, generate_qr_base64
     all_school = fetch_students_from_existing_db()
     school_dict = {s['admission_number']: s for s in all_school}
     
@@ -108,14 +108,6 @@ def download_cards_pdf(request):
     for a in ClassTemplateAssignment.objects.filter(academic_year='2026').select_related('template'):
         if a.template:
             template_map[a.class_name] = a.template
-    
-    for s in students:
-        if not s.qr_code:
-            try:
-                qr_file = generate_qr_for_student(s.id, version=s.card_version)
-                s.qr_code.save(f'{s.id}.png', qr_file, save=True)
-            except Exception:
-                pass
     
     barcode_images = {}
     for s in students:
@@ -127,30 +119,6 @@ def download_cards_pdf(request):
             barcode_images[s.id] = base64.b64encode(buffer.getvalue()).decode()
         except Exception:
             barcode_images[s.id] = ''
-    
-    # Pre-convert QR codes and photos to base64
-    qr_cache = {}
-    photo_cache = {}
-    for s in students:
-        # QR Code
-        if s.qr_code:
-            try:
-                with s.qr_code.open('rb') as f:
-                    qr_cache[s.id] = base64.b64encode(f.read()).decode('utf-8')
-            except Exception:
-                qr_cache[s.id] = ''
-        else:
-            qr_cache[s.id] = ''
-        
-        # Photo
-        if s.photo:
-            try:
-                with s.photo.open('rb') as f:
-                    photo_cache[s.id] = base64.b64encode(f.read()).decode('utf-8')
-            except Exception:
-                photo_cache[s.id] = ''
-        else:
-            photo_cache[s.id] = ''
     
     badge_url = 'https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg'
     school_name = 'JINJA SENIOR SECONDARY SCHOOL'
@@ -188,81 +156,83 @@ def download_cards_pdf(request):
         .card-count {{ color: #6b7280; font-size: 12px; margin-top: 8px; }}
         
         .card, .card-back {{
-            width: 300px; height: 200px; margin: 0 auto;
+            width: 300px; height: 200px; margin: 20px auto;
             border: 3px solid #0A1F3F; border-radius: 10px;
             background: white; page-break-after: always;
             page-break-inside: avoid; overflow: hidden;
         }}
         .card {{
-            padding: 8px 10px; display: flex;
+            padding: 10px 12px; display: flex;
             flex-direction: column; justify-content: space-between;
         }}
         .card .top {{
             display: flex; align-items: center; gap: 8px;
-            border-bottom: 1px solid #0A1F3F; padding-bottom: 4px;
+            border-bottom: 1.5px solid #0A1F3F; padding-bottom: 5px;
         }}
         .card .top .badge img {{
-            width: 45px; height: auto; max-height: 40px;
-            border-radius: 4px; object-fit: contain;
+            width: 42px; height: auto; max-height: 38px;
+            border-radius: 6px; object-fit: contain;
         }}
-        .card .top .school {{ font-weight: bold; font-size: 9px; color: #0A1F3F; }}
-        .card .top .label {{ font-size: 7px; color: #888; }}
+        .card .top .school {{ font-weight: 700; font-size: 9px; color: #0A1F3F; }}
+        .card .top .label {{ font-size: 7px; color: #6b7280; }}
         .card .top .badge-text {{
-            font-size: 7px; padding: 2px 6px; border-radius: 3px;
-            color: white; white-space: nowrap;
+            font-size: 7px; padding: 2px 6px; border-radius: 4px;
+            color: white; white-space: nowrap; font-weight: 600;
         }}
         .card .top .category-badge {{
-            font-size: 7px; padding: 2px 6px; border-radius: 3px;
-            color: white; white-space: nowrap; margin-left: 2px;
+            font-size: 7px; padding: 2px 6px; border-radius: 4px;
+            color: white; white-space: nowrap; font-weight: 600; margin-left: 2px;
         }}
         .card .middle {{
             display: flex; align-items: center; gap: 6px;
-            flex: 1; margin: 4px 0;
+            flex: 1; margin: 5px 0;
         }}
         .card .middle .photo-box {{
             width: 55px; height: 70px; flex-shrink: 0;
-            border: 1px solid #ddd; border-radius: 4px;
+            border: 1.5px solid #e5e7eb; border-radius: 6px;
             overflow: hidden;
         }}
         .card .middle .photo-box img {{ width: 55px; height: 70px; object-fit: cover; }}
-        .card .middle .qr {{ width: 65px; height: 65px; flex-shrink: 0; }}
-        .card .middle .qr img {{ width: 65px; height: 65px; }}
+        .card .middle .qr {{ width: 62px; height: 62px; flex-shrink: 0; }}
+        .card .middle .qr img {{ width: 62px; height: 62px; }}
         .card .middle .details {{
-            font-size: 8px; line-height: 1.3; flex: 1;
+            font-size: 8px; line-height: 1.35; flex: 1;
         }}
         .card .middle .details strong {{ color: #0A1F3F; }}
         .card .bottom {{
-            text-align: center; font-size: 6px; color: #888;
-            border-top: 1px solid #ddd; padding-top: 2px;
+            text-align: center; font-size: 6px; color: #9ca3af;
+            border-top: 1px solid #e5e7eb; padding-top: 3px;
         }}
         
         .card-back {{
-            padding: 10px 14px; display: flex;
+            padding: 12px 14px; display: flex;
             flex-direction: column; justify-content: space-between;
         }}
         .card-back .school-name {{
-            font-size: 10px; font-weight: bold; text-align: center;
-            border-bottom: 2px solid #0A1F3F; padding-bottom: 4px;
-            margin-bottom: 4px; color: #0A1F3F;
+            font-size: 11px; font-weight: 700; text-align: center;
+            border-bottom: 2px solid #0A1F3F; padding-bottom: 5px;
+            margin-bottom: 6px; color: #0A1F3F;
         }}
-        .card-back .info-section {{ font-size: 8px; line-height: 1.4; color: #333; }}
+        .card-back .info-section {{ font-size: 8px; line-height: 1.5; color: #374151; }}
         .card-back .info-section .row {{
             display: flex; justify-content: space-between; margin-bottom: 1px;
         }}
         .card-back .info-section strong {{ color: #0A1F3F; }}
-        .card-back .barcode-box {{ text-align: center; margin: 4px 0; }}
-        .card-back .barcode-box img {{ width: 250px; height: 40px; }}
+        .card-back .barcode-box {{ text-align: center; margin: 5px 0; }}
+        .card-back .barcode-box img {{ width: 240px; height: 38px; }}
         .card-back .barcode-text {{
-            text-align: center; font-size: 7px; color: #666;
+            text-align: center; font-size: 7px; color: #6b7280;
             font-family: 'Courier New', monospace;
         }}
         .card-back .warning-box {{
             background: #fff7ed; border: 1px solid #fed7aa;
-            border-radius: 4px; padding: 4px 6px;
+            border-radius: 6px; padding: 4px 6px;
             font-size: 7px; color: #ea580c; text-align: center;
-            margin: 3px 0; font-weight: 600;
+            margin: 4px 0; font-weight: 600;
         }}
-        .card-back .contact {{ font-size: 7px; color: #666; text-align: center; }}
+        .card-back .contact {{
+            font-size: 7px; color: #9ca3af; text-align: center;
+        }}
         
         @media print {{
             body {{ margin: 0; padding: 0; background: white; }}
@@ -284,23 +254,8 @@ def download_cards_pdf(request):
     
     # FRONT SIDES
     for s in students:
-        qr_base64 = qr_cache.get(s.id, '')
-        qr_src = f'data:image/png;base64,{qr_base64}' if qr_base64 else ''
-        
-        photo_base64 = photo_cache.get(s.id, '')
-        if photo_base64:
-            photo_src = f'data:image/png;base64,{photo_base64}'
-        else:
-            school_info = school_dict.get(s.admission_number, {})
-            name_front = school_info.get('full_name', 'Student')
-            school_photo = school_info.get('photo_path', '')
-            if school_photo and school_photo.startswith('http'):
-                photo_src = school_photo
-            elif school_photo:
-                photo_src = request.build_absolute_uri(settings.MEDIA_URL + school_photo)
-            else:
-                name_encoded = quote(name_front)
-                photo_src = f"https://ui-avatars.com/api/?name={name_encoded}&size=150&background=0A1F3F&color=fff"
+        qr_base64 = generate_qr_base64(s.id, s.card_version)
+        qr_url = f"data:image/png;base64,{qr_base64}"
         
         school_info = school_dict.get(s.admission_number, {})
         name_front = school_info.get('full_name', 'Student')
@@ -324,6 +279,18 @@ def download_cards_pdf(request):
             cat_bg = '#6b7280'; cat_text = '#FFF'; cat_icon_text = '[D]'
             if not tmpl: border_color = '#6b7280'; bg_color = '#FAFAFA'
         
+        if s.photo:
+            photo_url = request.build_absolute_uri(s.photo.url)
+        else:
+            school_photo = school_info.get('photo_path', '')
+            if school_photo and school_photo.startswith('http'):
+                photo_url = school_photo
+            elif school_photo:
+                photo_url = request.build_absolute_uri(settings.MEDIA_URL + school_photo)
+            else:
+                name_encoded = quote(name_front)
+                photo_url = f"https://ui-avatars.com/api/?name={name_encoded}&size=150&background=0A1F3F&color=fff"
+        
         html += f"""
         <div class="card" style="border-color: {border_color}; background: {bg_color};">
             <div class="top" style="border-bottom-color: {border_color};">
@@ -333,8 +300,8 @@ def download_cards_pdf(request):
                 <div class="category-badge" style="background:{cat_bg}; color:{cat_text};">{cat_icon_text} {cat_badge}</div>
             </div>
             <div class="middle">
-                <div class="photo-box"><img src="{photo_src}" alt="Photo"></div>
-                <div class="qr"><img src="{qr_src}" alt="QR"></div>
+                <div class="photo-box"><img src="{photo_url}" alt="Photo"></div>
+                <div class="qr"><img src="{qr_url}" alt="QR"></div>
                 <div class="details">
                     <strong>ID:</strong> {s.id}<br><strong>Name:</strong> {name_front}<br>
                     <strong>Adm:</strong> {s.admission_number}<br><strong>Level:</strong> {badge_txt} {color_name}<br>
@@ -377,7 +344,7 @@ def download_cards_pdf(request):
                 <div class="row"><strong>Name:</strong> <span>{name}</span></div>
                 <div class="row"><strong>Level:</strong> <span>{badge_txt} {color_name}</span></div>
                 <div class="row"><strong>Stream:</strong> <span>{student_stream}</span></div>
-                <div class="row"><strong>Category:</strong> <span style="background:{cat_bg}; color:white; padding:1px 6px; border-radius:3px; font-size:7px;">{cat_icon_text} {cat_badge}</span></div>
+                <div class="row"><strong>Category:</strong> <span style="background:{cat_bg}; color:white; padding:1px 6px; border-radius:4px; font-size:7px;">{cat_icon_text} {cat_badge}</span></div>
                 <div class="row"><strong>Adm No:</strong> <span>{s.admission_number}</span></div>
                 <div class="row"><strong>Card ID:</strong> <span>{s.id} (v{s.card_version})</span></div>
                 <div class="row"><strong>Pay Code:</strong> <span>{s.payment_code}</span></div>
