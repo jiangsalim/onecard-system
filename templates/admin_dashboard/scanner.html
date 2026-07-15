@@ -4,69 +4,425 @@
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner - OneCard</title>
+    <title>Scanner — OneCard</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #1a1a2e; color: #e0e0e0; }
-        .scanner-container { max-width: 640px; margin: 0 auto; padding: 20px; }
-        .header { text-align: center; padding: 24px 0 16px; }
-        .header .logo { display: inline-flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 700; color: #fff; }
-        .header .logo svg { width: 28px; height: 28px; }
-        .controls { display: flex; gap: 10px; margin-bottom: 16px; }
-        .controls select { flex: 1; padding: 10px 14px; border-radius: 8px; border: 1px solid #333; background: #16213e; color: #e0e0e0; font-size: 14px; cursor: pointer; }
-        #reader { width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 16px; border: 2px solid #2a2a4a; display: none; }
-        .result-card { background: #16213e; border-radius: 12px; padding: 24px; display: none; border: 1px solid #2a2a4a; animation: slideUp 0.3s ease; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        :root {
+            --navy: #0A1F3F;
+            --navy-light: #132D52;
+            --teal: #00C2BA;
+            --teal-dark: #00A8A0;
+            --bg: #0a0f1a;
+            --card-bg: #111827;
+            --card-border: #1f2937;
+            --text: #e5e7eb;
+            --text-muted: #9ca3af;
+            --green: #059669;
+            --green-bg: #064e3b;
+            --orange: #ea580c;
+            --orange-bg: #7c2d12;
+            --red: #dc2626;
+            --red-bg: #7f1d1d;
+            --blue: #2563eb;
+            --blue-bg: #1e3a5f;
+            --input-bg: #1a2235;
+            --input-border: #2a3345;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+        }
+
+        .scanner-container {
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* ─── Header ─────────────────────── */
+        .header {
+            text-align: center;
+            padding: 28px 0 20px;
+        }
+
+        .header .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 24px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: -0.3px;
+        }
+
+        .header .logo .hex-icon {
+            width: 36px;
+            height: 36px;
+        }
+
+        .header .logo span {
+            color: var(--teal);
+        }
+
+        /* ─── Controls ───────────────────── */
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .controls select {
+            flex: 1;
+            padding: 11px 14px;
+            border-radius: 10px;
+            border: 1.5px solid var(--input-border);
+            background: var(--input-bg);
+            color: var(--text);
+            font-size: 13px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: border-color 0.15s ease;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+        }
+
+        .controls select:focus {
+            outline: none;
+            border-color: var(--teal);
+            box-shadow: 0 0 0 3px rgba(0,194,186,0.15);
+        }
+
+        /* ─── Camera Toggle ──────────────── */
+        .toggle-camera {
+            text-align: center;
+            margin: 10px 0 16px;
+        }
+
+        .toggle-camera button {
+            padding: 10px 22px;
+            border-radius: 10px;
+            border: 1.5px solid var(--teal);
+            background: transparent;
+            color: var(--teal);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: inherit;
+            transition: all 0.15s ease;
+        }
+
+        .toggle-camera button:hover {
+            background: rgba(0,194,186,0.1);
+        }
+
+        /* ─── Scanner Area ───────────────── */
+        #reader {
+            width: 100%;
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 16px;
+            border: 2px solid var(--card-border);
+            display: none;
+        }
+
+        /* ─── Status Text ────────────────── */
+        .status-text {
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin: 12px 0;
+            min-height: 20px;
+        }
+
+        /* ─── Result Card ────────────────── */
+        .result-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            display: none;
+            border: 1px solid var(--card-border);
+            animation: slideUp 0.3s ease;
+            margin-bottom: 24px;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         .result-card.show { display: block; }
-        .result-header { display: flex; align-items: center; gap: 16px; margin-bottom: 18px; }
-        .result-photo { width: 60px; height: 75px; border-radius: 8px; object-fit: cover; border: 2px solid #3f51b5; flex-shrink: 0; }
-        .result-photo-placeholder { width: 60px; height: 75px; border-radius: 8px; background: #1a237e; color: white; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; flex-shrink: 0; border: 2px solid #3f51b5; }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .result-photo {
+            width: 60px; height: 75px;
+            border-radius: 10px;
+            object-fit: cover;
+            border: 2px solid var(--teal);
+            flex-shrink: 0;
+        }
+
+        .result-photo-placeholder {
+            width: 60px; height: 75px;
+            border-radius: 10px;
+            background: var(--navy);
+            color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; font-weight: 700;
+            flex-shrink: 0;
+            border: 2px solid var(--teal);
+        }
+
         .result-icon svg { width: 44px; height: 44px; }
-        .result-name { font-size: 20px; font-weight: 700; }
-        .result-detail { font-size: 13px; color: #8899aa; margin-top: 2px; }
-        .fees-box { background: #0f3460; border-radius: 8px; padding: 16px; margin: 14px 0; }
-        .fees-row { display: flex; justify-content: space-between; padding: 7px 0; font-size: 14px; color: #b0c4de; }
-        .fees-total { font-size: 20px; font-weight: 700; padding-top: 10px; border-top: 1px solid #1a4a7a; color: #fff; }
-        .badge { display: inline-block; padding: 5px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; letter-spacing: 0.3px; }
-        .badge-success { background: #1b5e20; color: #a5d6a7; }
-        .badge-warning { background: #e65100; color: #ffcc80; }
-        .badge-error { background: #b71c1c; color: #ef9a9a; }
-        .badge-info { background: #0d47a1; color: #90caf9; }
-        .attendance-confirm { text-align: center; padding: 12px; border-radius: 8px; margin-top: 12px; font-size: 14px; font-weight: 500; display: none; }
-        .attendance-confirm.marked { background: #1b5e20; color: #a5d6a7; display: block; }
-        .attendance-confirm.duplicate { background: #0d47a1; color: #90caf9; display: block; }
-        .manual-entry { margin-top: 24px; text-align: center; }
-        .manual-entry p { color: #8899aa; margin-bottom: 8px; font-size: 13px; }
-        .manual-entry .input-row { display: flex; gap: 8px; }
-        .manual-entry input { flex: 1; padding: 12px 16px; border-radius: 8px; border: 1px solid #333; background: #16213e; color: #fff; font-size: 14px; outline: none; }
-        .manual-entry input:focus { border-color: #3f51b5; }
-        .manual-entry button { padding: 12px 20px; border-radius: 8px; border: none; background: #3f51b5; color: white; cursor: pointer; font-size: 14px; font-weight: 600; white-space: nowrap; }
-        .status-text { text-align: center; font-size: 13px; color: #8899aa; margin-top: 12px; min-height: 20px; }
-        .toggle-camera { text-align: center; margin: 10px 0; }
-        .toggle-camera button { padding: 8px 16px; border-radius: 6px; border: 1px solid #3f51b5; background: transparent; color: #3f51b5; cursor: pointer; font-size: 13px; }
-        .close-btn { background: #c62828; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+
+        .result-name {
+            font-size: 20px; font-weight: 700; letter-spacing: -0.2px;
+        }
+
+        .result-detail {
+            font-size: 13px; color: var(--text-muted); margin-top: 3px;
+        }
+
+        /* ─── Fees Box ───────────────────── */
+        .fees-box {
+            background: var(--input-bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 14px 0;
+        }
+
+        .fees-row {
+            display: flex; justify-content: space-between;
+            padding: 7px 0; font-size: 14px; color: var(--text-muted);
+        }
+
+        .fees-total {
+            font-size: 20px; font-weight: 700;
+            padding-top: 10px;
+            border-top: 1px solid var(--card-border);
+            color: #fff;
+        }
+
+        /* ─── Badges ─────────────────────── */
+        .badge {
+            display: inline-block;
+            padding: 5px 14px;
+            border-radius: 50px;
+            font-size: 12px; font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        .badge-success { background: var(--green-bg); color: #6ee7b7; }
+        .badge-warning { background: var(--orange-bg); color: #fdba74; }
+        .badge-error { background: var(--red-bg); color: #fca5a5; }
+        .badge-info { background: var(--blue-bg); color: #93c5fd; }
+
+        /* ─── Attendance ─────────────────── */
+        .attendance-confirm {
+            text-align: center; padding: 12px; border-radius: 10px;
+            margin-top: 12px; font-size: 14px; font-weight: 500; display: none;
+        }
+
+        .attendance-confirm.marked {
+            background: var(--green-bg); color: #6ee7b7; display: block;
+        }
+
+        .attendance-confirm.duplicate {
+            background: var(--blue-bg); color: #93c5fd; display: block;
+        }
+
+        /* ─── Manual Entry ───────────────── */
+        .manual-entry {
+            margin-top: 8px; text-align: center;
+        }
+
+        .manual-entry p {
+            color: var(--text-muted); margin-bottom: 10px; font-size: 13px;
+        }
+
+        .manual-entry .input-row {
+            display: flex; gap: 10px;
+        }
+
+        .manual-entry input {
+            flex: 1;
+            padding: 13px 16px;
+            border-radius: 12px;
+            border: 1.5px solid var(--input-border);
+            background: var(--input-bg);
+            color: #fff;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.15s ease;
+        }
+
+        .manual-entry input:focus {
+            border-color: var(--teal);
+            box-shadow: 0 0 0 3px rgba(0,194,186,0.15);
+        }
+
+        .manual-entry input::placeholder { color: #4b5563; }
+
+        /* ─── Buttons ────────────────────── */
+        .btn {
+            padding: 12px 22px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px; font-weight: 600;
+            font-family: inherit;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .btn:hover { transform: translateY(-1px); }
+
+        .btn-lookup {
+            background: var(--teal);
+            color: var(--navy);
+        }
+
+        .btn-lookup:hover {
+            box-shadow: 0 4px 16px rgba(0,194,186,0.3);
+        }
+
+        .btn-close {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--card-border);
+            padding: 6px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px; font-weight: 500;
+            font-family: inherit;
+            float: right;
+            margin-bottom: 8px;
+            transition: all 0.15s ease;
+        }
+
+        .btn-close:hover {
+            background: var(--card-border);
+            color: #fff;
+        }
+
+        .btn-exit {
+            background: var(--orange);
+            color: white;
+            width: 100%;
+            padding: 13px;
+            margin-top: 10px;
+            border-radius: 12px;
+            border: none;
+            font-size: 15px; font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .btn-exit:hover {
+            box-shadow: 0 4px 16px rgba(234,88,12,0.3);
+        }
+
+        /* ─── Passout Form ───────────────── */
         .passout-form { margin-top: 12px; }
-        .passout-form select, .passout-form input { width: 100%; padding: 10px; margin: 6px 0; border-radius: 6px; border: 1px solid #333; background: #1a1a2e; color: #fff; font-size: 14px; }
-        .passout-form label { font-size: 13px; color: #8899aa; display: block; margin-top: 8px; }
-        .passout-form .btn-confirm { width: 100%; padding: 12px; margin-top: 10px; border-radius: 6px; border: none; font-size: 15px; font-weight: 600; cursor: pointer; }
-        .btn-exit { background: #e65100; color: white; }
-        .btn-return { background: #2e7d32; color: white; }
-        .duration-box { background: #0d47a1; border-radius: 8px; padding: 12px; text-align: center; margin: 10px 0; font-size: 16px; font-weight: 600; }
-        .meal-success-box { background: #1b5e20; border-radius: 8px; padding: 12px; text-align: center; margin: 10px 0; font-size: 16px; font-weight: 600; color: #a5d6a7; }
+
+        .passout-form label {
+            font-size: 13px; color: var(--text-muted);
+            display: block; margin-top: 10px; margin-bottom: 4px;
+        }
+
+        .passout-form select,
+        .passout-form input {
+            width: 100%;
+            padding: 11px 14px;
+            border-radius: 10px;
+            border: 1.5px solid var(--input-border);
+            background: var(--input-bg);
+            color: #fff;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+        }
+
+        .passout-form select:focus,
+        .passout-form input:focus {
+            border-color: var(--teal);
+        }
+
+        .duration-box {
+            background: var(--blue-bg);
+            border-radius: 10px;
+            padding: 14px;
+            text-align: center;
+            margin: 10px 0;
+            font-size: 15px; font-weight: 600;
+            color: #93c5fd;
+            line-height: 1.8;
+        }
+
+        .meal-success-box {
+            background: var(--green-bg);
+            border-radius: 10px;
+            padding: 14px;
+            text-align: center;
+            margin: 10px 0;
+            font-size: 15px; font-weight: 600;
+            color: #6ee7b7;
+            line-height: 1.8;
+        }
+
+        /* ─── Responsive ─────────────────── */
+        @media (max-width: 500px) {
+            .scanner-container { padding: 12px; }
+            .header { padding: 16px 0 12px; }
+            .header .logo { font-size: 20px; }
+            .header .logo .hex-icon { width: 28px; height: 28px; }
+            .controls { flex-direction: column; gap: 8px; }
+            .result-card { padding: 18px; }
+            .result-name { font-size: 17px; }
+            .manual-entry .input-row { flex-direction: column; }
+        }
     </style>
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
     <div class="scanner-container">
+        <!-- Header -->
         <div class="header">
             <div class="logo">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="2" width="18" height="20" rx="2"/><rect x="7" y="6" width="10" height="8" rx="1"/><line x1="7" y1="17" x2="17" y2="17"/><line x1="7" y1="20" x2="13" y2="20"/></svg>
-                OneCard Scanner
+                <svg class="hex-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+                    <polygon points="50,5 90,28 90,72 50,95 10,72 10,28" fill="#0A1F3F" stroke="#00C2BA" stroke-width="3"/>
+                    <line x1="35" y1="30" x2="35" y2="70" stroke="white" stroke-width="5" stroke-linecap="round"/>
+                    <line x1="65" y1="30" x2="65" y2="70" stroke="white" stroke-width="5" stroke-linecap="round"/>
+                    <line x1="35" y1="50" x2="65" y2="50" stroke="#00C2BA" stroke-width="5" stroke-linecap="round"/>
+                </svg>
+                One<span>Card</span> Scanner
             </div>
         </div>
+
+        <!-- Controls -->
         <div class="controls">
-            <select id="location"><option value="Main Gate">Main Gate</option><option value="Side Gate">Side Gate</option><option value="Dining Hall">Dining Hall</option><option value="Bursar Office">Bursar Office</option></select>
+            <select id="location">
+                <option value="Main Gate">Main Gate</option>
+                <option value="Side Gate">Side Gate</option>
+                <option value="Dining Hall">Dining Hall</option>
+                <option value="Bursar Office">Bursar Office</option>
+            </select>
             <select id="mode" onchange="onModeChange()">
                 <option value="attendance_balance">Attendance + Balance</option>
                 <option value="balance_only">Balance Only</option>
@@ -74,44 +430,78 @@
                 <option value="meal_tracking">Meal Tracking</option>
             </select>
         </div>
-        <div class="toggle-camera"><button onclick="toggleCamera()">Enable Camera Scanner</button></div>
+
+        <!-- Camera Toggle -->
+        <div class="toggle-camera">
+            <button onclick="toggleCamera()">Enable Camera Scanner</button>
+        </div>
+
+        <!-- Scanner -->
         <div id="reader"></div>
+
+        <!-- Status -->
         <div class="status-text" id="statusText">Enter a Student ID below and click Lookup</div>
 
+        <!-- Result Card -->
         <div id="result" class="result-card">
-            <div style="text-align:right; margin-bottom:8px;"><button class="close-btn" onclick="closeResult()">Close</button></div>
+            <button class="btn-close" onclick="closeResult()">Close</button>
+            <div style="clear:both;"></div>
             <div class="result-header">
                 <img id="resultPhoto" class="result-photo" src="" alt="Photo" style="display:none;">
                 <div id="resultPhotoPlaceholder" class="result-photo-placeholder" style="display:none;"></div>
                 <div class="result-icon" id="resultIcon"></div>
-                <div><div class="result-name" id="resultName"></div><div class="result-detail" id="resultDetail"></div></div>
+                <div>
+                    <div class="result-name" id="resultName"></div>
+                    <div class="result-detail" id="resultDetail"></div>
+                </div>
             </div>
+
             <div id="feesContainer">
-                <div class="fees-box"><div class="fees-row"><span>Total Fees</span><span id="feesTotal"></span></div><div class="fees-row"><span>Amount Paid</span><span id="feesPaid"></span></div><div class="fees-row fees-total"><span>Balance</span><span id="feesBalance"></span></div></div>
+                <div class="fees-box">
+                    <div class="fees-row"><span>Total Fees</span><span id="feesTotal"></span></div>
+                    <div class="fees-row"><span>Amount Paid</span><span id="feesPaid"></span></div>
+                    <div class="fees-row fees-total"><span>Balance</span><span id="feesBalance"></span></div>
+                </div>
                 <div style="text-align:center;" id="feesStatus"></div>
             </div>
-            <div id="passoutContainer" style="display:none;"><div class="passout-form" id="passoutForm"></div></div>
+
+            <div id="passoutContainer" style="display:none;">
+                <div class="passout-form" id="passoutForm"></div>
+            </div>
             <div id="returnContainer" style="display:none;"></div>
             <div id="mealContainer" style="display:none;"></div>
             <div id="attendanceConfirm" class="attendance-confirm"></div>
         </div>
 
-        <div class="manual-entry"><p>Manual Entry</p><div class="input-row"><input type="text" id="manualId" placeholder="Enter Student ID (e.g. STU-001)"><button id="lookupBtn" onclick="manualLookup()">Lookup</button></div></div>
+        <!-- Manual Entry -->
+        <div class="manual-entry">
+            <p>Manual Entry</p>
+            <div class="input-row">
+                <input type="text" id="manualId" placeholder="Enter Student ID (e.g. STU-001)">
+                <button id="lookupBtn" class="btn btn-lookup" onclick="manualLookup()">Lookup</button>
+            </div>
+        </div>
     </div>
 
-    <template id="icon-success"><svg viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="8,12 11,15 16,9"/></svg></template>
-    <template id="icon-warning"><svg viewBox="0 0 24 24" fill="none" stroke="#ff9800" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="7" x2="12" y2="13"/><circle cx="12" cy="16" r="0.5" fill="#ff9800" stroke="none"/></svg></template>
-    <template id="icon-error"><svg viewBox="0 0 24 24" fill="none" stroke="#f44336" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg></template>
-    <template id="icon-loading"><svg viewBox="0 0 24 24" fill="none" stroke="#90caf9" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/></circle></svg></template>
-    <template id="icon-exit"><svg viewBox="0 0 24 24" fill="none" stroke="#ff9800" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></template>
-    <template id="icon-return"><svg viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10,17 15,12 10,7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></template>
+    <!-- Icon Templates -->
+    <template id="icon-success"><svg viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="8,12 11,15 16,9"/></svg></template>
+    <template id="icon-warning"><svg viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="7" x2="12" y2="13"/><circle cx="12" cy="16" r="0.5" fill="#ea580c" stroke="none"/></svg></template>
+    <template id="icon-error"><svg viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg></template>
+    <template id="icon-loading"><svg viewBox="0 0 24 24" fill="none" stroke="#00C2BA" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/></circle></svg></template>
+    <template id="icon-exit"><svg viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></template>
+    <template id="icon-return"><svg viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10,17 15,12 10,7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></template>
 
     <script>
         let cameraActive = false;
         let currentStudentData = null;
         const html5QrCode = new Html5Qrcode("reader");
         const statusText = document.getElementById('statusText');
-        function setIcon(id) { const d = document.getElementById('resultIcon'); d.innerHTML = ''; d.appendChild(document.getElementById(id).content.cloneNode(true)); }
+
+        function setIcon(id) {
+            const d = document.getElementById('resultIcon');
+            d.innerHTML = '';
+            d.appendChild(document.getElementById(id).content.cloneNode(true));
+        }
         
         function setPhoto(photoUrl, name) {
             const img = document.getElementById('resultPhoto');
@@ -132,24 +522,52 @@
 
         function onModeChange() {
             const mode = document.getElementById('mode').value;
-            if (mode === 'pass_out') statusText.textContent = 'Pass Out Mode � Scan to exit or return';
-            else if (mode === 'meal_tracking') statusText.textContent = 'Meal Tracking Mode � Scan to serve meal';
+            if (mode === 'pass_out') statusText.textContent = 'Pass Out Mode — Scan to exit or return';
+            else if (mode === 'meal_tracking') statusText.textContent = 'Meal Tracking Mode — Scan to serve meal';
             else statusText.textContent = cameraActive ? 'Position QR code in front of camera' : 'Enter a Student ID and click Lookup';
         }
         
         function toggleCamera() {
-            if (cameraActive) { html5QrCode.stop().then(() => { cameraActive = false; document.getElementById('reader').style.display = 'none'; statusText.textContent = 'Camera stopped.'; }).catch(()=>{}); }
-            else { document.getElementById('reader').style.display = 'block'; statusText.textContent = 'Starting camera...'; html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess, onScanFailure).then(() => { cameraActive = true; onModeChange(); }).catch(err => { document.getElementById('reader').style.display = 'none'; statusText.textContent = 'Camera unavailable � use manual entry'; }); }
+            if (cameraActive) {
+                html5QrCode.stop().then(() => {
+                    cameraActive = false;
+                    document.getElementById('reader').style.display = 'none';
+                    statusText.textContent = 'Camera stopped.';
+                }).catch(()=>{});
+            } else {
+                document.getElementById('reader').style.display = 'block';
+                statusText.textContent = 'Starting camera...';
+                html5QrCode.start(
+                    { facingMode: "environment" },
+                    { fps: 10, qrbox: { width: 250, height: 250 } },
+                    onScanSuccess,
+                    onScanFailure
+                ).then(() => {
+                    cameraActive = true;
+                    onModeChange();
+                }).catch(err => {
+                    document.getElementById('reader').style.display = 'none';
+                    statusText.textContent = 'Camera unavailable — use manual entry';
+                });
+            }
         }
+
         function onScanSuccess(decodedText) { 
-            const now = Date.now(); if (now - lastScanTime < 3000) return; lastScanTime = now;
-            html5QrCode.pause(); showLoading(); processScan(decodedText); 
+            const now = Date.now();
+            if (now - lastScanTime < 3000) return;
+            lastScanTime = now;
+            html5QrCode.pause();
+            showLoading();
+            processScan(decodedText); 
         }
+
         function onScanFailure(err) {}
         let lastScanTime = 0;
         
         function showLoading() { 
-            setIcon('icon-loading'); document.getElementById('resultName').textContent = 'Processing...'; document.getElementById('resultName').style.color = '#90caf9'; 
+            setIcon('icon-loading');
+            document.getElementById('resultName').textContent = 'Processing...';
+            document.getElementById('resultName').style.color = '#00C2BA'; 
             document.getElementById('resultDetail').textContent = 'Fetching student data'; 
             document.getElementById('feesContainer').style.display = 'none'; 
             document.getElementById('passoutContainer').style.display = 'none'; 
@@ -162,9 +580,14 @@
         }
 
         function processScan(studentId) {
-            const location = document.getElementById('location').value, mode = document.getElementById('mode').value;
+            const location = document.getElementById('location').value;
+            const mode = document.getElementById('mode').value;
             const csrfToken = getCookie('csrftoken');
-            fetch('/api/scan/', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken || '' }, body: JSON.stringify({ student_id: studentId, location: location, mode: mode }) })
+            fetch('/api/scan/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken || '' },
+                body: JSON.stringify({ student_id: studentId, location: location, mode: mode })
+            })
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
@@ -191,25 +614,36 @@
             document.getElementById('passoutContainer').style.display = 'none';
             document.getElementById('returnContainer').style.display = 'none';
             document.getElementById('mealContainer').style.display = 'none';
-            if (f.status === 'CLEARED') { setIcon('icon-success'); document.getElementById('resultName').style.color = '#4caf50'; }
-            else if (f.status === 'OVERPAID') { setIcon('icon-warning'); document.getElementById('resultName').style.color = '#2196f3'; }
-            else if (f.status === 'NOT PAID') { setIcon('icon-error'); document.getElementById('resultName').style.color = '#f44336'; }
-            else { setIcon('icon-warning'); document.getElementById('resultName').style.color = '#ff9800'; }
+            
+            if (f.status === 'CLEARED') { setIcon('icon-success'); document.getElementById('resultName').style.color = '#6ee7b7'; }
+            else if (f.status === 'OVERPAID') { setIcon('icon-warning'); document.getElementById('resultName').style.color = '#93c5fd'; }
+            else if (f.status === 'NOT PAID') { setIcon('icon-error'); document.getElementById('resultName').style.color = '#fca5a5'; }
+            else { setIcon('icon-warning'); document.getElementById('resultName').style.color = '#fdba74'; }
+            
             document.getElementById('resultName').textContent = s.name;
             document.getElementById('resultDetail').textContent = `${s.class} ${s.stream} | ${s.admission}`;
-            
-            // Show photo
             setPhoto(s.photo || '', s.name);
             
             document.getElementById('feesTotal').textContent = f.total.toLocaleString() + ' UGX';
             document.getElementById('feesPaid').textContent = f.paid.toLocaleString() + ' UGX';
             document.getElementById('feesBalance').textContent = f.balance.toLocaleString() + ' UGX';
-            let badge = f.status === 'CLEARED' ? '<span class="badge badge-success">CLEARED</span>' : f.status === 'OVERPAID' ? '<span class="badge badge-info">OVERPAID</span>' : f.status === 'NOT PAID' ? '<span class="badge badge-error">NOT PAID</span>' : '<span class="badge badge-warning">NOT CLEARED</span>';
+            
+            let badge = f.status === 'CLEARED' ? '<span class="badge badge-success">CLEARED</span>' :
+                        f.status === 'OVERPAID' ? '<span class="badge badge-info">OVERPAID</span>' :
+                        f.status === 'NOT PAID' ? '<span class="badge badge-error">NOT PAID</span>' :
+                        '<span class="badge badge-warning">NOT CLEARED</span>';
             document.getElementById('feesStatus').innerHTML = badge;
+            
             const attEl = document.getElementById('attendanceConfirm');
-            if (data.attendance.marked) { attEl.textContent = 'Attendance Recorded � ' + new Date().toLocaleTimeString(); attEl.className = 'attendance-confirm marked'; }
-            else if (data.attendance.already_marked) { attEl.textContent = 'Already Marked Present Today'; attEl.className = 'attendance-confirm duplicate'; }
-            else { attEl.className = 'attendance-confirm'; }
+            if (data.attendance.marked) {
+                attEl.textContent = 'Attendance Recorded — ' + new Date().toLocaleTimeString();
+                attEl.className = 'attendance-confirm marked';
+            } else if (data.attendance.already_marked) {
+                attEl.textContent = 'Already Marked Present Today';
+                attEl.className = 'attendance-confirm duplicate';
+            } else {
+                attEl.className = 'attendance-confirm';
+            }
         }
 
         function showPassOutForm(data) {
@@ -219,7 +653,9 @@
             document.getElementById('mealContainer').style.display = 'none';
             document.getElementById('passoutContainer').style.display = 'block';
             document.getElementById('attendanceConfirm').className = 'attendance-confirm';
-            setIcon('icon-exit'); document.getElementById('resultName').textContent = s.name; document.getElementById('resultName').style.color = '#ff9800';
+            setIcon('icon-exit');
+            document.getElementById('resultName').textContent = s.name;
+            document.getElementById('resultName').style.color = '#fdba74';
             document.getElementById('resultDetail').textContent = `${s.class} ${s.stream} | ${s.admission}`;
             setPhoto(s.photo || '', s.name);
             currentStudentData = data;
@@ -227,43 +663,59 @@
                 <label>Reason for leaving</label>
                 <select id="passReason"><option value="sick">Sick</option><option value="home">Home</option><option value="emergency">Emergency</option><option value="other">Other</option></select>
                 <label>Authorized by</label><input type="text" id="passAuthorizedBy" placeholder="Name of authorizing staff">
-                <button class="btn-confirm btn-exit" onclick="confirmPassOut()">Confirm Exit</button>`;
+                <button class="btn-exit" onclick="confirmPassOut()">Confirm Exit</button>`;
         }
 
         function showReturnConfirmation(data) {
             const m = data.movement;
-            document.getElementById('feesContainer').style.display = 'none'; document.getElementById('passoutContainer').style.display = 'none';
+            document.getElementById('feesContainer').style.display = 'none';
+            document.getElementById('passoutContainer').style.display = 'none';
             document.getElementById('mealContainer').style.display = 'none';
-            document.getElementById('returnContainer').style.display = 'block'; document.getElementById('attendanceConfirm').className = 'attendance-confirm';
-            setIcon('icon-return'); document.getElementById('resultName').textContent = data.student.name; document.getElementById('resultName').style.color = '#4caf50';
+            document.getElementById('returnContainer').style.display = 'block';
+            document.getElementById('attendanceConfirm').className = 'attendance-confirm';
+            setIcon('icon-return');
+            document.getElementById('resultName').textContent = data.student.name;
+            document.getElementById('resultName').style.color = '#6ee7b7';
             document.getElementById('resultDetail').textContent = 'Student has returned';
             setPhoto(data.student.photo || '', data.student.name);
             document.getElementById('returnContainer').innerHTML = `
                 <div class="duration-box">Time Out: ${m.time_out}<br>Time In: ${m.time_in}<br>Duration: ${m.duration}</div>
-                <p style="text-align:center; color:#a5d6a7; margin-top:10px;">Return Logged Successfully</p>`;
+                <p style="text-align:center; color:#6ee7b7; margin-top:10px;">Return Logged Successfully</p>`;
         }
 
         function confirmPassOut() {
             const reason = document.getElementById('passReason').value;
             const authorizedBy = document.getElementById('passAuthorizedBy').value.trim();
             if (!authorizedBy) { alert('Please enter who authorized this exit.'); return; }
-            fetch('/movement/api/pass-out/', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') || '' }, body: JSON.stringify({ student_id: currentStudentData.student.id, reason: reason, authorized_by: authorizedBy, location: document.getElementById('location').value }) })
+            fetch('/movement/api/pass-out/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') || '' },
+                body: JSON.stringify({ student_id: currentStudentData.student.id, reason: reason, authorized_by: authorizedBy, location: document.getElementById('location').value })
+            })
             .then(r => r.json()).then(data => {
-                if (data.success) { document.getElementById('passoutForm').innerHTML = '<p style="text-align:center; color:#ffcc80; padding:20px;">Exit Logged � Student may leave</p>'; setTimeout(closeResult, 3000); }
-                else { alert(data.error || 'Failed to log exit'); }
+                if (data.success) {
+                    document.getElementById('passoutForm').innerHTML = '<p style="text-align:center; color:#fdba74; padding:20px;">Exit Logged — Student may leave</p>';
+                    setTimeout(closeResult, 3000);
+                } else {
+                    alert(data.error || 'Failed to log exit');
+                }
             }).catch(() => alert('Connection error'));
         }
 
         function showMealResult(data) {
             const s = data.student, m = data.meal;
-            document.getElementById('feesContainer').style.display = 'none'; document.getElementById('passoutContainer').style.display = 'none';
-            document.getElementById('returnContainer').style.display = 'none'; document.getElementById('attendanceConfirm').className = 'attendance-confirm';
+            document.getElementById('feesContainer').style.display = 'none';
+            document.getElementById('passoutContainer').style.display = 'none';
+            document.getElementById('returnContainer').style.display = 'none';
+            document.getElementById('attendanceConfirm').className = 'attendance-confirm';
             document.getElementById('mealContainer').style.display = 'block';
-            setIcon('icon-success'); document.getElementById('resultName').textContent = s.name; document.getElementById('resultName').style.color = '#4caf50';
+            setIcon('icon-success');
+            document.getElementById('resultName').textContent = s.name;
+            document.getElementById('resultName').style.color = '#6ee7b7';
             document.getElementById('resultDetail').textContent = `${s.class} ${s.stream} | ${m.category.toUpperCase()}`;
             setPhoto(s.photo || '', s.name);
             document.getElementById('mealContainer').innerHTML = `
-                <div class="meal-success-box">? ${m.type.toUpperCase()} SERVED<br><small>Time: ${m.time}</small><br><small>Category: ${m.category.toUpperCase()}</small></div>`;
+                <div class="meal-success-box">${m.type.toUpperCase()} SERVED<br><small style="opacity:0.7;">Time: ${m.time}</small><br><small style="opacity:0.7;">Category: ${m.category.toUpperCase()}</small></div>`;
         }
 
         function showMealError(data) {
@@ -276,50 +728,69 @@
     
             if (data.error_code === 'ALREADY_SERVED') {
                 setIcon('icon-warning');
-                document.getElementById('resultName').style.color = '#ff9800';
+                document.getElementById('resultName').style.color = '#fdba74';
                 document.getElementById('resultName').textContent = 'Already Served';
             } else if (data.error_code === 'BALANCE_TOO_HIGH') {
                 setIcon('icon-error');
-                document.getElementById('resultName').style.color = '#f44336';
-                document.getElementById('resultName').textContent = 'Meal Denied � Balance Too High';
+                document.getElementById('resultName').style.color = '#fca5a5';
+                document.getElementById('resultName').textContent = 'Meal Denied — Balance Too High';
             } else {
                 setIcon('icon-error');
-                document.getElementById('resultName').style.color = '#f44336';
+                document.getElementById('resultName').style.color = '#fca5a5';
                 document.getElementById('resultName').textContent = 'Access Denied';
             }
             document.getElementById('resultDetail').textContent = data.error;
-            document.getElementById('mealContainer').innerHTML = `<p style="text-align:center; color:#ffcc80; padding:20px;">${data.error}</p>`;
+            document.getElementById('mealContainer').innerHTML = `<p style="text-align:center; color:#fdba74; padding:20px;">${data.error}</p>`;
         }
 
         function showError(message, errorCode) {
-            setIcon('icon-error'); document.getElementById('resultName').textContent = errorCode === 'CARD_REPLACED' ? 'Card Replaced' : 'Error'; document.getElementById('resultName').style.color = '#f44336'; document.getElementById('resultDetail').textContent = message;
-            document.getElementById('feesContainer').style.display = 'none'; document.getElementById('passoutContainer').style.display = 'none'; document.getElementById('returnContainer').style.display = 'none'; document.getElementById('mealContainer').style.display = 'none'; document.getElementById('attendanceConfirm').className = 'attendance-confirm';
+            setIcon('icon-error');
+            document.getElementById('resultName').textContent = errorCode === 'CARD_REPLACED' ? 'Card Replaced' : 'Error';
+            document.getElementById('resultName').style.color = '#fca5a5';
+            document.getElementById('resultDetail').textContent = message;
+            document.getElementById('feesContainer').style.display = 'none';
+            document.getElementById('passoutContainer').style.display = 'none';
+            document.getElementById('returnContainer').style.display = 'none';
+            document.getElementById('mealContainer').style.display = 'none';
+            document.getElementById('attendanceConfirm').className = 'attendance-confirm';
             setPhoto('', '');
             document.getElementById('result').classList.add('show');
         }
-        function closeResult() { document.getElementById('result').classList.remove('show'); onModeChange(); }
-        function manualLookup() { const id = document.getElementById('manualId').value.trim(); if (!id) { alert('Enter a Student ID'); return; } showLoading(); processScan(id); document.getElementById('manualId').value = ''; document.getElementById('manualId').focus(); }
-        function getCookie(name) { let v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)'); return v ? v[2] : null; }
-        document.getElementById('manualId').addEventListener('keypress', function(e) { if (e.key === 'Enter') manualLookup(); });
+
+        function closeResult() {
+            document.getElementById('result').classList.remove('show');
+            onModeChange();
+        }
+
+        function manualLookup() {
+            const id = document.getElementById('manualId').value.trim();
+            if (!id) { alert('Enter a Student ID'); return; }
+            showLoading();
+            processScan(id);
+            document.getElementById('manualId').value = '';
+            document.getElementById('manualId').focus();
+        }
+
+        function getCookie(name) {
+            let v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+            return v ? v[2] : null;
+        }
+
+        document.getElementById('manualId').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') manualLookup();
+        });
     </script>
 
-
-
-
-<script>
-console.log("╔══════════════════════════════════════╗");
-console.log("║        ONECARD SYSTEM               ║");
-console.log("║   Smart Student Management          ║");
-console.log("║                                    ║");
-console.log("║   Welcome to Developer Console      ║");
-console.log("║                                    ║");
-console.log("║   (c) 2026 Herman Software Solutions║");
-console.log("║   All Rights Reserved               ║");
-console.log("╚══════════════════════════════════════╝");
-</script>
+    <script>
+        console.log("╔══════════════════════════════════════╗");
+        console.log("║        ONECARD SYSTEM               ║");
+        console.log("║   Smart Student Management          ║");
+        console.log("║                                    ║");
+        console.log("║   Welcome to Developer Console      ║");
+        console.log("║                                    ║");
+        console.log("║   (c) 2026 Herman Software Solutions║");
+        console.log("║   All Rights Reserved               ║");
+        console.log("╚══════════════════════════════════════╝");
+    </script>
 </body>
 </html>
-
-
-
-

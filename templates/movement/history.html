@@ -4,97 +4,143 @@
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Movement History - OneCard</title>
+    <title>Movement History — OneCard</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; }
-        .navbar { background: #1a237e; color: white; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; height: 60px; }
-        .navbar .brand { font-size: 18px; font-weight: 600; }
+
+        :root {
+            --navy: #0A1F3F; --navy-light: #132D52;
+            --teal: #00C2BA; --teal-dark: #00A8A0;
+            --bg: #f0f2f5; --card-bg: #ffffff;
+            --text: #1f2937; --text-muted: #6b7280;
+            --border: #e5e7eb; --sidebar-hover: #f0f4ff;
+            --green: #059669; --green-bg: #ecfdf5;
+            --orange: #ea580c; --orange-bg: #fff7ed;
+        }
+
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+
+        .navbar { background: var(--navy); color: white; padding: 0 28px; display: flex; justify-content: space-between; align-items: center; height: 64px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(10,31,63,0.15); }
+        .navbar .brand { display: flex; align-items: center; gap: 10px; font-size: 19px; font-weight: 700; letter-spacing: -0.3px; }
+        .navbar .brand .logo-icon { width: 34px; height: 34px; }
+        .navbar .brand span { color: var(--teal); }
         .navbar a { color: white; text-decoration: none; }
+
         .layout { display: flex; }
-        .sidebar { width: 240px; background: white; min-height: calc(100vh - 60px); border-right: 1px solid #e0e0e0; padding-top: 10px; }
-        .sidebar a { display: block; padding: 12px 24px; color: #333; text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
-        .sidebar a:hover { background: #f5f5ff; color: #1a237e; border-left-color: #1a237e; }
-        .sidebar .section-title { padding: 20px 24px 8px; font-size: 11px; text-transform: uppercase; color: #999; letter-spacing: 1.5px; font-weight: 600; }
-        .main-content { flex: 1; padding: 24px 32px; }
-        .card { background: white; border-radius: 8px; padding: 24px; border: 1px solid #e8e8e8; }
-        .card h2 { color: #1a237e; margin-bottom: 16px; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 14px; }
-        th { background: #f5f5f5; font-weight: 600; }
-        /* Mobile Responsive */
-@media (max-width: 768px) {
-    .layout { flex-direction: column; }
-    .sidebar { 
-        width: 100%; min-height: auto; 
-        display: flex; flex-wrap: wrap; gap: 0;
-        padding: 5px 0; border-right: none; 
-        border-bottom: 1px solid #e0e0e0;
-    }
-    .sidebar .section-title { display: none; }
-    .sidebar a { 
-        padding: 8px 12px; font-size: 12px; 
-        border-left: none; border-bottom: 2px solid transparent;
-    }
-    .sidebar a:hover { border-bottom-color: #1a237e; border-left: none; }
-    .main-content { margin-left: 0; padding: 12px; }
-    .card { padding: 16px; }
-    .card h2 { font-size: 16px; }
-    table { font-size: 11px; }
-    th, td { padding: 6px 8px; }
-}
+        .sidebar { width: 260px; background: var(--card-bg); min-height: calc(100vh - 64px); border-right: 1px solid var(--border); padding: 16px 12px; position: sticky; top: 64px; }
+        .sidebar .section-title { padding: 20px 16px 8px; font-size: 11px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1.8px; font-weight: 700; }
+        .sidebar a { display: flex; align-items: center; gap: 10px; padding: 10px 16px; color: var(--text); text-decoration: none; font-size: 14px; font-weight: 500; border-radius: 10px; margin-bottom: 2px; transition: all 0.15s ease; border-left: 3px solid transparent; }
+        .sidebar a:hover { background: var(--sidebar-hover); color: var(--navy); }
+        .sidebar a.active { background: var(--sidebar-hover); color: var(--navy); font-weight: 600; border-left-color: var(--teal); }
+        .sidebar a .icon { width: 18px; height: 18px; opacity: 0.45; flex-shrink: 0; }
+        .sidebar a.active .icon, .sidebar a:hover .icon { opacity: 1; }
+
+        .main-content { flex: 1; padding: 28px 32px; }
+        .page-title { color: var(--navy); font-size: 26px; font-weight: 700; letter-spacing: -0.4px; display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+        .page-subtitle { color: var(--text-muted); font-size: 14px; margin-bottom: 24px; }
+
+        .card { background: var(--card-bg); border-radius: 16px; padding: 28px; border: 1px solid var(--border); }
+        .card h2 { color: var(--navy); font-size: 18px; font-weight: 700; letter-spacing: -0.2px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+        .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; min-width: 700px; }
+        th, td { padding: 12px 16px; text-align: left; font-size: 13px; }
+        th { background: #f9fafb; font-weight: 600; color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; border-bottom: 2px solid var(--border); }
+        td { border-bottom: 1px solid var(--border); color: var(--text); }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #fafbfc; }
+
+        .empty-state { text-align: center; padding: 40px; color: var(--text-muted); }
+        .empty-state svg { width: 44px; height: 44px; margin: 0 auto 12px; opacity: 0.3; }
+
+        @media (max-width: 768px) {
+            .layout { flex-direction: column; }
+            .sidebar { width: 100%; min-height: auto; display: flex; flex-wrap: wrap; padding: 8px 4px; border-right: none; border-bottom: 1px solid var(--border); position: static; overflow-x: auto; }
+            .sidebar .section-title { display: none; }
+            .sidebar a { padding: 8px 12px; font-size: 12px; border-radius: 0; white-space: nowrap; }
+            .main-content { padding: 16px 12px; }
+            .card { padding: 20px; }
+            .card h2 { font-size: 16px; }
+            .navbar { padding: 0 14px; }
+            .navbar .brand { font-size: 15px; }
+        }
     </style>
-    <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
     <div class="navbar">
-        <div class="brand"><a href="{% url 'dashboard' %}" style="color:white;">OneCard System</a></div>
+        <a href="{% url 'dashboard' %}">
+            <div class="brand">
+                <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+                    <polygon points="50,5 90,28 90,72 50,95 10,72 10,28" fill="#0A1F3F" stroke="#00C2BA" stroke-width="3"/>
+                    <line x1="35" y1="30" x2="35" y2="70" stroke="white" stroke-width="5" stroke-linecap="round"/>
+                    <line x1="65" y1="30" x2="65" y2="70" stroke="white" stroke-width="5" stroke-linecap="round"/>
+                    <line x1="35" y1="50" x2="65" y2="50" stroke="#00C2BA" stroke-width="5" stroke-linecap="round"/>
+                </svg>
+                One<span>Card</span>
+            </div>
+        </a>
     </div>
+
     <div class="layout">
         <div class="sidebar">
             <div class="section-title">Movement</div>
-            <a href="{% url 'movement_dashboard' %}">Dashboard</a>
-            <a href="{% url 'movement_history' %}" style="background:#f5f5ff; color:#1a237e; border-left-color:#1a237e;">History</a>
+            <a href="{% url 'movement_dashboard' %}">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                Dashboard
+            </a>
+            <a href="{% url 'movement_history' %}" class="active">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+                History
+            </a>
         </div>
+
         <div class="main-content">
+            <h1 class="page-title">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+                Movement History
+            </h1>
+            <p class="page-subtitle">Complete record of student movement logs</p>
+
             <div class="card">
-                <h2>Movement History</h2>
-                <table>
-                    <thead><tr><th>Student</th><th>Date</th><th>Time Out</th><th>Time In</th><th>Reason</th><th>Authorized</th></tr></thead>
-                    <tbody>
-                        {% for log in logs %}
-                        <tr>
-                            <td><strong>{{ log.student.id }}</strong></td>
-                            <td>{{ log.exit_date }}</td>
-                            <td>{{ log.time_out }}</td>
-                            <td>{{ log.time_in|default:"Still Out" }}</td>
-                            <td>{{ log.get_reason_display }}</td>
-                            <td>{{ log.authorized_by }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <h2>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+                    All Movement Records
+                </h2>
+
+                {% if logs %}
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Student</th><th>Date</th><th>Time Out</th><th>Time In</th><th>Reason</th><th>Authorized</th></tr></thead>
+                        <tbody>
+                            {% for log in logs %}
+                            <tr>
+                                <td><strong>{{ log.student.id }}</strong></td>
+                                <td>{{ log.exit_date }}</td>
+                                <td>{{ log.time_out }}</td>
+                                <td>{{ log.time_in|default:"Still Out" }}</td>
+                                <td>{{ log.get_reason_display }}</td>
+                                <td>{{ log.authorized_by }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+                    <p>No movement records found.</p>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
 
-<script>
-console.log("╔══════════════════════════════════════╗");
-console.log("║        ONECARD SYSTEM               ║");
-console.log("║   Smart Student Management          ║");
-console.log("║                                    ║");
-console.log("║   Welcome to Developer Console      ║");
-console.log("║                                    ║");
-console.log("║   (c) 2026 Herman Software Solutions║");
-console.log("║   All Rights Reserved               ║");
-console.log("╚══════════════════════════════════════╝");
-</script>
+    <script>
+        console.log("╔══════════════════════════════════════╗");
+        console.log("║        ONECARD SYSTEM               ║");
+        console.log("║   Smart Student Management          ║");
+        console.log("║   (c) 2026 Herman Software Solutions║");
+        console.log("╚══════════════════════════════════════╝");
+    </script>
 </body>
 </html>
-
-
-
-
-
-
-

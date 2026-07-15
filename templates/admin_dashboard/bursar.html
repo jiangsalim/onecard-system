@@ -4,160 +4,415 @@
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bursar - OneCard</title>
+    <title>Bursar — OneCard</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; }
-        .navbar { background: #1a237e; color: white; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; height: 60px; }
-        .navbar .brand { font-size: 18px; font-weight: 600; }
+
+        :root {
+            --navy: #0A1F3F;
+            --navy-light: #132D52;
+            --teal: #00C2BA;
+            --teal-dark: #00A8A0;
+            --bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --text: #1f2937;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --sidebar-hover: #f0f4ff;
+            --green: #059669;
+            --green-bg: #ecfdf5;
+            --orange: #ea580c;
+            --orange-bg: #fff7ed;
+            --red: #dc2626;
+            --red-bg: #fef2f2;
+            --purple: #7c3aed;
+            --purple-bg: #f5f3ff;
+            --amber: #d97706;
+            --amber-bg: #fffbeb;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ─── Navbar ─────────────────────── */
+        .navbar {
+            background: var(--navy);
+            color: white;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 64px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 12px rgba(10,31,63,0.15);
+        }
+
+        .navbar .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 19px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .navbar .brand .logo-icon { width: 34px; height: 34px; }
+
+        .navbar .brand span { color: var(--teal); }
+
         .navbar a { color: white; text-decoration: none; }
-        .navbar .user-info { display: flex; align-items: center; gap: 16px; font-size: 14px; }
-        .navbar .role-badge { background: #ff9800; color: #000; padding: 4px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
-        .navbar button { background: #c62828; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+
+        .navbar .user-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 14px;
+            color: rgba(255,255,255,0.85);
+        }
+
+        .navbar .user-avatar {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: var(--amber);
+            display: flex;
+            align-items: center; justify-content: center;
+            font-weight: 700; font-size: 15px; color: white;
+        }
+
+        .navbar .role-badge {
+            background: var(--amber);
+            color: white;
+            padding: 4px 14px;
+            border-radius: 50px;
+            font-size: 11px; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        .navbar button {
+            background: transparent;
+            color: rgba(255,255,255,0.7);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px; font-weight: 500;
+            transition: all 0.15s ease;
+        }
+
+        .navbar button:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border-color: rgba(255,255,255,0.4);
+        }
+
+        /* ─── Layout ─────────────────────── */
         .layout { display: flex; }
-        .sidebar { width: 240px; background: white; min-height: calc(100vh - 60px); border-right: 1px solid #e0e0e0; padding-top: 10px; }
-        .sidebar a { display: block; padding: 12px 24px; color: #333; text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
-        .sidebar a:hover { background: #f5f5ff; color: #1a237e; border-left-color: #1a237e; }
-        .sidebar .section-title { padding: 20px 24px 8px; font-size: 11px; text-transform: uppercase; color: #999; letter-spacing: 1.5px; font-weight: 600; }
-        .main-content { flex: 1; padding: 24px 32px; }
-        .card { background: white; border-radius: 8px; padding: 24px; border: 1px solid #e8e8e8; margin-bottom: 20px; }
-        .card h2 { color: #1a237e; margin-bottom: 12px; }
-        .btn { padding: 10px 22px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; text-decoration: none; display: inline-block; }
-        .btn-primary { background: #1a237e; color: white; }
-        .btn-outline { background: white; color: #1a237e; border: 1px solid #1a237e; }
-        /* Mobile Responsive */
-@media (max-width: 768px) {
-    .layout { flex-direction: column; }
-    .sidebar { 
-        width: 100%; min-height: auto; 
-        display: flex; flex-wrap: wrap; gap: 0;
-        padding: 5px 0; border-right: none; 
-        border-bottom: 1px solid #e0e0e0;
-    }
-    .sidebar .section-title { display: none; }
-    .sidebar a { 
-        padding: 8px 12px; font-size: 12px; 
-        border-left: none; border-bottom: 2px solid transparent;
-    }
-    .sidebar a:hover { border-bottom-color: #1a237e; border-left: none; }
-    .main-content { margin-left: 0; padding: 12px; }
-    .stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .stat-card { padding: 16px 10px; }
-    .stat-card .stat-value { font-size: 22px; }
-    .stat-card .stat-label { font-size: 11px; }
-    .grid-2 { grid-template-columns: 1fr; }
-    .action-grid { grid-template-columns: 1fr; }
-    .card { padding: 16px; }
-    .card h2 { font-size: 16px; }
-    table { font-size: 11px; }
-    th, td { padding: 6px 8px; }
-    .btn { padding: 8px 14px; font-size: 12px; }
-    .navbar { padding: 0 10px; }
-    .navbar .brand { font-size: 15px; }
-    .navbar .user-info { gap: 8px; font-size: 11px; }
-    .navbar .role-badge { padding: 2px 8px; font-size: 9px; }
-    .quick-links { flex-direction: column; }
-    .quick-links .btn { width: 100%; text-align: center; }
-    .filter-row { flex-direction: column; }
-    .filter-row select, .filter-row input { width: 100%; }
-}
-     /* Mobile Responsive */
-@media (max-width: 768px) {
-    .layout { flex-direction: column; }
-    .sidebar { 
-        width: 100%; min-height: auto; 
-        display: flex; flex-wrap: wrap; gap: 0;
-        padding: 5px 0; border-right: none; 
-        border-bottom: 1px solid #e0e0e0;
-    }
-    .sidebar .section-title { display: none; }
-    .sidebar a { 
-        padding: 8px 12px; font-size: 12px; 
-        border-left: none; border-bottom: 2px solid transparent;
-    }
-    .sidebar a:hover { border-bottom-color: #1a237e; border-left: none; }
-    .main-content { margin-left: 0; padding: 12px; }
-    .stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .stat-card { padding: 16px 10px; }
-    .stat-card .stat-value { font-size: 22px; }
-    .stat-card .stat-label { font-size: 11px; }
-    .grid-2 { grid-template-columns: 1fr; }
-    .action-grid { grid-template-columns: 1fr; }
-    .card { padding: 16px; }
-    .card h2 { font-size: 16px; }
-    table { font-size: 11px; }
-    th, td { padding: 6px 8px; }
-    .btn { padding: 8px 14px; font-size: 12px; }
-    .navbar { padding: 0 10px; }
-    .navbar .brand { font-size: 15px; }
-    .navbar .user-info { gap: 8px; font-size: 11px; }
-    .navbar .role-badge { padding: 2px 8px; font-size: 9px; }
-    .quick-links { flex-direction: column; }
-    .quick-links .btn { width: 100%; text-align: center; }
-    .filter-row { flex-direction: column; }
-    .filter-row select, .filter-row input { width: 100%; }
-}
+
+        /* ─── Sidebar ────────────────────── */
+        .sidebar {
+            width: 260px;
+            background: var(--card-bg);
+            min-height: calc(100vh - 64px);
+            border-right: 1px solid var(--border);
+            padding: 16px 12px;
+            position: sticky; top: 64px;
+        }
+
+        .sidebar .section-title {
+            padding: 20px 16px 8px;
+            font-size: 11px; text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 1.8px; font-weight: 700;
+        }
+
+        .sidebar a {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 16px; color: var(--text);
+            text-decoration: none; font-size: 14px; font-weight: 500;
+            border-radius: 10px; margin-bottom: 2px;
+            transition: all 0.15s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar a:hover {
+            background: var(--sidebar-hover); color: var(--navy);
+        }
+
+        .sidebar a.active {
+            background: var(--sidebar-hover); color: var(--navy);
+            font-weight: 600; border-left-color: var(--teal);
+        }
+
+        .sidebar a .icon {
+            width: 18px; height: 18px;
+            opacity: 0.45; flex-shrink: 0;
+        }
+
+        .sidebar a.active .icon,
+        .sidebar a:hover .icon { opacity: 1; }
+
+        /* ─── Main Content ───────────────── */
+        .main-content {
+            flex: 1; padding: 28px 32px; max-width: 800px;
+        }
+
+        .main-content .page-title {
+            color: var(--navy);
+            font-size: 26px; font-weight: 700;
+            margin-bottom: 4px; letter-spacing: -0.4px;
+            display: flex; align-items: center; gap: 10px;
+        }
+
+        .main-content .page-subtitle {
+            color: var(--text-muted);
+            font-size: 14px; margin-bottom: 28px;
+        }
+
+        /* ─── Cards ──────────────────────── */
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 28px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+            transition: all 0.2s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        }
+
+        .card .card-header {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .card .card-icon {
+            width: 48px; height: 48px;
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .card .card-icon.amber { background: var(--amber-bg); color: var(--amber); }
+        .card .card-icon.purple { background: var(--purple-bg); color: var(--purple); }
+        .card .card-icon.green { background: var(--green-bg); color: var(--green); }
+
+        .card h2 {
+            color: var(--navy);
+            font-size: 20px; font-weight: 700;
+            letter-spacing: -0.2px;
+        }
+
+        .card .card-body {
+            color: var(--text-muted);
+            font-size: 14px; line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .card .btn-row {
+            display: flex; gap: 12px; flex-wrap: wrap;
+        }
+
+        /* ─── Buttons ────────────────────── */
+        .btn {
+            padding: 11px 22px;
+            border: none; border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px; font-weight: 600;
+            text-decoration: none;
+            display: inline-flex; align-items: center; gap: 8px;
+            transition: all 0.15s ease;
+            font-family: inherit;
+        }
+
+        .btn:hover { transform: translateY(-1px); }
+
+        .btn-primary {
+            background: var(--navy); color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--navy-light);
+            box-shadow: 0 4px 12px rgba(10,31,63,0.25);
+        }
+
+        .btn-outline {
+            background: white; color: var(--navy);
+            border: 1.5px solid var(--border);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--navy);
+            background: var(--sidebar-hover);
+        }
+
+        .btn-amber {
+            background: var(--amber); color: white;
+        }
+
+        .btn-amber:hover {
+            box-shadow: 0 4px 12px rgba(217,119,6,0.3);
+        }
+
+        /* ─── Responsive ─────────────────── */
+        @media (max-width: 768px) {
+            .layout { flex-direction: column; }
+            .sidebar {
+                width: 100%; min-height: auto;
+                display: flex; flex-wrap: wrap;
+                padding: 8px 4px;
+                border-right: none; border-bottom: 1px solid var(--border);
+                position: static; overflow-x: auto;
+            }
+            .sidebar .section-title { display: none; }
+            .sidebar a {
+                padding: 8px 12px; font-size: 12px;
+                border-left: none; border-bottom: 2px solid transparent;
+                border-radius: 0; white-space: nowrap;
+            }
+            .sidebar a:hover { border-bottom-color: var(--teal); border-left: none; }
+            .sidebar a.active { border-left: none; border-bottom-color: var(--teal); }
+            .main-content { padding: 16px 12px; }
+            .card { padding: 20px; }
+            .card h2 { font-size: 17px; }
+            .navbar { padding: 0 14px; }
+            .navbar .brand { font-size: 15px; }
+            .navbar .user-info { gap: 8px; font-size: 12px; }
+            .navbar .role-badge { padding: 3px 10px; font-size: 10px; }
+            .card .btn-row { flex-direction: column; }
+            .card .btn-row .btn { justify-content: center; }
+        }
     </style>
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
     <div class="navbar">
-        <div class="brand"><a href="{% url 'dashboard' %}" style="color:white;">OneCard System</a></div>
+        <a href="{% url 'bursar_dashboard' %}">
+            <div class="brand">
+                <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+                    <polygon points="50,5 90,28 90,72 50,95 10,72 10,28" fill="#0A1F3F" stroke="#00C2BA" stroke-width="3"/>
+                    <line x1="35" y1="30" x2="35" y2="70" stroke="white" stroke-width="5" stroke-linecap="round"/>
+                    <line x1="65" y1="30" x2="65" y2="70" stroke="white" stroke-width="5" stroke-linecap="round"/>
+                    <line x1="35" y1="50" x2="65" y2="50" stroke="#00C2BA" stroke-width="5" stroke-linecap="round"/>
+                </svg>
+                One<span>Card</span>
+            </div>
+        </a>
         <div class="user-info">
             <span class="role-badge">Bursar</span>
             <span>{{ user.get_full_name|default:user.username }}</span>
+            <div class="user-avatar">{{ user.get_full_name|default:user.username|first|upper }}</div>
             <form method="post" action="{% url 'logout' %}" style="display:inline;">
-                {% csrf_token %}<button type="submit">Logout</button>
+                {% csrf_token %}
+                <button type="submit">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; margin-right:4px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    Logout
+                </button>
             </form>
         </div>
     </div>
+
     <div class="layout">
         <div class="sidebar">
             <div class="section-title">Main</div>
-            <a href="{% url 'bursar_dashboard' %}">Dashboard</a>
-            <div class="section-title">Actions</div>
-            <a href="{% url 'scanner' %}">Scan Student Card</a>
-            <a href="{% url 'fee_report' %}">View Fee Balances</a>
-            <a href="{% url 'reprint_card' %}">Reprint Card</a>
-            <div class="section-title">Students</div>
-            <a href="{% url 'view_students' %}">View Students</a>
-        </div>
-        <div class="main-content">
-            <h1 style="color:#1a237e; margin-bottom:20px;">Bursar Dashboard</h1>
+            <a href="{% url 'bursar_dashboard' %}" class="active">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                Dashboard
+            </a>
 
+            <div class="section-title">Actions</div>
+            <a href="{% url 'scanner' %}">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="18" height="7" rx="1"/></svg>
+                Scan Student Card
+            </a>
+            <a href="{% url 'fee_report' %}">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                View Fee Balances
+            </a>
+            <a href="{% url 'reprint_card' %}">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1,4 1,10 7,10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                Reprint Card
+            </a>
+
+            <div class="section-title">Students</div>
+            <a href="{% url 'view_students' %}">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                View Students
+            </a>
+        </div>
+
+        <div class="main-content">
+            <h1 class="page-title">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                Bursar Dashboard
+            </h1>
+            <p class="page-subtitle">Manage student fees, payments, and card reprints</p>
+
+            <!-- Fee Management -->
             <div class="card">
-                <h2>Fee Management</h2>
-                <p style="color:#666; margin-bottom:16px;">Scan a student card or search to view balance and payment history.</p>
-                <a href="{% url 'scanner' %}" class="btn btn-primary">Scan Student Card</a>
-                <a href="{% url 'fee_report' %}" class="btn btn-outline" style="margin-left:10px;">View Fee Report</a>
+                <div class="card-header">
+                    <div class="card-icon amber">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    </div>
+                    <div>
+                        <h2>Fee Management</h2>
+                    </div>
+                </div>
+                <p class="card-body">Scan a student card or search to view balance and payment history. Quick access to all fee-related operations.</p>
+                <div class="btn-row">
+                    <a href="{% url 'scanner' %}" class="btn btn-amber">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="18" height="7" rx="1"/></svg>
+                        Scan Student Card
+                    </a>
+                    <a href="{% url 'fee_report' %}" class="btn btn-outline">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
+                        View Fee Report
+                    </a>
+                </div>
             </div>
 
+            <!-- Quick Actions -->
             <div class="card">
-                <h2>Quick Actions</h2>
-                <p style="color:#666; margin-bottom:12px;">Common bursar tasks available from here.</p>
-                <a href="{% url 'view_students' %}" class="btn btn-outline">View All Students</a>
-                <a href="{% url 'reprint_card' %}" class="btn btn-outline" style="margin-left:10px;">Reprint Lost Card</a>
+                <div class="card-header">
+                    <div class="card-icon purple">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+                    </div>
+                    <div>
+                        <h2>Quick Actions</h2>
+                    </div>
+                </div>
+                <p class="card-body">Common bursar tasks available from here. View all students or reprint a lost card.</p>
+                <div class="btn-row">
+                    <a href="{% url 'view_students' %}" class="btn btn-outline">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                        View All Students
+                    </a>
+                    <a href="{% url 'reprint_card' %}" class="btn btn-outline">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1,4 1,10 7,10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                        Reprint Lost Card
+                    </a>
+                </div>
             </div>
         </div>
     </div>
 
-<script>
-console.log("╔══════════════════════════════════════╗");
-console.log("║        ONECARD SYSTEM               ║");
-console.log("║   Smart Student Management          ║");
-console.log("║                                    ║");
-console.log("║   Welcome to Developer Console      ║");
-console.log("║                                    ║");
-console.log("║   (c) 2026 Herman Software Solutions║");
-console.log("║   All Rights Reserved               ║");
-console.log("╚══════════════════════════════════════╝");
-</script>
+    <script>
+        console.log("╔══════════════════════════════════════╗");
+        console.log("║        ONECARD SYSTEM               ║");
+        console.log("║   Smart Student Management          ║");
+        console.log("║                                    ║");
+        console.log("║   Welcome to Developer Console      ║");
+        console.log("║                                    ║");
+        console.log("║   (c) 2026 Herman Software Solutions║");
+        console.log("║   All Rights Reserved               ║");
+        console.log("╚══════════════════════════════════════╝");
+    </script>
 </body>
 </html>
-
-
-
-
-
-
-

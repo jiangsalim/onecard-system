@@ -4,88 +4,164 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
-    <title>Attendance Report - OneCard</title>
+    <title>Attendance Report — OneCard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; }
-        .navbar { background: #1a237e; color: white; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; height: 60px; }
-        .navbar .brand { font-size: 18px; font-weight: 600; }
+
+        :root {
+            --navy: #0A1F3F; --navy-light: #132D52;
+            --teal: #00C2BA; --teal-dark: #00A8A0;
+            --bg: #f0f2f5; --card-bg: #ffffff;
+            --text: #1f2937; --text-muted: #6b7280;
+            --border: #e5e7eb; --sidebar-hover: #f0f4ff;
+            --green: #059669; --green-bg: #ecfdf5;
+            --orange: #ea580c; --orange-bg: #fff7ed;
+            --red: #dc2626; --red-bg: #fef2f2;
+            --blue: #2563eb; --blue-bg: #eff6ff;
+            --pink: #db2777; --pink-bg: #fdf2f8;
+            --purple: #7c3aed; --purple-bg: #f5f3ff;
+        }
+
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+
+        .navbar { background: var(--navy); color: white; padding: 0 28px; display: flex; justify-content: space-between; align-items: center; height: 64px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(10,31,63,0.15); }
+        .navbar .brand { display: flex; align-items: center; gap: 10px; font-size: 19px; font-weight: 700; letter-spacing: -0.3px; }
+        .navbar .brand .logo-icon { width: 34px; height: 34px; }
+        .navbar .brand span { color: var(--teal); }
         .navbar a { color: white; text-decoration: none; }
+
         .layout { display: flex; }
-        .sidebar { width: 240px; background: white; min-height: calc(100vh - 60px); border-right: 1px solid #e0e0e0; padding-top: 10px; }
-        .sidebar a { display: block; padding: 12px 24px; color: #333; text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
-        .sidebar a:hover { background: #f5f5ff; color: #1a237e; border-left-color: #1a237e; }
-        .sidebar .section-title { padding: 20px 24px 8px; font-size: 11px; text-transform: uppercase; color: #999; letter-spacing: 1.5px; font-weight: 600; }
-        .main-content { flex: 1; padding: 24px 32px; }
-        .card { background: white; border-radius: 8px; padding: 24px; border: 1px solid #e8e8e8; margin-bottom: 20px; }
-        .card h2 { color: #1a237e; margin-bottom: 16px; }
-        .chart-container { max-width: 700px; margin: 0 auto; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 14px; }
-        th { background: #f5f5f5; font-weight: 600; }
-        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
-        .stat-card { background: white; border-radius: 8px; padding: 20px; text-align: center; border: 1px solid #e8e8e8; }
-        .stat-card .stat-value { font-size: 28px; font-weight: 700; }
-        .stat-card .stat-label { font-size: 13px; color: #888; margin-top: 4px; }
-        .badge { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
-        .badge-success { background: #e8f5e9; color: #2e7d32; }
-        .badge-warning { background: #fff3e0; color: #e65100; }
-        .badge-error { background: #ffebee; color: #c62828; }
+        .sidebar { width: 260px; background: var(--card-bg); min-height: calc(100vh - 64px); border-right: 1px solid var(--border); padding: 16px 12px; position: sticky; top: 64px; }
+        .sidebar .section-title { padding: 20px 16px 8px; font-size: 11px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1.8px; font-weight: 700; }
+        .sidebar a { display: flex; align-items: center; gap: 10px; padding: 10px 16px; color: var(--text); text-decoration: none; font-size: 14px; font-weight: 500; border-radius: 10px; margin-bottom: 2px; transition: all 0.15s ease; border-left: 3px solid transparent; }
+        .sidebar a:hover { background: var(--sidebar-hover); color: var(--navy); }
+        .sidebar a.active { background: var(--sidebar-hover); color: var(--navy); font-weight: 600; border-left-color: var(--teal); }
+        .sidebar a .icon { width: 18px; height: 18px; opacity: 0.45; flex-shrink: 0; }
+        .sidebar a.active .icon, .sidebar a:hover .icon { opacity: 1; }
+
+        .main-content { flex: 1; padding: 28px 32px; }
+        .page-title { color: var(--navy); font-size: 26px; font-weight: 700; letter-spacing: -0.4px; display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+        .page-meta { color: var(--text-muted); font-size: 13px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .page-meta .meta-tag { background: #f9fafb; padding: 4px 10px; border-radius: 50px; font-size: 12px; }
+
+        /* Filter Pills */
+        .filter-pills { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+        .filter-pill { padding: 8px 18px; border-radius: 50px; font-size: 13px; font-weight: 600; text-decoration: none; border: 2px solid transparent; transition: all 0.15s ease; }
+        .filter-pill:hover { transform: translateY(-1px); }
+        .filter-pill.active-all { background: var(--navy); color: white; }
+        .filter-pill.active-male { background: var(--blue); color: white; }
+        .filter-pill.active-female { background: var(--pink); color: white; }
+        .filter-pill.inactive { background: white; color: var(--text-muted); border-color: var(--border); }
+        .filter-pill.inactive:hover { border-color: var(--navy); color: var(--navy); }
+
+        /* Gender Cards */
         .gender-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
-        .gender-card { padding: 20px; border-radius: 8px; text-align: center; }
-        .gender-card.male { background: #e3f2fd; border: 2px solid #90caf9; }
-        .gender-card.female { background: #fce4ec; border: 2px solid #f48fb1; }
-        .gender-card h3 { margin-bottom: 8px; font-size: 14px; }
-        .gender-card .big-number { font-size: 30px; font-weight: 700; }
-        .gender-card .detail { font-size: 12px; color: #666; margin-top: 4px; }
-        .gender-card .rate { font-size: 20px; font-weight: 600; margin-top: 6px; }
-        .filter-pills { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-        .filter-pill { padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; text-decoration: none; border: 2px solid transparent; }
-        .filter-pill.active-all { background: #1a237e; color: white; border-color: #1a237e; }
-        .filter-pill.active-male { background: #1565c0; color: white; border-color: #1565c0; }
-        .filter-pill.active-female { background: #c62828; color: white; border-color: #c62828; }
-        .filter-pill.inactive { background: #e0e0e0; color: #666; }
+        .gender-card { padding: 24px; border-radius: 16px; text-align: center; border: 1px solid transparent; transition: all 0.2s ease; }
+        .gender-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+        .gender-card.male { background: var(--blue-bg); border-color: rgba(37,99,235,0.15); }
+        .gender-card.female { background: var(--pink-bg); border-color: rgba(219,39,119,0.15); }
+        .gender-card .g-icon { width: 36px; height: 36px; margin: 0 auto 10px; }
+        .gender-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+        .gender-card.male h3 { color: var(--blue); }
+        .gender-card.female h3 { color: var(--pink); }
+        .gender-card .big-number { font-size: 32px; font-weight: 800; letter-spacing: -0.5px; }
+        .gender-card.male .big-number { color: var(--blue); }
+        .gender-card.female .big-number { color: var(--pink); }
+        .gender-card .detail { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+        .gender-card .rate { font-size: 22px; font-weight: 700; margin-top: 8px; }
+        .gender-card.male .rate { color: var(--blue); }
+        .gender-card.female .rate { color: var(--pink); }
+
+        /* Stats Row */
+        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+        .stat-card { background: var(--card-bg); border-radius: 16px; padding: 24px; text-align: center; border: 1px solid var(--border); transition: all 0.2s ease; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+        .stat-card:nth-child(1) .stat-value { color: var(--green); }
+        .stat-card:nth-child(2) .stat-value { color: var(--orange); }
+        .stat-card:nth-child(3) .stat-value { color: var(--red); }
+        .stat-card:nth-child(4) .stat-value { color: var(--purple); }
+        .stat-card .stat-value { font-size: 32px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px; }
+        .stat-card .stat-label { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+
+        /* Card */
+        .card { background: var(--card-bg); border-radius: 16px; padding: 28px; border: 1px solid var(--border); margin-bottom: 20px; }
+        .card h2 { color: var(--navy); font-size: 18px; font-weight: 700; letter-spacing: -0.2px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .chart-container { max-width: 600px; margin: 0 auto; }
+
+        /* Table */
+        .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; min-width: 500px; }
+        th, td { padding: 11px 16px; text-align: left; font-size: 13px; }
+        th { background: #f9fafb; font-weight: 600; color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; border-bottom: 2px solid var(--border); }
+        td { border-bottom: 1px solid var(--border); color: var(--text); }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #fafbfc; }
+        .badge { padding: 4px 10px; border-radius: 50px; font-size: 11px; font-weight: 600; }
+        .badge-success { background: var(--green-bg); color: var(--green); }
+        .badge-warning { background: var(--orange-bg); color: var(--orange); }
+
+        @media (max-width: 1024px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 768px) {
             .layout { flex-direction: column; }
-            .sidebar { width: 100%; min-height: auto; display: flex; flex-wrap: wrap; overflow-x: auto; }
+            .sidebar { width: 100%; min-height: auto; display: flex; flex-wrap: wrap; padding: 8px 4px; border-right: none; border-bottom: 1px solid var(--border); position: static; overflow-x: auto; }
             .sidebar .section-title { display: none; }
-            .sidebar a { display: inline-block; padding: 8px 12px; font-size: 12px; border-left: none; border-bottom: 2px solid transparent; }
-            .main-content { margin-left: 0; padding: 12px; }
-            .stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-            .stat-card { padding: 16px 10px; }
-            .stat-card .stat-value { font-size: 22px; }
-            table { font-size: 11px; }
-            th, td { padding: 6px 8px; }
+            .sidebar a { padding: 8px 12px; font-size: 12px; border-radius: 0; white-space: nowrap; }
+            .main-content { padding: 16px 12px; }
+            .stats-row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .stat-card { padding: 18px 14px; }
+            .stat-card .stat-value { font-size: 24px; }
             .gender-cards { grid-template-columns: 1fr; }
+            .card { padding: 20px; }
+            .card h2 { font-size: 16px; }
+            .navbar { padding: 0 14px; }
+            .navbar .brand { font-size: 15px; }
         }
     </style>
 </head>
 <body>
     <div class="navbar">
-        <div class="brand"><a href="{% url 'dashboard' %}" style="color:white;">OneCard System</a></div>
+        <a href="{% url 'dashboard' %}">
+            <div class="brand">
+                <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+                    <polygon points="50,5 90,28 90,72 50,95 10,72 10,28" fill="#0A1F3F" stroke="#00C2BA" stroke-width="3"/>
+                    <line x1="35" y1="30" x2="35" y2="70" stroke="white" stroke-width="5" stroke-linecap="round"/>
+                    <line x1="65" y1="30" x2="65" y2="70" stroke="white" stroke-width="5" stroke-linecap="round"/>
+                    <line x1="35" y1="50" x2="65" y2="50" stroke="#00C2BA" stroke-width="5" stroke-linecap="round"/>
+                </svg>
+                One<span>Card</span>
+            </div>
+        </a>
     </div>
+
     <div class="layout">
         <div class="sidebar">
             <div class="section-title">Reports</div>
-            <a href="{% url 'attendance_report' %}" style="background:#f5f5ff; color:#1a237e; border-left-color:#1a237e;">Attendance</a>
-            <a href="{% url 'fee_report' %}">Fees</a>
-            <a href="{% url 'movement_history' %}">Movement</a>
+            <a href="{% url 'attendance_report' %}" class="active">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Attendance
+            </a>
+            <a href="{% url 'fee_report' %}">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                Fees
+            </a>
+            <a href="{% url 'movement_history' %}">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+                Movement
+            </a>
         </div>
+
         <div class="main-content">
-            <h1 style="color:#1a237e; margin-bottom:8px;">
+            <h1 class="page-title">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                 Attendance Report
-                {% if class_filter %}
-                <span style="font-size:16px; color:#888;">� {{ class_filter }} {{ stream_filter }}</span>
-                {% endif %}
-                {% if gender_filter == 'M' %}
-                <span style="font-size:16px; color:#1565c0;">(Males Only)</span>
-                {% elif gender_filter == 'F' %}
-                <span style="font-size:16px; color:#c62828;">(Females Only)</span>
-                {% endif %}
             </h1>
-            <p style="color:#888; margin-bottom:16px; font-size:13px;">
-                Late cutoff: {{ cutoff_time|time:'H:i' }} | Total: {{ stats.total }} students
+            <p class="page-meta">
+                <span class="meta-tag">Cutoff: {{ cutoff_time|time:'H:i' }}</span>
+                <span class="meta-tag">Total: {{ stats.total }} students</span>
+                {% if class_filter %}<span class="meta-tag">{{ class_filter }} {{ stream_filter }}</span>{% endif %}
+                {% if gender_filter == 'M' %}<span class="meta-tag" style="color:var(--blue);">Males Only</span>{% endif %}
+                {% if gender_filter == 'F' %}<span class="meta-tag" style="color:var(--pink);">Females Only</span>{% endif %}
             </p>
 
             <!-- Gender Filter Pills -->
@@ -98,73 +174,58 @@
                    class="filter-pill {% if gender_filter == 'F' %}active-female{% else %}inactive{% endif %}">Females Only</a>
             </div>
 
-            <!-- Gender Breakdown Cards -->
+            <!-- Gender Cards -->
             <div class="gender-cards">
                 <div class="gender-card male">
-                    <h3 style="color:#1565c0;">Males</h3>
-                    <div class="big-number" style="color:#1565c0;">{{ gender_stats.males.present }}/{{ gender_stats.males.total }}</div>
+                    <svg class="g-icon" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><circle cx="10" cy="7" r="5"/><line x1="10" y1="12" x2="10" y2="22"/><line x1="6" y1="17" x2="14" y2="17"/></svg>
+                    <h3>Males</h3>
+                    <div class="big-number">{{ gender_stats.males.present }}/{{ gender_stats.males.total }}</div>
                     <div class="detail">Present: {{ gender_stats.males.present }} | Absent: {{ gender_stats.males.absent }}</div>
-                    <div class="rate" style="color:#1565c0;">{{ gender_stats.males.rate }}%</div>
+                    <div class="rate">{{ gender_stats.males.rate }}%</div>
                 </div>
                 <div class="gender-card female">
-                    <h3 style="color:#c62828;">Females</h3>
-                    <div class="big-number" style="color:#c62828;">{{ gender_stats.females.present }}/{{ gender_stats.females.total }}</div>
+                    <svg class="g-icon" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" stroke-width="2"><circle cx="12" cy="7" r="5"/><line x1="12" y1="12" x2="12" y2="22"/><line x1="7" y1="15" x2="17" y2="15"/></svg>
+                    <h3>Females</h3>
+                    <div class="big-number">{{ gender_stats.females.present }}/{{ gender_stats.females.total }}</div>
                     <div class="detail">Present: {{ gender_stats.females.present }} | Absent: {{ gender_stats.females.absent }}</div>
-                    <div class="rate" style="color:#c62828;">{{ gender_stats.females.rate }}%</div>
+                    <div class="rate">{{ gender_stats.females.rate }}%</div>
                 </div>
             </div>
 
             <!-- Overall Stats -->
             <div class="stats-row">
-                <div class="stat-card">
-                    <div class="stat-value" style="color:#2e7d32;">{{ stats.on_time }}</div>
-                    <div class="stat-label">On Time</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" style="color:#e65100;">{{ stats.late }}</div>
-                    <div class="stat-label">Late</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" style="color:#c62828;">{{ stats.absent }}</div>
-                    <div class="stat-label">Absent</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">{{ stats.rate }}%</div>
-                    <div class="stat-label">Attendance Rate</div>
-                </div>
+                <div class="stat-card"><div class="stat-value">{{ stats.on_time }}</div><div class="stat-label">On Time</div></div>
+                <div class="stat-card"><div class="stat-value">{{ stats.late }}</div><div class="stat-label">Late</div></div>
+                <div class="stat-card"><div class="stat-value">{{ stats.absent }}</div><div class="stat-label">Absent</div></div>
+                <div class="stat-card"><div class="stat-value">{{ stats.rate }}%</div><div class="stat-label">Attendance Rate</div></div>
             </div>
 
+            <!-- Chart -->
             <div class="card">
-                <h2>Today's Attendance Chart</h2>
-                <div class="chart-container">
-                    <canvas id="attendanceChart" height="200"></canvas>
-                </div>
+                <h2><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Today's Attendance Chart</h2>
+                <div class="chart-container"><canvas id="attendanceChart" height="180"></canvas></div>
             </div>
 
+            <!-- Records -->
             <div class="card">
-                <h2>Today's Records</h2>
-                <table>
-                    <thead><tr><th>Student ID</th><th>Time In</th><th>Location</th><th>Marked By</th></tr></thead>
-                    <tbody>
-                        {% for a in attendance_list %}
-                        <tr>
-                            <td><strong>{{ a.student.id }}</strong></td>
-                            <td>
-                                {{ a.time_in }}
-                                {% if a.time_in > cutoff_time %}
-                                <span class="badge badge-warning">Late</span>
-                                {% else %}
-                                <span class="badge badge-success">On Time</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ a.scan_location }}</td>
-                            <td>{{ a.marked_by }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="4" style="text-align:center; color:#999;">No attendance records today.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <h2><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/></svg> Today's Records</h2>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Student ID</th><th>Time In</th><th>Location</th><th>Marked By</th></tr></thead>
+                        <tbody>
+                            {% for a in attendance_list %}
+                            <tr>
+                                <td><strong>{{ a.student.id }}</strong></td>
+                                <td>{{ a.time_in }} {% if a.time_in > cutoff_time %}<span class="badge badge-warning">Late</span>{% else %}<span class="badge badge-success">On Time</span>{% endif %}</td>
+                                <td>{{ a.scan_location }}</td>
+                                <td>{{ a.marked_by }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" style="text-align:center; padding:30px; color:var(--text-muted);">No attendance records today.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -173,45 +234,24 @@
         document.addEventListener('DOMContentLoaded', function() {
             const canvas = document.getElementById('attendanceChart');
             if (canvas) {
-                const ctx = canvas.getContext('2d');
-                new Chart(ctx, {
+                new Chart(canvas.getContext('2d'), {
                     type: 'bar',
                     data: {
                         labels: ['On Time', 'Late', 'Absent'],
-                        datasets: [{
-                            label: 'Students',
-                            data: [
-                                {{ stats.on_time|default:0 }},
-                                {{ stats.late|default:0 }},
-                                {{ stats.absent|default:0 }}
-                            ],
-                            backgroundColor: ['#2e7d32', '#e65100', '#c62828'],
-                            borderRadius: 4,
-                        }]
+                        datasets: [{ data: [{{ stats.on_time|default:0 }}, {{ stats.late|default:0 }}, {{ stats.absent|default:0 }}], backgroundColor: ['#059669', '#ea580c', '#dc2626'], borderRadius: 6, borderWidth: 0 }]
                     },
-                    options: {
-                        responsive: true,
-                        plugins: { legend: { display: false } },
-                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-                    }
+                    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#f3f4f6' } }, x: { grid: { display: false } } } }
                 });
             }
         });
     </script>
 
-<script>
-console.log("╔══════════════════════════════════════╗");
-console.log("║        ONECARD SYSTEM               ║");
-console.log("║   Smart Student Management          ║");
-console.log("║                                    ║");
-console.log("║   Welcome to Developer Console      ║");
-console.log("║                                    ║");
-console.log("║   (c) 2026 Herman Software Solutions║");
-console.log("║   All Rights Reserved               ║");
-console.log("╚══════════════════════════════════════╝");
-</script>
+    <script>
+        console.log("╔══════════════════════════════════════╗");
+        console.log("║        ONECARD SYSTEM               ║");
+        console.log("║   Smart Student Management          ║");
+        console.log("║   (c) 2026 Herman Software Solutions║");
+        console.log("╚══════════════════════════════════════╝");
+    </script>
 </body>
 </html>
-
-
-

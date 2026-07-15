@@ -4,128 +4,179 @@
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notification Settings - OneCard</title>
+    <title>Notification Settings — OneCard</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; }
-        .navbar { background: #1a237e; color: white; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; height: 60px; }
-        .navbar .brand { font-size: 18px; font-weight: 600; }
+
+        :root {
+            --navy: #0A1F3F; --navy-light: #132D52;
+            --teal: #00C2BA; --teal-dark: #00A8A0;
+            --bg: #f0f2f5; --card-bg: #ffffff;
+            --text: #1f2937; --text-muted: #6b7280;
+            --border: #e5e7eb; --sidebar-hover: #f0f4ff;
+            --green: #059669; --green-bg: #ecfdf5;
+        }
+
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+
+        .navbar { background: var(--navy); color: white; padding: 0 28px; display: flex; justify-content: space-between; align-items: center; height: 64px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(10,31,63,0.15); }
+        .navbar .brand { display: flex; align-items: center; gap: 10px; font-size: 19px; font-weight: 700; letter-spacing: -0.3px; }
+        .navbar .brand .logo-icon { width: 34px; height: 34px; }
+        .navbar .brand span { color: var(--teal); }
         .navbar a { color: white; text-decoration: none; }
+
         .layout { display: flex; }
-        .sidebar { width: 240px; background: white; min-height: calc(100vh - 60px); border-right: 1px solid #e0e0e0; padding-top: 10px; }
-        .sidebar a { display: block; padding: 12px 24px; color: #333; text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
-        .sidebar a:hover { background: #f5f5ff; color: #1a237e; border-left-color: #1a237e; }
-        .sidebar .section-title { padding: 20px 24px 8px; font-size: 11px; text-transform: uppercase; color: #999; letter-spacing: 1.5px; font-weight: 600; }
-        .main-content { flex: 1; padding: 24px 32px; }
-        .card { background: white; border-radius: 8px; padding: 24px; border: 1px solid #e8e8e8; max-width: 600px; }
-        .card h2 { color: #1a237e; margin-bottom: 20px; }
-        .form-group { margin-bottom: 18px; }
-        .form-group label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 5px; color: #333; }
-        .form-group input { width: 100%; padding: 10px; border: 1px solid #d0d0d0; border-radius: 4px; }
-        .checkbox-group { margin-bottom: 14px; }
-        .btn { padding: 10px 24px; background: #1a237e; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; }
-        .alert { padding: 12px 20px; border-radius: 6px; margin-bottom: 16px; }
-        .alert-success { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #4caf50; }
-        /* Mobile Responsive */
-@media (max-width: 768px) {
-    .layout { flex-direction: column; }
-    .sidebar { 
-        width: 100%; min-height: auto; 
-        display: flex; flex-wrap: wrap; gap: 0;
-        padding: 5px 0; border-right: none; 
-        border-bottom: 1px solid #e0e0e0;
-    }
-    .sidebar .section-title { display: none; }
-    .sidebar a { 
-        padding: 8px 12px; font-size: 12px; 
-        border-left: none; border-bottom: 2px solid transparent;
-    }
-    .sidebar a:hover { border-bottom-color: #1a237e; border-left: none; }
-    .main-content { margin-left: 0; padding: 12px; }
-    .stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .stat-card { padding: 16px 10px; }
-    .stat-card .stat-value { font-size: 22px; }
-    .stat-card .stat-label { font-size: 11px; }
-    .grid-2 { grid-template-columns: 1fr; }
-    .action-grid { grid-template-columns: 1fr; }
-    .card { padding: 16px; }
-    .card h2 { font-size: 16px; }
-    table { font-size: 11px; }
-    th, td { padding: 6px 8px; }
-    .btn { padding: 8px 14px; font-size: 12px; }
-    .navbar { padding: 0 10px; }
-    .navbar .brand { font-size: 15px; }
-    .navbar .user-info { gap: 8px; font-size: 11px; }
-    .navbar .role-badge { padding: 2px 8px; font-size: 9px; }
-    .quick-links { flex-direction: column; }
-    .quick-links .btn { width: 100%; text-align: center; }
-    .filter-row { flex-direction: column; }
-    .filter-row select, .filter-row input { width: 100%; }
-}
+        .sidebar { width: 260px; background: var(--card-bg); min-height: calc(100vh - 64px); border-right: 1px solid var(--border); padding: 16px 12px; position: sticky; top: 64px; }
+        .sidebar .section-title { padding: 20px 16px 8px; font-size: 11px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1.8px; font-weight: 700; }
+        .sidebar a { display: flex; align-items: center; gap: 10px; padding: 10px 16px; color: var(--text); text-decoration: none; font-size: 14px; font-weight: 500; border-radius: 10px; margin-bottom: 2px; transition: all 0.15s ease; border-left: 3px solid transparent; }
+        .sidebar a:hover { background: var(--sidebar-hover); color: var(--navy); }
+        .sidebar a.active { background: var(--sidebar-hover); color: var(--navy); font-weight: 600; border-left-color: var(--teal); }
+        .sidebar a .icon { width: 18px; height: 18px; opacity: 0.45; flex-shrink: 0; }
+        .sidebar a.active .icon, .sidebar a:hover .icon { opacity: 1; }
+
+        .main-content { flex: 1; padding: 28px 32px; max-width: 600px; }
+        .page-title { color: var(--navy); font-size: 26px; font-weight: 700; letter-spacing: -0.4px; display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+        .page-subtitle { color: var(--text-muted); font-size: 14px; margin-bottom: 24px; }
+
+        .alert { padding: 14px 20px; border-radius: 12px; margin-bottom: 20px; font-size: 14px; font-weight: 500; }
+        .alert-success { background: var(--green-bg); color: var(--green); border-left: 4px solid var(--green); }
+
+        .card { background: var(--card-bg); border-radius: 16px; padding: 28px; border: 1px solid var(--border); }
+        .card h2 { color: var(--navy); font-size: 20px; font-weight: 700; letter-spacing: -0.2px; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; color: var(--text); }
+        .form-group input[type="number"], .form-group input[type="time"] {
+            width: 100%; padding: 11px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: 10px; font-size: 14px;
+            font-family: inherit; color: var(--text); background: white;
+            transition: border-color 0.15s ease;
+        }
+        .form-group input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(0,194,186,0.1); }
+        .form-group .hint { color: var(--text-muted); font-size: 12px; margin-top: 5px; }
+
+        .checkbox-group {
+            display: flex; align-items: center; gap: 10px;
+            padding: 14px 16px; background: #f9fafb;
+            border-radius: 10px; border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: 18px; height: 18px;
+            accent-color: var(--teal);
+            cursor: pointer;
+        }
+        .checkbox-group label { cursor: pointer; font-size: 14px; font-weight: 500; color: var(--text); }
+
+        .btn {
+            padding: 11px 28px; background: var(--navy); color: white;
+            border: none; border-radius: 10px; cursor: pointer;
+            font-size: 14px; font-weight: 600; font-family: inherit;
+            transition: all 0.15s ease;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn:hover { background: var(--navy-light); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(10,31,63,0.25); }
+
+        @media (max-width: 768px) {
+            .layout { flex-direction: column; }
+            .sidebar { width: 100%; min-height: auto; display: flex; flex-wrap: wrap; padding: 8px 4px; border-right: none; border-bottom: 1px solid var(--border); position: static; overflow-x: auto; }
+            .sidebar .section-title { display: none; }
+            .sidebar a { padding: 8px 12px; font-size: 12px; border-radius: 0; white-space: nowrap; }
+            .main-content { padding: 16px 12px; }
+            .card { padding: 20px; }
+            .card h2 { font-size: 17px; }
+            .btn { width: 100%; justify-content: center; }
+            .navbar { padding: 0 14px; }
+            .navbar .brand { font-size: 15px; }
+        }
     </style>
-    <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
     <div class="navbar">
-        <div class="brand"><a href="{% url 'dashboard' %}" style="color:white;">OneCard System</a></div>
+        <a href="{% url 'dashboard' %}">
+            <div class="brand">
+                <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+                    <polygon points="50,5 90,28 90,72 50,95 10,72 10,28" fill="#0A1F3F" stroke="#00C2BA" stroke-width="3"/>
+                    <line x1="35" y1="30" x2="35" y2="70" stroke="white" stroke-width="5" stroke-linecap="round"/>
+                    <line x1="65" y1="30" x2="65" y2="70" stroke="white" stroke-width="5" stroke-linecap="round"/>
+                    <line x1="35" y1="50" x2="65" y2="50" stroke="#00C2BA" stroke-width="5" stroke-linecap="round"/>
+                </svg>
+                One<span>Card</span>
+            </div>
+        </a>
     </div>
+
     <div class="layout">
         <div class="sidebar">
             <div class="section-title">Notifications</div>
-            <a href="{% url 'notification_list' %}">All Notifications</a>
-            <a href="{% url 'notification_settings' %}" style="background:#f5f5ff; color:#1a237e; border-left-color:#1a237e;">Settings</a>
+            <a href="{% url 'notification_list' %}">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                All Notifications
+            </a>
+            <a href="{% url 'notification_settings' %}" class="active">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Settings
+            </a>
         </div>
+
         <div class="main-content">
             {% if messages %}
             {% for m in messages %}<div class="alert alert-success">{{ m }}</div>{% endfor %}
             {% endif %}
+
+            <h1 class="page-title">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Notification Settings
+            </h1>
+            <p class="page-subtitle">Configure when and how you receive alerts</p>
+
             <div class="card">
-                <h2>Notification Settings</h2>
+                <h2>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    Alert Configuration
+                </h2>
                 <form method="post">
                     {% csrf_token %}
                     <div class="form-group">
                         <label>Fee Balance Alert Threshold (UGX)</label>
-                        <input type="number" name="fee_balance_threshold" value="{{ settings.fee_balance_threshold }}">
+                        <input type="number" name="fee_balance_threshold" value="{{ settings.fee_balance_threshold }}" placeholder="e.g. 50000">
+                        <p class="hint">Alert when student balance exceeds this amount</p>
                     </div>
                     <div class="form-group">
                         <label>Consecutive Days Absent Alert</label>
-                        <input type="number" name="attendance_consecutive_days" value="{{ settings.attendance_consecutive_days }}">
+                        <input type="number" name="attendance_consecutive_days" value="{{ settings.attendance_consecutive_days }}" placeholder="e.g. 3">
+                        <p class="hint">Alert after this many consecutive absences</p>
                     </div>
                     <div class="form-group">
                         <label>Student Outside Alert (Hours)</label>
-                        <input type="number" name="movement_hours_outside" value="{{ settings.movement_hours_outside }}">
+                        <input type="number" name="movement_hours_outside" value="{{ settings.movement_hours_outside }}" placeholder="e.g. 4">
+                        <p class="hint">Alert when student has been outside longer than this</p>
                     </div>
                     <div class="form-group">
                         <label>Late Arrival Cutoff Time</label>
                         <input type="time" name="late_cutoff_time" value="{{ settings.late_cutoff_time|time:'H:i'|default:'08:00' }}">
-                        <small style="color:#888;">Students scanned after this time are marked Late</small>
+                        <p class="hint">Students scanned after this time are marked Late</p>
                     </div>
                     <div class="checkbox-group">
-                        <label><input type="checkbox" name="show_in_dashboard" {% if settings.show_in_dashboard %}checked{% endif %}> Show alerts in dashboard</label>
+                        <input type="checkbox" name="show_in_dashboard" id="showDashboard" {% if settings.show_in_dashboard %}checked{% endif %}>
+                        <label for="showDashboard">Show alerts in dashboard</label>
                     </div>
-                    <button type="submit" class="btn">Save Settings</button>
+                    <button type="submit" class="btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg>
+                        Save Settings
+                    </button>
                 </form>
             </div>
         </div>
     </div>
 
-<script>
-console.log("╔══════════════════════════════════════╗");
-console.log("║        ONECARD SYSTEM               ║");
-console.log("║   Smart Student Management          ║");
-console.log("║                                    ║");
-console.log("║   Welcome to Developer Console      ║");
-console.log("║                                    ║");
-console.log("║   (c) 2026 Herman Software Solutions║");
-console.log("║   All Rights Reserved               ║");
-console.log("╚══════════════════════════════════════╝");
-</script>
+    <script>
+        console.log("╔══════════════════════════════════════╗");
+        console.log("║        ONECARD SYSTEM               ║");
+        console.log("║   Smart Student Management          ║");
+        console.log("║   (c) 2026 Herman Software Solutions║");
+        console.log("╚══════════════════════════════════════╝");
+    </script>
 </body>
 </html>
-
-
-
-
-
-
-

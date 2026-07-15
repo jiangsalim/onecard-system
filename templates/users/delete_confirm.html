@@ -4,92 +4,158 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
-    <title>Delete User - OneCard</title>
+    <title>Delete User — OneCard</title>
     <style>
+        :root {
+            --navy: #0A1F3F; --navy-light: #132D52;
+            --teal: #00C2BA;
+            --bg: #f0f2f5; --card-bg: #ffffff;
+            --text: #1f2937; --text-muted: #6b7280;
+            --red: #dc2626; --red-bg: #fef2f2; --red-dark: #b91c1c;
+            --orange-bg: #fff7ed; --orange: #ea580c;
+            --border: #e5e7eb;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .card { background: white; border-radius: 12px; padding: 36px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); text-align: center; max-width: 450px; }
-        .card h2 { color: #c62828; margin-bottom: 12px; }
-        .card p { color: #666; margin-bottom: 20px; line-height: 1.6; }
-        .card .user-info { background: #fff3e0; padding: 12px; border-radius: 6px; margin-bottom: 20px; text-align: left; }
-        .btn { padding: 10px 24px; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; font-size: 14px; text-decoration: none; display: inline-block; }
-        .btn-danger { background: #c62828; color: white; }
-        .btn-secondary { background: #e0e0e0; color: #333; margin-left: 10px; }
-        /* Mobile Responsive */
-@media (max-width: 768px) {
-    .layout { flex-direction: column; }
-    .sidebar { 
-        width: 100%; min-height: auto; 
-        display: flex; flex-wrap: wrap; gap: 0;
-        padding: 5px 0; border-right: none; 
-        border-bottom: 1px solid #e0e0e0;
-    }
-    .sidebar .section-title { display: none; }
-    .sidebar a { 
-        padding: 8px 12px; font-size: 12px; 
-        border-left: none; border-bottom: 2px solid transparent;
-    }
-    .sidebar a:hover { border-bottom-color: #1a237e; border-left: none; }
-    .main-content { margin-left: 0; padding: 12px; }
-    .stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .stat-card { padding: 16px 10px; }
-    .stat-card .stat-value { font-size: 22px; }
-    .stat-card .stat-label { font-size: 11px; }
-    .grid-2 { grid-template-columns: 1fr; }
-    .action-grid { grid-template-columns: 1fr; }
-    .card { padding: 16px; }
-    .card h2 { font-size: 16px; }
-    table { font-size: 11px; }
-    th, td { padding: 6px 8px; }
-    .btn { padding: 8px 14px; font-size: 12px; }
-    .navbar { padding: 0 10px; }
-    .navbar .brand { font-size: 15px; }
-    .navbar .user-info { gap: 8px; font-size: 11px; }
-    .navbar .role-badge { padding: 2px 8px; font-size: 9px; }
-    .quick-links { flex-direction: column; }
-    .quick-links .btn { width: 100%; text-align: center; }
-    .filter-row { flex-direction: column; }
-    .filter-row select, .filter-row input { width: 100%; }
-}
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #0A1F3F 0%, #132D52 100%);
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 2l24 14v28L30 58 6 44V16L30 2z' fill='none' stroke='white' stroke-width='0.5'/%3E%3C/svg%3E");
+            background-size: 60px 60px;
+            opacity: 0.04; pointer-events: none;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 40px 36px;
+            max-width: 460px; width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative; z-index: 1;
+        }
+
+        .logo-icon { width: 52px; height: 52px; margin: 0 auto 20px; }
+
+        .warning-icon {
+            width: 56px; height: 56px;
+            background: var(--red-bg);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 20px;
+            color: var(--red);
+        }
+
+        .card h2 {
+            color: var(--navy); font-size: 22px; font-weight: 700;
+            letter-spacing: -0.3px; margin-bottom: 8px; text-align: center;
+        }
+        .card .subtitle {
+            color: var(--text-muted); font-size: 14px;
+            margin-bottom: 24px; text-align: center; line-height: 1.5;
+        }
+
+        .user-info {
+            background: var(--orange-bg);
+            border: 1px solid rgba(234,88,12,0.15);
+            border-radius: 14px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+        }
+        .user-info .info-row {
+            display: flex; justify-content: space-between;
+            padding: 7px 0; font-size: 13px;
+        }
+        .user-info .info-row:not(:last-child) { border-bottom: 1px solid rgba(234,88,12,0.1); }
+        .user-info .info-label { color: var(--orange); font-weight: 500; }
+        .user-info .info-value { color: var(--text); font-weight: 600; }
+
+        .btn-row { display: flex; gap: 12px; }
+        .btn {
+            padding: 12px 24px; border: none; border-radius: 12px;
+            cursor: pointer; font-size: 14px; font-weight: 600;
+            text-decoration: none; font-family: inherit;
+            transition: all 0.15s ease;
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            flex: 1;
+        }
+        .btn:hover { transform: translateY(-1px); }
+        .btn-danger {
+            background: var(--red); color: white;
+        }
+        .btn-danger:hover {
+            background: var(--red-dark);
+            box-shadow: 0 4px 12px rgba(220,38,38,0.3);
+        }
+        .btn-secondary {
+            background: white; color: var(--text);
+            border: 1.5px solid var(--border);
+        }
+        .btn-secondary:hover {
+            border-color: var(--navy); color: var(--navy);
+            background: #f9fafb;
+        }
+
+        @media (max-width: 480px) {
+            .card { padding: 28px 22px; }
+            .btn-row { flex-direction: column; }
+        }
     </style>
-    <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
     <div class="card">
-        <h2>Delete User</h2>
-        <p>Are you sure you want to delete this user? This action cannot be undone.</p>
-        <div class="user-info">
-            <strong>Username:</strong> {{ target_user.username }}<br>
-            <strong>Name:</strong> {{ target_user.get_full_name }}<br>
-            <strong>Role:</strong> {{ target_user.get_role_display }}
+        <div class="warning-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         </div>
+
+        <h2>Delete User</h2>
+        <p class="subtitle">Are you sure you want to delete this user? This action <strong>cannot be undone</strong>.</p>
+
+        <div class="user-info">
+            <div class="info-row">
+                <span class="info-label">Username</span>
+                <span class="info-value">{{ target_user.username }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Name</span>
+                <span class="info-value">{{ target_user.get_full_name }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Role</span>
+                <span class="info-value">{{ target_user.get_role_display }}</span>
+            </div>
+        </div>
+
         <form method="post">
             {% csrf_token %}
-            <button type="submit" class="btn btn-danger">Yes, Delete User</button>
-            <a href="{% url 'user_management' %}" class="btn btn-secondary">Cancel</a>
+            <div class="btn-row">
+                <a href="{% url 'user_management' %}" class="btn btn-secondary">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    Cancel
+                </a>
+                <button type="submit" class="btn btn-danger">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    Yes, Delete User
+                </button>
+            </div>
         </form>
     </div>
 
-
-
-
-<script>
-console.log("╔══════════════════════════════════════╗");
-console.log("║        ONECARD SYSTEM               ║");
-console.log("║   Smart Student Management          ║");
-console.log("║                                    ║");
-console.log("║   Welcome to Developer Console      ║");
-console.log("║                                    ║");
-console.log("║   (c) 2026 Herman Software Solutions║");
-console.log("║   All Rights Reserved               ║");
-console.log("╚══════════════════════════════════════╝");
-</script>
+    <script>
+        console.log("╔══════════════════════════════════════╗");
+        console.log("║        ONECARD SYSTEM               ║");
+        console.log("║   Smart Student Management          ║");
+        console.log("║   (c) 2026 Herman Software Solutions║");
+        console.log("╚══════════════════════════════════════╝");
+    </script>
 </body>
 </html>
-
-
-
-
-
-
-

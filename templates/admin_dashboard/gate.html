@@ -4,161 +4,648 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
-    <title>Gate - OneCard</title>
+    <title>Gate — OneCard</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; }
-        .navbar { background: #1a237e; color: white; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; height: 60px; }
-        .navbar .brand { font-size: 18px; font-weight: 600; }
+
+        :root {
+            --navy: #0A1F3F;
+            --navy-light: #132D52;
+            --teal: #00C2BA;
+            --teal-dark: #00A8A0;
+            --bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --text: #1f2937;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --sidebar-hover: #f0f4ff;
+            --green: #059669;
+            --green-bg: #ecfdf5;
+            --orange: #ea580c;
+            --orange-bg: #fff7ed;
+            --red: #dc2626;
+            --red-bg: #fef2f2;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ─── Navbar ─────────────────────── */
+        .navbar {
+            background: var(--navy);
+            color: white;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 64px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 12px rgba(10,31,63,0.15);
+        }
+
+        .navbar .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 19px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .navbar .brand .logo-icon {
+            width: 34px;
+            height: 34px;
+        }
+
+        .navbar .brand span {
+            color: var(--teal);
+        }
+
         .navbar a { color: white; text-decoration: none; }
-        .navbar .user-info { display: flex; align-items: center; gap: 16px; font-size: 14px; }
-        .navbar .role-badge { background: #4caf50; color: white; padding: 4px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
-        .navbar button { background: #c62828; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+
+        .navbar .user-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 14px;
+            color: rgba(255,255,255,0.85);
+        }
+
+        .navbar .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 15px;
+            color: white;
+        }
+
+        .navbar .role-badge {
+            background: var(--green);
+            color: white;
+            padding: 4px 14px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .navbar button {
+            background: transparent;
+            color: rgba(255,255,255,0.7);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.15s ease;
+        }
+
+        .navbar button:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border-color: rgba(255,255,255,0.4);
+        }
+
+        /* ─── Layout ─────────────────────── */
         .layout { display: flex; }
-        .sidebar { width: 240px; background: white; min-height: calc(100vh - 60px); border-right: 1px solid #e0e0e0; padding-top: 10px; }
-        .sidebar a { display: block; padding: 12px 24px; color: #333; text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
-        .sidebar a:hover { background: #f5f5ff; color: #1a237e; border-left-color: #1a237e; }
-        .sidebar .section-title { padding: 20px 24px 8px; font-size: 11px; text-transform: uppercase; color: #999; letter-spacing: 1.5px; font-weight: 600; }
-        .main-content { flex: 1; padding: 24px 32px; }
-        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
-        .stat-card { background: white; border-radius: 8px; padding: 24px; text-align: center; border: 1px solid #e8e8e8; }
-        .stat-card .stat-value { font-size: 28px; font-weight: 700; color: #1a237e; }
-        .stat-card .stat-label { font-size: 13px; color: #888; margin-top: 4px; }
-        .card { background: white; border-radius: 8px; padding: 24px; border: 1px solid #e8e8e8; margin-bottom: 20px; }
-        .card h2 { color: #1a237e; margin-bottom: 12px; }
-        .btn { padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: 600; text-decoration: none; display: inline-block; }
-        .btn-primary { background: #1a237e; color: white; }
-        .btn-outline { background: white; color: #1a237e; border: 2px solid #1a237e; }
-        .btn-success { background: #2e7d32; color: white; }
-        .btn-warning { background: #e65100; color: white; }
-        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .action-card { text-align: center; }
-        /* Mobile Responsive */
-@media (max-width: 768px) {
-    .layout { flex-direction: column; }
-    .sidebar { 
-        width: 100%; min-height: auto; 
-        display: flex; flex-wrap: wrap; gap: 0;
-        padding: 5px 0; border-right: none; 
-        border-bottom: 1px solid #e0e0e0;
-    }
-    .sidebar .section-title { display: none; }
-    .sidebar a { 
-        padding: 8px 12px; font-size: 12px; 
-        border-left: none; border-bottom: 2px solid transparent;
-    }
-    .sidebar a:hover { border-bottom-color: #1a237e; border-left: none; }
-    .main-content { margin-left: 0; padding: 12px; }
-    .stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .stat-card { padding: 16px 10px; }
-    .stat-card .stat-value { font-size: 22px; }
-    .stat-card .stat-label { font-size: 11px; }
-    .grid-2 { grid-template-columns: 1fr; }
-    .action-grid { grid-template-columns: 1fr; }
-    .card { padding: 16px; }
-    .card h2 { font-size: 16px; }
-    table { font-size: 11px; }
-    th, td { padding: 6px 8px; }
-    .btn { padding: 8px 14px; font-size: 12px; }
-    .navbar { padding: 0 10px; }
-    .navbar .brand { font-size: 15px; }
-    .navbar .user-info { gap: 8px; font-size: 11px; }
-    .navbar .role-badge { padding: 2px 8px; font-size: 9px; }
-    .quick-links { flex-direction: column; }
-    .quick-links .btn { width: 100%; text-align: center; }
-    .filter-row { flex-direction: column; }
-    .filter-row select, .filter-row input { width: 100%; }
-}
+
+        /* ─── Sidebar ────────────────────── */
+        .sidebar {
+            width: 260px;
+            background: var(--card-bg);
+            min-height: calc(100vh - 64px);
+            border-right: 1px solid var(--border);
+            padding: 16px 12px;
+            position: sticky;
+            top: 64px;
+        }
+
+        .sidebar .section-title {
+            padding: 20px 16px 8px;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 1.8px;
+            font-weight: 700;
+        }
+
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            color: var(--text);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 10px;
+            margin-bottom: 2px;
+            transition: all 0.15s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar a:hover {
+            background: var(--sidebar-hover);
+            color: var(--navy);
+        }
+
+        .sidebar a.active {
+            background: var(--sidebar-hover);
+            color: var(--navy);
+            font-weight: 600;
+            border-left-color: var(--teal);
+        }
+
+        .sidebar a .icon {
+            width: 18px;
+            height: 18px;
+            opacity: 0.45;
+            flex-shrink: 0;
+        }
+
+        .sidebar a.active .icon,
+        .sidebar a:hover .icon {
+            opacity: 1;
+        }
+
+        /* ─── Main Content ───────────────── */
+        .main-content {
+            flex: 1;
+            padding: 28px 32px;
+            max-width: 1000px;
+        }
+
+        .main-content .page-title {
+            color: var(--navy);
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            letter-spacing: -0.4px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .main-content .page-subtitle {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .main-content .page-subtitle .location-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--green);
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        /* ─── Stats Row ──────────────────── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .stat-card:nth-child(1)::before { background: var(--green); }
+        .stat-card:nth-child(2)::before { background: var(--orange); }
+        .stat-card:nth-child(3)::before { background: var(--red); }
+        .stat-card:nth-child(4)::before { background: var(--navy); }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .stat-card .icon-circle {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .stat-card:nth-child(1) .icon-circle { background: var(--green-bg); }
+        .stat-card:nth-child(2) .icon-circle { background: var(--orange-bg); }
+        .stat-card:nth-child(3) .icon-circle { background: var(--red-bg); }
+        .stat-card:nth-child(4) .icon-circle { background: rgba(10,31,63,0.08); }
+
+        .stat-card .stat-value {
+            font-size: 34px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+
+        .stat-card:nth-child(1) .stat-value { color: var(--green); }
+        .stat-card:nth-child(2) .stat-value { color: var(--orange); }
+        .stat-card:nth-child(3) .stat-value { color: var(--red); }
+        .stat-card:nth-child(4) .stat-value { color: var(--navy); font-size: 28px; }
+
+        .stat-card .stat-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* ─── Action Grid ────────────────── */
+        .action-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .action-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 28px;
+            border: 1px solid var(--border);
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .action-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .action-card .action-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+
+        .action-card:first-child .action-icon {
+            background: var(--green-bg);
+            color: var(--green);
+        }
+
+        .action-card:last-child .action-icon {
+            background: var(--orange-bg);
+            color: var(--orange);
+        }
+
+        .action-card h2 {
+            color: var(--navy);
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.2px;
+        }
+
+        .action-card p {
+            color: var(--text-muted);
+            font-size: 13px;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        /* ─── Quick Reports Card ─────────── */
+        .reports-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 28px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .reports-card h2 {
+            color: var(--navy);
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            letter-spacing: -0.2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .reports-card .report-links {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* ─── Buttons ────────────────────── */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.15s ease;
+            font-family: inherit;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-primary {
+            background: var(--navy);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--navy-light);
+            box-shadow: 0 4px 12px rgba(10,31,63,0.25);
+        }
+
+        .btn-outline {
+            background: white;
+            color: var(--navy);
+            border: 1.5px solid var(--border);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--navy);
+            background: var(--sidebar-hover);
+        }
+
+        .btn-success {
+            background: var(--green);
+            color: white;
+        }
+
+        .btn-success:hover {
+            box-shadow: 0 4px 12px rgba(5,150,105,0.3);
+        }
+
+        .btn-warning {
+            background: var(--orange);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            box-shadow: 0 4px 12px rgba(234,88,12,0.3);
+        }
+
+        /* ─── Responsive ─────────────────── */
+        @media (max-width: 1024px) {
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            .layout { flex-direction: column; }
+            .sidebar {
+                width: 100%;
+                min-height: auto;
+                display: flex;
+                flex-wrap: wrap;
+                padding: 8px 4px;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                position: static;
+                overflow-x: auto;
+            }
+            .sidebar .section-title { display: none; }
+            .sidebar a {
+                padding: 8px 12px;
+                font-size: 12px;
+                border-left: none;
+                border-bottom: 2px solid transparent;
+                border-radius: 0;
+                white-space: nowrap;
+            }
+            .sidebar a:hover { border-bottom-color: var(--teal); border-left: none; }
+            .sidebar a.active { border-left: none; border-bottom-color: var(--teal); }
+            .main-content { padding: 16px 12px; }
+            .stats-row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .stat-card { padding: 18px 14px; }
+            .stat-card .stat-value { font-size: 24px; }
+            .stat-card .stat-label { font-size: 11px; }
+            .action-grid { grid-template-columns: 1fr; }
+            .card, .action-card, .reports-card { padding: 20px; }
+            .btn { padding: 10px 18px; font-size: 13px; }
+            .navbar { padding: 0 14px; }
+            .navbar .brand { font-size: 15px; }
+            .navbar .user-info { gap: 8px; font-size: 12px; }
+            .navbar .role-badge { padding: 3px 10px; font-size: 10px; }
+            .report-links { flex-direction: column; }
+            .report-links .btn { width: 100%; justify-content: center; }
+        }
+
+        @media (max-width: 400px) {
+            .stats-row { grid-template-columns: 1fr; }
+        }
     </style>
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
     <div class="navbar">
-        <div class="brand"><a href="{% url 'dashboard' %}" style="color:white;">OneCard System</a></div>
+        <a href="{% url 'gate_dashboard' %}">
+            <div class="brand">
+                <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+                    <polygon points="50,5 90,28 90,72 50,95 10,72 10,28" fill="#0A1F3F" stroke="#00C2BA" stroke-width="3"/>
+                    <line x1="35" y1="30" x2="35" y2="70" stroke="white" stroke-width="5" stroke-linecap="round"/>
+                    <line x1="65" y1="30" x2="65" y2="70" stroke="white" stroke-width="5" stroke-linecap="round"/>
+                    <line x1="35" y1="50" x2="65" y2="50" stroke="#00C2BA" stroke-width="5" stroke-linecap="round"/>
+                </svg>
+                One<span>Card</span>
+            </div>
+        </a>
         <div class="user-info">
             <span class="role-badge">Gate Staff</span>
             <span>{{ user.get_full_name|default:user.username }}</span>
+            <div class="user-avatar">{{ user.get_full_name|default:user.username|first|upper }}</div>
             <form method="post" action="{% url 'logout' %}" style="display:inline;">
-                {% csrf_token %}<button type="submit">Logout</button>
+                {% csrf_token %}
+                <button type="submit">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; margin-right:4px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    Logout
+                </button>
             </form>
         </div>
     </div>
+
     <div class="layout">
         <div class="sidebar">
             <div class="section-title">Main</div>
-            <a href="{% url 'gate_dashboard' %}" style="background:#f5f5ff; color:#1a237e; border-left-color:#1a237e;">Dashboard</a>
-            <div class="section-title">Scanning</div>
-            <a href="{% url 'scanner' %}">Open Scanner</a>
-            <div class="section-title">Movement</div>
-            <a href="{% url 'movement_dashboard' %}">Movement Dashboard</a>
-            <a href="{% url 'movement_history' %}">Movement History</a>
-            <div class="section-title">Reports</div>
-            <a href="{% url 'attendance_report' %}">Attendance Report</a>
-            <a href="{% url 'meal_report' %}">Meal Report</a>
-        </div>
-        <div class="main-content">
-            <h1 style="color:#1a237e; margin-bottom:4px;">Gate Operations</h1>
-            <p style="color:#888; margin-bottom:20px; font-size:14px;">{{ user.assigned_location|default:"Main Gate" }}</p>
+            <a href="{% url 'gate_dashboard' %}" class="active">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                Dashboard
+            </a>
 
+            <div class="section-title">Scanning</div>
+            <a href="{% url 'scanner' %}">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="18" height="7" rx="1"/></svg>
+                Open Scanner
+            </a>
+
+            <div class="section-title">Movement</div>
+            <a href="{% url 'movement_dashboard' %}">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+                Movement Dashboard
+            </a>
+            <a href="{% url 'movement_history' %}">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+                Movement History
+            </a>
+
+            <div class="section-title">Reports</div>
+            <a href="{% url 'attendance_report' %}">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Attendance Report
+            </a>
+            <a href="{% url 'meal_report' %}">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+                Meal Report
+            </a>
+        </div>
+
+        <div class="main-content">
+            <h1 class="page-title">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Gate Operations
+            </h1>
+            <p class="page-subtitle">
+                <span class="location-dot"></span>
+                {{ user.assigned_location|default:"Main Gate" }}
+            </p>
+
+            <!-- Stats -->
             <div class="stats-row">
                 <div class="stat-card">
+                    <div class="icon-circle">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>
+                    </div>
                     <div class="stat-value">{{ stats.present }}</div>
                     <div class="stat-label">Checked In Today</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value" style="color:#e65100;">{{ stats.outside }}</div>
+                    <div class="icon-circle">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </div>
+                    <div class="stat-value">{{ stats.outside }}</div>
                     <div class="stat-label">Currently Outside</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value" style="color:#c62828;">{{ stats.absent }}</div>
+                    <div class="icon-circle">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    </div>
+                    <div class="stat-value">{{ stats.absent }}</div>
                     <div class="stat-label">Absent Today</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value" style="font-size:22px;">{{ stats.last_scan }}</div>
+                    <div class="icon-circle">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2"><polyline points="6,9 6,2 18,2 18,9"/><path d="M6 12H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    </div>
+                    <div class="stat-value">{{ stats.last_scan }}</div>
                     <div class="stat-label">Last Scan</div>
                 </div>
             </div>
 
+            <!-- Action Cards -->
             <div class="action-grid">
-                <div class="card action-card">
+                <div class="action-card">
+                    <div class="action-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="18" height="7" rx="1"/></svg>
+                    </div>
                     <h2>Attendance Check-In</h2>
-                    <p style="color:#666; margin-bottom:16px;">Scan student cards for morning check-in. Auto-marks attendance.</p>
-                    <a href="{% url 'scanner' %}" class="btn btn-success">Open Scanner</a>
+                    <p>Scan student cards for morning check-in. Auto-marks attendance.</p>
+                    <a href="{% url 'scanner' %}" class="btn btn-success">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="18" height="7" rx="1"/></svg>
+                        Open Scanner
+                    </a>
                 </div>
-                <div class="card action-card">
+                <div class="action-card">
+                    <div class="action-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+                    </div>
                     <h2>Movement Tracking</h2>
-                    <p style="color:#666; margin-bottom:16px;">View and manage student pass-outs. Track who is outside.</p>
-                    <a href="{% url 'movement_dashboard' %}" class="btn btn-warning">View Movement</a>
+                    <p>View and manage student pass-outs. Track who is outside.</p>
+                    <a href="{% url 'movement_dashboard' %}" class="btn btn-warning">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+                        View Movement
+                    </a>
                 </div>
             </div>
 
-            <div class="card" style="text-align:center;">
-                <h2>Quick Reports</h2>
-                <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:12px;">
-                    <a href="{% url 'attendance_report' %}" class="btn btn-outline">Today's Attendance</a>
-                    <a href="{% url 'movement_history' %}" class="btn btn-outline">Movement History</a>
-                    <a href="{% url 'meal_report' %}" class="btn btn-outline">Meal Report</a>
+            <!-- Quick Reports -->
+            <div class="reports-card">
+                <h2>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Quick Reports
+                </h2>
+                <div class="report-links">
+                    <a href="{% url 'attendance_report' %}" class="btn btn-outline">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
+                        Today's Attendance
+                    </a>
+                    <a href="{% url 'movement_history' %}" class="btn btn-outline">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+                        Movement History
+                    </a>
+                    <a href="{% url 'meal_report' %}" class="btn btn-outline">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg>
+                        Meal Report
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 
-<script>
-console.log("╔══════════════════════════════════════╗");
-console.log("║        ONECARD SYSTEM               ║");
-console.log("║   Smart Student Management          ║");
-console.log("║                                    ║");
-console.log("║   Welcome to Developer Console      ║");
-console.log("║                                    ║");
-console.log("║   (c) 2026 Herman Software Solutions║");
-console.log("║   All Rights Reserved               ║");
-console.log("╚══════════════════════════════════════╝");
-</script>
+    <script>
+        console.log("╔══════════════════════════════════════╗");
+        console.log("║        ONECARD SYSTEM               ║");
+        console.log("║   Smart Student Management          ║");
+        console.log("║                                    ║");
+        console.log("║   Welcome to Developer Console      ║");
+        console.log("║                                    ║");
+        console.log("║   (c) 2026 Herman Software Solutions║");
+        console.log("║   All Rights Reserved               ║");
+        console.log("╚══════════════════════════════════════╝");
+    </script>
 </body>
 </html>
-
-
-
-
-
-

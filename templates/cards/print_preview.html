@@ -4,101 +4,282 @@
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Print Preview - OneCard</title>
+    <title>Print Preview — OneCard</title>
     <style>
+        :root {
+            --navy: #0A1F3F;
+            --teal: #00C2BA;
+            --text: #1f2937;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #e0e0e0; padding: 20px; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #e5e7eb;
+            padding: 24px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ─── Toolbar ────────────────────── */
+        .toolbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: white;
+            border-radius: 16px;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            border: 1px solid var(--border);
+        }
+
+        .toolbar .title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--navy);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toolbar .title .hex-icon {
+            width: 28px;
+            height: 28px;
+        }
+
+        .toolbar .count {
+            background: rgba(0,194,186,0.1);
+            color: var(--teal);
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .btn-print {
+            padding: 11px 28px;
+            background: var(--navy);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: inherit;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-print:hover {
+            background: #132D52;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(10,31,63,0.25);
+        }
+
+        /* ─── Card Grid ──────────────────── */
+        .cards-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            justify-content: center;
+        }
+
         .card-preview {
-            width: 320px; background: white; border: 2px solid #1a237e; border-radius: 8px;
-            padding: 16px; margin: 10px; display: inline-block; vertical-align: top;
+            width: 320px;
+            background: white;
+            border: 2px solid var(--navy);
+            border-radius: 14px;
+            padding: 20px;
+            transition: all 0.2s ease;
         }
-        .card-preview .header { text-align: center; font-weight: bold; font-size: 12px; margin-bottom: 8px; }
-        .card-preview .qr { text-align: center; margin: 8px 0; }
-        .card-preview .qr img { width: 100px; height: 100px; }
-        .card-preview .info { font-size: 11px; line-height: 1.6; }
-        .btn-print { padding: 10px 30px; background: #1a237e; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin: 20px; }
+
+        .card-preview:hover {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .card-preview .card-brand {
+            text-align: center;
+            font-weight: 700;
+            font-size: 12px;
+            color: var(--navy);
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .card-preview .card-type {
+            text-align: center;
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .card-preview .card-divider {
+            border: none;
+            border-top: 1px dashed var(--border);
+            margin: 10px 0;
+        }
+
+        .card-preview .qr-section {
+            text-align: center;
+            margin: 12px 0;
+            padding: 8px;
+            background: #f9fafb;
+            border-radius: 10px;
+        }
+
+        .card-preview .qr-section img {
+            width: 100px;
+            height: 100px;
+            border-radius: 6px;
+        }
+
+        .card-preview .info {
+            font-size: 12px;
+            line-height: 1.8;
+            color: var(--text);
+        }
+
+        .card-preview .info strong {
+            color: var(--navy);
+            display: inline-block;
+            min-width: 90px;
+        }
+
+        .card-preview .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 50px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .card-preview .status-active {
+            background: #ecfdf5;
+            color: #059669;
+        }
+
+        /* ─── Empty State ────────────────── */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state svg {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 16px;
+            opacity: 0.3;
+        }
+
+        .empty-state p {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        /* ─── Print Styles ───────────────── */
         @media print {
-            .btn-print { display: none; }
+            .toolbar { display: none; }
             body { background: white; padding: 0; }
-            .card-preview { page-break-inside: avoid; }
+            .cards-container { gap: 0; }
+            .card-preview {
+                page-break-inside: avoid;
+                border-radius: 0;
+                margin: 0;
+                width: 100%;
+                max-width: 350px;
+                box-shadow: none;
+            }
+            .card-preview:hover { transform: none; box-shadow: none; }
         }
-        /* Mobile Responsive */
-@media (max-width: 768px) {
-    .layout { flex-direction: column; }
-    .sidebar { 
-        width: 100%; min-height: auto; 
-        display: flex; flex-wrap: wrap; gap: 0;
-        padding: 5px 0; border-right: none; 
-        border-bottom: 1px solid #e0e0e0;
-    }
-    .sidebar .section-title { display: none; }
-    .sidebar a { 
-        padding: 8px 12px; font-size: 12px; 
-        border-left: none; border-bottom: 2px solid transparent;
-    }
-    .sidebar a:hover { border-bottom-color: #1a237e; border-left: none; }
-    .main-content { margin-left: 0; padding: 12px; }
-    .stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .stat-card { padding: 16px 10px; }
-    .stat-card .stat-value { font-size: 22px; }
-    .stat-card .stat-label { font-size: 11px; }
-    .grid-2 { grid-template-columns: 1fr; }
-    .action-grid { grid-template-columns: 1fr; }
-    .card { padding: 16px; }
-    .card h2 { font-size: 16px; }
-    table { font-size: 11px; }
-    th, td { padding: 6px 8px; }
-    .btn { padding: 8px 14px; font-size: 12px; }
-    .navbar { padding: 0 10px; }
-    .navbar .brand { font-size: 15px; }
-    .navbar .user-info { gap: 8px; font-size: 11px; }
-    .navbar .role-badge { padding: 2px 8px; font-size: 9px; }
-    .quick-links { flex-direction: column; }
-    .quick-links .btn { width: 100%; text-align: center; }
-    .filter-row { flex-direction: column; }
-    .filter-row select, .filter-row input { width: 100%; }
-}
+
+        /* ─── Responsive ─────────────────── */
+        @media (max-width: 500px) {
+            body { padding: 12px; }
+            .toolbar { padding: 14px 18px; border-radius: 12px; }
+            .toolbar .title { font-size: 15px; }
+            .btn-print { padding: 10px 20px; font-size: 13px; width: 100%; justify-content: center; }
+            .card-preview { width: 100%; }
+        }
     </style>
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
-    <button class="btn-print" onclick="window.print()">Print All Cards</button>
-    
-    {% for student in students %}
-    <div class="card-preview">
-        <div class="header">ONECARD SYSTEM</div>
-        <div style="text-align:center; font-size:11px; color:#888;">Student ID Card</div>
-        <div class="qr">
-            {% if student.qr_code %}
-            <img src="{{ student.qr_code.url }}" alt="QR">
-            {% endif %}
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="title">
+            <svg class="hex-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+                <polygon points="50,5 90,28 90,72 50,95 10,72 10,28" fill="#0A1F3F" stroke="#00C2BA" stroke-width="3"/>
+                <line x1="35" y1="30" x2="35" y2="70" stroke="white" stroke-width="5" stroke-linecap="round"/>
+                <line x1="65" y1="30" x2="65" y2="70" stroke="white" stroke-width="5" stroke-linecap="round"/>
+                <line x1="35" y1="50" x2="65" y2="50" stroke="#00C2BA" stroke-width="5" stroke-linecap="round"/>
+            </svg>
+            OneCard Print Preview
+            <span class="count">{{ students|length }} cards</span>
         </div>
-        <div class="info">
-            <strong>ID:</strong> {{ student.id }}<br>
-            <strong>Admission:</strong> {{ student.admission_number }}<br>
-            <strong>Payment Code:</strong> {{ student.payment_code }}<br>
-            <strong>Status:</strong> {{ student.get_status_display }}
-        </div>
+        <button class="btn-print" onclick="window.print()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,9 6,2 18,2 18,9"/><path d="M6 12H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Print All Cards
+        </button>
     </div>
-    {% endfor %}
 
-<script>
-console.log("╔══════════════════════════════════════╗");
-console.log("║        ONECARD SYSTEM               ║");
-console.log("║   Smart Student Management          ║");
-console.log("║                                    ║");
-console.log("║   Welcome to Developer Console      ║");
-console.log("║                                    ║");
-console.log("║   (c) 2026 Herman Software Solutions║");
-console.log("║   All Rights Reserved               ║");
-console.log("╚══════════════════════════════════════╝");
-</script>
+    {% if students %}
+    <!-- Cards -->
+    <div class="cards-container">
+        {% for student in students %}
+        <div class="card-preview">
+            <div class="card-brand">ONECARD SYSTEM</div>
+            <div class="card-type">Student ID Card</div>
+            <hr class="card-divider">
+            {% if student.qr_code or student.qr_base64 %}
+            <div class="qr-section">
+                {% if student.qr_code %}
+                <img src="{{ student.qr_code.url }}" alt="QR Code">
+                {% elif student.qr_base64 %}
+                <img src="data:image/png;base64,{{ student.qr_base64 }}" alt="QR Code">
+                {% endif %}
+            </div>
+            {% endif %}
+            <div class="info">
+                <strong>ID:</strong> {{ student.id }}<br>
+                <strong>Admission:</strong> {{ student.admission_number }}<br>
+                <strong>Payment Code:</strong> {{ student.payment_code }}<br>
+                <strong>Status:</strong> <span class="status-badge status-active">{{ student.get_status_display }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="3" y1="9" x2="21" y2="9"/></svg>
+        <p>No cards selected for preview.</p>
+    </div>
+    {% endif %}
+
+    <script>
+        console.log("╔══════════════════════════════════════╗");
+        console.log("║        ONECARD SYSTEM               ║");
+        console.log("║   Smart Student Management          ║");
+        console.log("║                                    ║");
+        console.log("║   Welcome to Developer Console      ║");
+        console.log("║                                    ║");
+        console.log("║   (c) 2026 Herman Software Solutions║");
+        console.log("║   All Rights Reserved               ║");
+        console.log("╚══════════════════════════════════════╝");
+    </script>
 </body>
 </html>
-
-
-
-
-
-
-

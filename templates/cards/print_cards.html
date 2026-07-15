@@ -4,102 +4,348 @@
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Print Cards - OneCard</title>
+    <title>Print Cards — OneCard</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; }
-        .navbar { background: #1a237e; color: white; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; height: 60px; }
-        .navbar .brand { font-size: 18px; font-weight: 600; }
+
+        :root {
+            --navy: #0A1F3F;
+            --navy-light: #132D52;
+            --teal: #00C2BA;
+            --teal-dark: #00A8A0;
+            --bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --text: #1f2937;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --sidebar-hover: #f0f4ff;
+            --green: #059669;
+            --green-bg: #ecfdf5;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ─── Navbar ─────────────────────── */
+        .navbar {
+            background: var(--navy);
+            color: white;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 64px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 12px rgba(10,31,63,0.15);
+        }
+
+        .navbar .brand {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 19px; font-weight: 700; letter-spacing: -0.3px;
+        }
+        .navbar .brand .logo-icon { width: 34px; height: 34px; }
+        .navbar .brand span { color: var(--teal); }
         .navbar a { color: white; text-decoration: none; }
+
+        /* ─── Layout ─────────────────────── */
         .layout { display: flex; }
-        .sidebar { width: 240px; background: white; min-height: calc(100vh - 60px); border-right: 1px solid #e0e0e0; padding-top: 10px; }
-        .sidebar a { display: block; padding: 12px 24px; color: #333; text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
-        .sidebar a:hover { background: #f5f5ff; color: #1a237e; border-left-color: #1a237e; }
-        .sidebar .section-title { padding: 20px 24px 8px; font-size: 11px; text-transform: uppercase; color: #999; letter-spacing: 1.5px; font-weight: 600; }
-        .main-content { flex: 1; padding: 24px 32px; }
-        .card-box { background: white; border-radius: 8px; padding: 24px; border: 1px solid #e8e8e8; margin-bottom: 20px; }
-        .card-box h2 { color: #1a237e; margin-bottom: 16px; }
-        .btn { padding: 10px 22px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; text-decoration: none; display: inline-block; }
-        .btn-primary { background: #1a237e; color: white; }
-        .btn-success { background: #2e7d32; color: white; }
-        .btn-outline { background: white; color: #1a237e; border: 1px solid #1a237e; }
-        .form-row { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; }
-        select { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
-        .card-grid { display: flex; flex-wrap: wrap; gap: 12px; }
-        .card-item { width: 300px; border: 2px solid #e0e0e0; border-radius: 8px; padding: 16px; background: white; cursor: pointer; transition: 0.2s; position: relative; }
-        .card-item:hover { border-color: #1a237e; }
-        .card-item.selected { border-color: #2e7d32; background: #f1f8e9; }
-        .card-item .check { position: absolute; top: 8px; right: 8px; font-size: 20px; display: none; }
-        .card-item.selected .check { display: block; color: #2e7d32; }
-        .card-item .qr { text-align: center; margin: 8px 0; }
-        .card-item .qr img { width: 80px; height: 80px; }
-        .card-item .info { font-size: 12px; line-height: 1.6; }
-        .card-item .header { text-align: center; font-weight: bold; font-size: 11px; margin-bottom: 4px; color: #1a237e; }
-        .actions { display: flex; gap: 10px; margin-top: 16px; align-items: center; flex-wrap: wrap; }
-        .stats { margin-bottom: 16px; font-size: 14px; color: #666; }
-        /* Mobile Responsive */
-@media (max-width: 768px) {
-    .layout { flex-direction: column; }
-    .sidebar { 
-        width: 100%; min-height: auto; 
-        display: flex; flex-wrap: wrap; gap: 0;
-        padding: 5px 0; border-right: none; 
-        border-bottom: 1px solid #e0e0e0;
-    }
-    .sidebar .section-title { display: none; }
-    .sidebar a { 
-        padding: 8px 12px; font-size: 12px; 
-        border-left: none; border-bottom: 2px solid transparent;
-    }
-    .sidebar a:hover { border-bottom-color: #1a237e; border-left: none; }
-    .main-content { margin-left: 0; padding: 12px; }
-    .stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .stat-card { padding: 16px 10px; }
-    .stat-card .stat-value { font-size: 22px; }
-    .stat-card .stat-label { font-size: 11px; }
-    .grid-2 { grid-template-columns: 1fr; }
-    .action-grid { grid-template-columns: 1fr; }
-    .card { padding: 16px; }
-    .card h2 { font-size: 16px; }
-    table { font-size: 11px; }
-    th, td { padding: 6px 8px; }
-    .btn { padding: 8px 14px; font-size: 12px; }
-    .navbar { padding: 0 10px; }
-    .navbar .brand { font-size: 15px; }
-    .navbar .user-info { gap: 8px; font-size: 11px; }
-    .navbar .role-badge { padding: 2px 8px; font-size: 9px; }
-    .quick-links { flex-direction: column; }
-    .quick-links .btn { width: 100%; text-align: center; }
-    .filter-row { flex-direction: column; }
-    .filter-row select, .filter-row input { width: 100%; }
-}
+
+        /* ─── Sidebar ────────────────────── */
+        .sidebar {
+            width: 260px; background: var(--card-bg);
+            min-height: calc(100vh - 64px);
+            border-right: 1px solid var(--border);
+            padding: 16px 12px;
+            position: sticky; top: 64px;
+        }
+        .sidebar .section-title {
+            padding: 20px 16px 8px;
+            font-size: 11px; text-transform: uppercase;
+            color: var(--text-muted); letter-spacing: 1.8px; font-weight: 700;
+        }
+        .sidebar a {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 16px; color: var(--text);
+            text-decoration: none; font-size: 14px; font-weight: 500;
+            border-radius: 10px; margin-bottom: 2px;
+            transition: all 0.15s ease;
+            border-left: 3px solid transparent;
+        }
+        .sidebar a:hover { background: var(--sidebar-hover); color: var(--navy); }
+        .sidebar a.active {
+            background: var(--sidebar-hover); color: var(--navy);
+            font-weight: 600; border-left-color: var(--teal);
+        }
+        .sidebar a .icon { width: 18px; height: 18px; opacity: 0.45; flex-shrink: 0; }
+        .sidebar a.active .icon, .sidebar a:hover .icon { opacity: 1; }
+
+        /* ─── Main Content ───────────────── */
+        .main-content { flex: 1; padding: 28px 32px; }
+        .main-content .page-title {
+            color: var(--navy); font-size: 26px; font-weight: 700;
+            margin-bottom: 4px; letter-spacing: -0.4px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .main-content .page-subtitle {
+            color: var(--text-muted); font-size: 14px; margin-bottom: 24px;
+        }
+
+        /* ─── Alert ──────────────────────── */
+        .alert {
+            padding: 14px 20px; border-radius: 12px;
+            margin-bottom: 20px; font-size: 14px; font-weight: 500;
+        }
+        .alert-success { background: var(--green-bg); color: var(--green); border-left: 4px solid var(--green); }
+
+        /* ─── Card Box ───────────────────── */
+        .card-box {
+            background: var(--card-bg); border-radius: 16px;
+            padding: 28px; border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        .card-box h2 {
+            color: var(--navy); font-size: 20px; font-weight: 700;
+            letter-spacing: -0.2px; margin-bottom: 8px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .card-box .description {
+            color: var(--text-muted); font-size: 14px; margin-bottom: 20px;
+        }
+
+        /* ─── Form Row ───────────────────── */
+        .form-row {
+            display: flex; gap: 12px; align-items: center;
+            margin-bottom: 20px; flex-wrap: wrap;
+        }
+        select {
+            padding: 10px 16px;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-size: 14px; font-family: inherit;
+            color: var(--text); background: white;
+            cursor: pointer; transition: border-color 0.15s ease;
+            appearance: none; -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 36px;
+        }
+        select:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(0,194,186,0.1); }
+
+        /* ─── Stats ──────────────────────── */
+        .stats-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: #f9fafb; border: 1px solid var(--border);
+            border-radius: 12px; padding: 10px 18px;
+            font-size: 14px; color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+        .stats-badge strong { color: var(--navy); font-size: 18px; font-weight: 700; }
+
+        /* ─── Buttons ────────────────────── */
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 10px;
+            cursor: pointer; font-size: 13px; font-weight: 600;
+            text-decoration: none;
+            display: inline-flex; align-items: center; gap: 6px;
+            transition: all 0.15s ease; font-family: inherit;
+        }
+        .btn:hover { transform: translateY(-1px); }
+        .btn-primary { background: var(--navy); color: white; }
+        .btn-primary:hover { background: var(--navy-light); box-shadow: 0 4px 12px rgba(10,31,63,0.25); }
+        .btn-success { background: var(--green); color: white; }
+        .btn-success:hover { box-shadow: 0 4px 12px rgba(5,150,105,0.3); }
+        .btn-outline { background: white; color: var(--navy); border: 1.5px solid var(--border); }
+        .btn-outline:hover { border-color: var(--navy); background: var(--sidebar-hover); }
+
+        .actions {
+            display: flex; gap: 10px; margin: 16px 0;
+            align-items: center; flex-wrap: wrap;
+        }
+        .selected-count {
+            margin-left: auto; color: var(--text-muted);
+            font-size: 13px; font-weight: 500;
+        }
+        .selected-count strong { color: var(--teal); font-size: 16px; }
+
+        /* ─── Card Grid ──────────────────── */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 14px;
+            margin-top: 16px;
+        }
+
+        .card-item {
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            background: var(--card-bg);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .card-item:hover {
+            border-color: var(--navy);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            transform: translateY(-2px);
+        }
+        .card-item.selected {
+            border-color: var(--green);
+            background: var(--green-bg);
+            box-shadow: 0 4px 16px rgba(5,150,105,0.12);
+        }
+        .card-item .check-badge {
+            position: absolute; top: 12px; right: 12px;
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: var(--border);
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .card-item.selected .check-badge {
+            background: var(--green);
+            color: white;
+        }
+        .card-item .check-badge svg {
+            width: 14px; height: 14px;
+            opacity: 0; transition: opacity 0.2s ease;
+        }
+        .card-item.selected .check-badge svg { opacity: 1; }
+        .card-item .card-header-text {
+            text-align: center; font-weight: 700;
+            font-size: 11px; margin-bottom: 6px;
+            color: var(--navy); letter-spacing: 0.5px;
+        }
+        .card-item .card-subtitle {
+            text-align: center; font-size: 10px;
+            color: var(--text-muted); margin-bottom: 12px;
+        }
+        .card-item .qr {
+            text-align: center; margin: 10px 0;
+        }
+        .card-item .qr img {
+            width: 80px; height: 80px;
+            border-radius: 8px;
+        }
+        .card-item .info {
+            font-size: 12px; line-height: 1.7;
+            color: var(--text);
+            border-top: 1px solid var(--border);
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+        .card-item .info strong { color: var(--navy); }
+
+        /* ─── All Done ───────────────────── */
+        .all-done {
+            text-align: center; padding: 32px 20px;
+            color: var(--green); font-weight: 600;
+        }
+        .all-done svg {
+            width: 48px; height: 48px; margin: 0 auto 12px;
+            opacity: 0.5;
+        }
+
+        /* ─── Responsive ─────────────────── */
+        @media (max-width: 768px) {
+            .layout { flex-direction: column; }
+            .sidebar {
+                width: 100%; min-height: auto;
+                display: flex; flex-wrap: wrap;
+                padding: 8px 4px; border-right: none;
+                border-bottom: 1px solid var(--border);
+                position: static; overflow-x: auto;
+            }
+            .sidebar .section-title { display: none; }
+            .sidebar a {
+                padding: 8px 12px; font-size: 12px;
+                border-left: none; border-bottom: 2px solid transparent;
+                border-radius: 0; white-space: nowrap;
+            }
+            .sidebar a:hover { border-bottom-color: var(--teal); border-left: none; }
+            .sidebar a.active { border-left: none; border-bottom-color: var(--teal); }
+            .main-content { padding: 16px 12px; }
+            .card-box { padding: 20px; }
+            .card-box h2 { font-size: 17px; }
+            .form-row { flex-direction: column; }
+            .form-row select { width: 100%; }
+            .actions { flex-direction: column; }
+            .actions .btn { width: 100%; justify-content: center; }
+            .selected-count { margin-left: 0; text-align: center; }
+            .card-grid { grid-template-columns: 1fr; }
+            .navbar { padding: 0 14px; }
+            .navbar .brand { font-size: 15px; }
+        }
     </style>
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
     <div class="navbar">
-        <div class="brand"><a href="{% url 'dashboard' %}" style="color:white;">OneCard System</a></div>
+        <a href="{% url 'dashboard' %}">
+            <div class="brand">
+                <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+                    <polygon points="50,5 90,28 90,72 50,95 10,72 10,28" fill="#0A1F3F" stroke="#00C2BA" stroke-width="3"/>
+                    <line x1="35" y1="30" x2="35" y2="70" stroke="white" stroke-width="5" stroke-linecap="round"/>
+                    <line x1="65" y1="30" x2="65" y2="70" stroke="white" stroke-width="5" stroke-linecap="round"/>
+                    <line x1="35" y1="50" x2="65" y2="50" stroke="#00C2BA" stroke-width="5" stroke-linecap="round"/>
+                </svg>
+                One<span>Card</span>
+            </div>
+        </a>
     </div>
+
     <div class="layout">
         <div class="sidebar">
             <div class="section-title">Cards</div>
-            <a href="{% url 'template_list' %}">Card Designs</a>
-            <a href="{% url 'assign_templates' %}">Assign to Classes</a>
-            <a href="{% url 'print_cards' %}" style="background:#f5f5ff; color:#1a237e; border-left-color:#1a237e;">Print Cards</a>
-            <a href="{% url 'printed_cards' %}">Printed Cards</a>
-            <a href="{% url 'reprint_card' %}">Reprint Card</a>
+            <a href="{% url 'template_list' %}">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="3" y1="9" x2="21" y2="9"/></svg>
+                Card Designs
+            </a>
+            <a href="{% url 'assign_templates' %}">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                Assign to Classes
+            </a>
+            <a href="{% url 'print_cards' %}" class="active">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 6,2 18,2 18,9"/><path d="M6 12H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                Print Cards
+            </a>
+            <a href="{% url 'printed_cards' %}">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>
+                Printed Cards
+            </a>
+            <a href="{% url 'reprint_card' %}">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1,4 1,10 7,10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                Reprint Card
+            </a>
         </div>
+
         <div class="main-content">
+            <h1 class="page-title">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2"><polyline points="6,9 6,2 18,2 18,9"/><path d="M6 12H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                Print Cards
+            </h1>
+            <p class="page-subtitle">Select a class and print student ID cards</p>
+
             {% if messages %}
             {% for m in messages %}
-            <div style="padding:12px 20px; border-radius:6px; margin-bottom:16px; background:#e8f5e9; color:#2e7d32; border-left:4px solid #4caf50;">{{ m }}</div>
+            <div class="alert alert-success">{{ m }}</div>
             {% endfor %}
             {% endif %}
 
             <div class="card-box">
-                <h2>Print Student Cards</h2>
-                <p style="color:#666; margin-bottom:16px;">Select a class to view unprinted cards. Click cards to select, then print or download PDF.</p>
-                
+                <h2>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2"><polyline points="6,9 6,2 18,2 18,9"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    Print Student Cards
+                </h2>
+                <p class="description">Select a class to view unprinted cards. Click cards to select, then print or download PDF.</p>
+
                 <form method="post">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="preview">
@@ -110,34 +356,51 @@
                             <option value="{{ c }}" {% if selected_class == c %}selected{% endif %}>{{ c }}</option>
                             {% endfor %}
                         </select>
-                        <button type="submit" class="btn btn-primary">Show Unprinted Cards</button>
+                        <button type="submit" class="btn btn-primary">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            Show Unprinted Cards
+                        </button>
                     </div>
                 </form>
 
                 {% if students %}
-                <div class="stats">
+                <div class="stats-badge">
                     <strong>{{ students.count }}</strong> unprinted student(s) in {{ selected_class }}
                 </div>
-                
+
                 <form method="post" id="printForm">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="print_selected">
                     <div class="actions">
-                        <button type="button" class="btn btn-outline" onclick="selectAll()">Select All</button>
-                        <button type="button" class="btn btn-outline" onclick="deselectAll()">Deselect All</button>
-                        <button type="submit" class="btn btn-success" onclick="return confirmPrint()">Mark as Printed</button>
-                        <button type="button" class="btn btn-primary" onclick="downloadPDF()">Print / Export PDF</button>
-                        <span style="margin-left:10px; color:#666;">Selected: <strong id="count">0</strong></span>
+                        <button type="button" class="btn btn-outline" onclick="selectAll()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><polyline points="9,11 11,13 15,9"/></svg>
+                            Select All
+                        </button>
+                        <button type="button" class="btn btn-outline" onclick="deselectAll()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            Deselect All
+                        </button>
+                        <button type="submit" class="btn btn-success" onclick="return confirmPrint()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>
+                            Mark as Printed
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="downloadPDF()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Print / Export PDF
+                        </button>
+                        <span class="selected-count">Selected: <strong id="count">0</strong></span>
                     </div>
-                    
-                    <div class="card-grid" style="margin-top:16px;">
+
+                    <div class="card-grid">
                         {% for student in students %}
                         <div class="card-item" id="card-{{ student.id }}" onclick="toggleCard(this, '{{ student.id }}')">
-                            <div class="check">&#10003;</div>
-                            <div class="header">ONECARD SYSTEM</div>
-                            <div style="text-align:center; font-size:10px; color:#888;">Student ID Card</div>
+                            <div class="check-badge">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20,6 9,17 4,12"/></svg>
+                            </div>
+                            <div class="card-header-text">ONECARD SYSTEM</div>
+                            <div class="card-subtitle">Student ID Card</div>
                             <div class="qr">
-                               <img src="data:image/png;base64,{{ student.qr_base64 }}" alt="QR">
+                                <img src="data:image/png;base64,{{ student.qr_base64 }}" alt="QR">
                             </div>
                             <div class="info">
                                 <strong>ID:</strong> {{ student.id }}<br>
@@ -150,7 +413,10 @@
                     </div>
                 </form>
                 {% elif selected_class %}
-                <p style="color:#2e7d32; padding:20px; text-align:center;">All cards in {{ selected_class }} have been printed!</p>
+                <div class="all-done">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>
+                    <p>All cards in {{ selected_class }} have been printed!</p>
+                </div>
                 {% endif %}
             </div>
         </div>
@@ -197,23 +463,16 @@
         }
     </script>
 
-<script>
-console.log("╔══════════════════════════════════════╗");
-console.log("║        ONECARD SYSTEM               ║");
-console.log("║   Smart Student Management          ║");
-console.log("║                                    ║");
-console.log("║   Welcome to Developer Console      ║");
-console.log("║                                    ║");
-console.log("║   (c) 2026 Herman Software Solutions║");
-console.log("║   All Rights Reserved               ║");
-console.log("╚══════════════════════════════════════╝");
-</script>
+    <script>
+        console.log("╔══════════════════════════════════════╗");
+        console.log("║        ONECARD SYSTEM               ║");
+        console.log("║   Smart Student Management          ║");
+        console.log("║                                    ║");
+        console.log("║   Welcome to Developer Console      ║");
+        console.log("║                                    ║");
+        console.log("║   (c) 2026 Herman Software Solutions║");
+        console.log("║   All Rights Reserved               ║");
+        console.log("╚══════════════════════════════════════╝");
+    </script>
 </body>
 </html>
-
-
-
-
-
-
-

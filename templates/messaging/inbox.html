@@ -4,58 +4,118 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
-    <title>Messages - OneCard</title>
+    <title>Messages — OneCard</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; }
-        .navbar { background: #1a237e; color: white; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; height: 60px; }
-        .navbar .brand { font-size: 18px; font-weight: 600; }
+
+        :root {
+            --navy: #0A1F3F; --navy-light: #132D52;
+            --teal: #00C2BA; --teal-dark: #00A8A0;
+            --bg: #f0f2f5; --card-bg: #ffffff;
+            --text: #1f2937; --text-muted: #6b7280;
+            --border: #e5e7eb; --sidebar-hover: #f0f4ff;
+            --red: #dc2626; --red-bg: #fef2f2;
+        }
+
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+
+        .navbar { background: var(--navy); color: white; padding: 0 28px; display: flex; justify-content: space-between; align-items: center; height: 64px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(10,31,63,0.15); }
+        .navbar .brand { display: flex; align-items: center; gap: 10px; font-size: 19px; font-weight: 700; letter-spacing: -0.3px; }
+        .navbar .brand .logo-icon { width: 34px; height: 34px; }
+        .navbar .brand span { color: var(--teal); }
         .navbar a { color: white; text-decoration: none; }
+
         .layout { display: flex; }
-        .sidebar { width: 240px; background: white; min-height: calc(100vh - 60px); border-right: 1px solid #e0e0e0; padding-top: 10px; }
-        .sidebar a { display: block; padding: 12px 24px; color: #333; text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
-        .sidebar a:hover { background: #f5f5ff; color: #1a237e; border-left-color: #1a237e; }
-        .sidebar .section-title { padding: 20px 24px 8px; font-size: 11px; text-transform: uppercase; color: #999; letter-spacing: 1.5px; font-weight: 600; }
-        .main-content { flex: 1; padding: 24px 32px; max-width: 800px; }
-        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .header-row h1 { color: #1a237e; }
-        .btn-new { background: #1a237e; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; }
-        .conversation-card { background: white; border-radius: 8px; padding: 16px; border: 1px solid #e8e8e8; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; text-decoration: none; color: #333; cursor: pointer; }
-        .conversation-card:hover { background: #f5f5ff; }
-        .conv-avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
-        .conv-avatar-letter { width: 48px; height: 48px; border-radius: 50%; background: #1a237e; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; flex-shrink: 0; }
+        .sidebar { width: 260px; background: var(--card-bg); min-height: calc(100vh - 64px); border-right: 1px solid var(--border); padding: 16px 12px; }
+        .sidebar .section-title { padding: 20px 16px 8px; font-size: 11px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1.8px; font-weight: 700; }
+        .sidebar a { display: flex; align-items: center; gap: 10px; padding: 10px 16px; color: var(--text); text-decoration: none; font-size: 14px; font-weight: 500; border-radius: 10px; margin-bottom: 2px; transition: all 0.15s ease; border-left: 3px solid transparent; }
+        .sidebar a:hover { background: var(--sidebar-hover); color: var(--navy); }
+        .sidebar a.active { background: var(--sidebar-hover); color: var(--navy); font-weight: 600; border-left-color: var(--teal); }
+        .sidebar a .icon { width: 18px; height: 18px; opacity: 0.45; flex-shrink: 0; }
+        .sidebar a.active .icon, .sidebar a:hover .icon { opacity: 1; }
+        .sidebar .unread-count { background: var(--red); color: white; padding: 2px 8px; border-radius: 50px; font-size: 10px; font-weight: 700; margin-left: auto; }
+
+        .main-content { flex: 1; padding: 28px 32px; max-width: 700px; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+        .page-title { color: var(--navy); font-size: 26px; font-weight: 700; letter-spacing: -0.4px; display: flex; align-items: center; gap: 10px; }
+
+        .btn-new { background: var(--teal); color: var(--navy); padding: 10px 20px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s ease; }
+        .btn-new:hover { background: var(--teal-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,194,186,0.3); }
+
+        .conversation-card {
+            background: var(--card-bg); border-radius: 14px; padding: 18px;
+            border: 1px solid var(--border); margin-bottom: 8px;
+            display: flex; align-items: center; gap: 14px;
+            text-decoration: none; color: var(--text);
+            transition: all 0.15s ease;
+        }
+        .conversation-card:hover { background: var(--sidebar-hover); border-color: #d0d5dd; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+        .conv-avatar { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+        .conv-avatar-letter { width: 50px; height: 50px; border-radius: 50%; background: var(--navy); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 19px; flex-shrink: 0; }
         .conversation-card .info { flex: 1; min-width: 0; }
-        .conversation-card .name { font-weight: 600; font-size: 14px; }
-        .conversation-card .preview { font-size: 13px; color: #888; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 400px; }
+        .conversation-card .name { font-weight: 600; font-size: 14px; color: var(--navy); }
+        .conversation-card .name .role-tag { color: var(--text-muted); font-weight: 400; font-size: 12px; }
+        .conversation-card .preview { font-size: 13px; color: var(--text-muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 350px; }
         .conversation-card .meta { text-align: right; flex-shrink: 0; }
-        .conversation-card .time { font-size: 11px; color: #aaa; }
-        .unread-badge { background: #c62828; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; margin-top: 4px; display: inline-block; }
-        .empty-state { text-align: center; padding: 60px 20px; color: #888; }
-        .empty-state p { margin: 10px 0; }
+        .conversation-card .time { font-size: 11px; color: #9ca3af; }
+        .unread-badge { background: var(--red); color: white; padding: 3px 10px; border-radius: 50px; font-size: 11px; font-weight: 600; margin-top: 5px; display: inline-block; }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+        .empty-state svg { width: 56px; height: 56px; margin: 0 auto 16px; opacity: 0.25; }
+        .empty-state h3 { color: var(--navy); font-size: 18px; margin-bottom: 8px; }
+        .empty-state p { margin-bottom: 16px; }
+
         @media (max-width: 768px) {
             .layout { flex-direction: column; }
-            .sidebar { width: 100%; min-height: auto; display: flex; flex-wrap: wrap; }
+            .sidebar { width: 100%; min-height: auto; display: flex; flex-wrap: wrap; padding: 8px 4px; border-right: none; border-bottom: 1px solid var(--border); position: static; overflow-x: auto; }
             .sidebar .section-title { display: none; }
-            .sidebar a { padding: 8px 12px; font-size: 12px; }
-            .main-content { padding: 12px; }
-            .conversation-card .preview { max-width: 200px; }
+            .sidebar a { padding: 8px 12px; font-size: 12px; border-radius: 0; white-space: nowrap; }
+            .main-content { padding: 16px 12px; }
+            .conversation-card .preview { max-width: 180px; }
+            .navbar { padding: 0 14px; }
+            .navbar .brand { font-size: 15px; }
         }
     </style>
 </head>
 <body>
     <div class="navbar">
-        <div class="brand"><a href="{% url 'dashboard' %}" style="color:white;">OneCard System</a></div>
+        <a href="{% url 'dashboard' %}">
+            <div class="brand">
+                <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+                    <polygon points="50,5 90,28 90,72 50,95 10,72 10,28" fill="#0A1F3F" stroke="#00C2BA" stroke-width="3"/>
+                    <line x1="35" y1="30" x2="35" y2="70" stroke="white" stroke-width="5" stroke-linecap="round"/>
+                    <line x1="65" y1="30" x2="65" y2="70" stroke="white" stroke-width="5" stroke-linecap="round"/>
+                    <line x1="35" y1="50" x2="65" y2="50" stroke="#00C2BA" stroke-width="5" stroke-linecap="round"/>
+                </svg>
+                One<span>Card</span>
+            </div>
+        </a>
     </div>
+
     <div class="layout">
         <div class="sidebar">
             <div class="section-title">Messaging</div>
-            <a href="{% url 'inbox' %}" style="background:#f5f5ff; color:#1a237e; border-left-color:#1a237e;">Inbox {% if total_unread %}<span style="background:#c62828;color:white;padding:2px 8px;border-radius:10px;font-size:10px;">{{ total_unread }}</span>{% endif %}</a>
-            <a href="{% url 'start_conversation' %}">New Message</a>
+            <a href="{% url 'inbox' %}" class="active">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                Inbox
+                {% if total_unread %}<span class="unread-count">{{ total_unread }}</span>{% endif %}
+            </a>
+            <a href="{% url 'start_conversation' %}">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                New Message
+            </a>
         </div>
+
         <div class="main-content">
-            <div class="header-row">
-                <h1>Messages</h1>
-                <a href="{% url 'start_conversation' %}" class="btn-new">+ New Message</a>
+            <div class="page-header">
+                <h1 class="page-title">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    Messages
+                </h1>
+                <a href="{% url 'start_conversation' %}" class="btn-new">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    New Message
+                </a>
             </div>
 
             {% if conversations %}
@@ -69,7 +129,7 @@
                             <div class="conv-avatar-letter">{{ participant.get_full_name|default:participant.username|slice:":1"|upper }}</div>
                             {% endif %}
                             <div class="info">
-                                <div class="name">{{ participant.get_full_name|default:participant.username }} <small style="color:#888; font-weight:400;">({{ participant.get_role_display }})</small></div>
+                                <div class="name">{{ participant.get_full_name|default:participant.username }} <span class="role-tag">({{ participant.get_role_display }})</span></div>
                                 <div class="preview">{{ conv.last_msg.content|default:"No messages yet" }}</div>
                             </div>
                             <div class="meta">
@@ -86,27 +146,21 @@
                 {% endfor %}
             {% else %}
                 <div class="empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                     <h3>No conversations yet</h3>
                     <p>Start a new message to communicate with other staff members.</p>
-                    <a href="{% url 'start_conversation' %}" class="btn-new" style="display:inline-block; margin-top:12px;">+ New Message</a>
+                    <a href="{% url 'start_conversation' %}" class="btn-new" style="display:inline-flex;">+ New Message</a>
                 </div>
             {% endif %}
         </div>
     </div>
 
-<script>
-console.log("╔══════════════════════════════════════╗");
-console.log("║        ONECARD SYSTEM               ║");
-console.log("║   Smart Student Management          ║");
-console.log("║                                    ║");
-console.log("║   Welcome to Developer Console      ║");
-console.log("║                                    ║");
-console.log("║   (c) 2026 Herman Software Solutions║");
-console.log("║   All Rights Reserved               ║");
-console.log("╚══════════════════════════════════════╝");
-</script>
+    <script>
+        console.log("╔══════════════════════════════════════╗");
+        console.log("║        ONECARD SYSTEM               ║");
+        console.log("║   Smart Student Management          ║");
+        console.log("║   (c) 2026 Herman Software Solutions║");
+        console.log("╚══════════════════════════════════════╝");
+    </script>
 </body>
 </html>
-
-
-
