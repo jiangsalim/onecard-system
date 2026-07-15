@@ -679,6 +679,8 @@ def api_import_progress(request):
 
 from core.cache_utils import invalidate_cache, make_key
 
+from core.cache_utils import invalidate_cache, make_key
+
 @login_required
 @require_POST
 def api_import_students(request):
@@ -688,11 +690,9 @@ def api_import_students(request):
         selected = data.get('students', [])
         import_all = data.get('import_all', False)
         
-        school = _get_school(request)
-        
         if import_all:
             all_school = fetch_students_from_existing_db()
-            imported_ids = set(Student.objects.filter(school=school).values_list('admission_number', flat=True))
+            imported_ids = set(Student.objects.values_list('admission_number', flat=True))
             selected = [s['admission_number'] for s in all_school if s['admission_number'] not in imported_ids]
         
         if not selected:
@@ -711,7 +711,7 @@ def api_import_students(request):
         
         for i, admission_number in enumerate(selected):
             try:
-                if Student.objects.filter(school=school, admission_number=admission_number).exists():
+                if Student.objects.filter(admission_number=admission_number).exists():
                     skipped += 1; continue
                 student_data = school_dict.get(admission_number)
                 if not student_data: errors += 1; continue
@@ -720,7 +720,6 @@ def api_import_students(request):
                 qr_file = generate_qr_for_student(student_id)
                 
                 student = Student(
-                    school=school,
                     id=student_id, admission_number=admission_number,
                     payment_code=student_data['payment_code'],
                     category=student_data.get('category', 'day'),
@@ -730,7 +729,6 @@ def api_import_students(request):
                 student.save()
                 imported += 1
             except Exception as e:
-                logger.error(f"Import error for {admission_number}: {e}")
                 errors += 1
             
             if i % 50 == 0:
@@ -743,10 +741,10 @@ def api_import_students(request):
         
         # Invalidate caches after import
         invalidate_cache(
-            make_key('total_students', school.id),
-            make_key('student_list', school.id),
-            make_key('fee_report', school.id),
-            make_key('attendance_report', school.id, date.today()),
+            'total_students',
+            'student_list',
+            'fee_report',
+            make_key('attendance_report', date.today()),
         )
         
         cache.set('import_progress', {
@@ -757,7 +755,7 @@ def api_import_students(request):
         
         return JsonResponse({
             'success': True, 'message': f'Imported: {imported} | Skipped: {skipped} | Errors: {errors}',
-            'imported': Student.objects.filter(school=school, status='active').count(),
+            'imported': Student.objects.filter(status='active').count(),
             'total': total, 'imported_count': imported, 'skipped': skipped, 'errors': errors
         })
     except Exception as e:
