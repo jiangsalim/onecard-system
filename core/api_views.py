@@ -722,6 +722,8 @@ def api_import_students(request):
                 student = Student(
                     id=student_id, admission_number=admission_number,
                     payment_code=student_data['payment_code'],
+                    full_name=student_data.get('full_name', ''),
+                    parent_name='',
                     category=student_data.get('category', 'day'),
                     status='active', card_version=1
                 )

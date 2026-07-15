@@ -34,7 +34,7 @@ def handle_import(request):
             payment_code = request.POST.get(f'payment_{admission_number}', '')
             student_id = get_next_student_id()
             qr_file = generate_qr_for_student(student_id)
-            student = Student(id=student_id, admission_number=admission_number, payment_code=payment_code, status='active')
+            student = Student(id=student_id, admission_number=admission_number, payment_code=payment_code, full_name=full_name, parent_name='', current_class='', stream='', gender='', status='active')
             student.qr_code.save(f'{student_id}.png', qr_file)
             student.save()
             imported += 1
@@ -175,6 +175,7 @@ def import_students_excel(request):
                 student = Student(
                     id=student_id, admission_number=admission_number,
                     payment_code=payment_code, full_name=full_name,
+
                     current_class=current_class, stream=stream,
                     gender=gender, category=category,
                     status='active', card_version=1,

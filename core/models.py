@@ -20,6 +20,18 @@ class Student(models.Model):
     category = models.CharField(max_length=10, choices=[('day', 'Day Scholar'), ('hostel', 'Hostel Student')], default='day')
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
+    
+    # Student info fields
+    full_name = models.CharField(max_length=100, blank=True, default='')
+    current_class = models.CharField(max_length=20, blank=True, default='')
+    stream = models.CharField(max_length=10, blank=True, default='')
+    gender = models.CharField(max_length=1, blank=True, default='')
+    parent_name = models.CharField(max_length=100, blank=True, default='')
+    parent_phone = models.CharField(max_length=15, blank=True, default='')
+    student_phone = models.CharField(max_length=15, blank=True, default='')
+    date_of_birth = models.DateField(null=True, blank=True)
+    admission_date = models.DateField(null=True, blank=True)
+    photo_path = models.CharField(max_length=255, blank=True, default='')
 
     class Meta:
         db_table = 'students'
