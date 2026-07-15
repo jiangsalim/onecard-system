@@ -134,7 +134,10 @@ def download_cards_pdf(request):
     school_phone = 'Tel: 0772404055'
     
     html = f"""<!DOCTYPE html>
-    <html><head><meta charset="utf-8"><title>OneCard Print</title>
+    <html><head>
+    <meta charset="utf-8">
+    <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
+    <title>OneCard Print</title>
     <style>
         @page {{ size: 320px 220px; margin: 0; }}
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
