@@ -204,7 +204,9 @@ def download_cards_pdf(request):
     
     # FRONT SIDES
     for s in students:
-        qr_url = request.build_absolute_uri(s.qr_code.url) if s.qr_code else ''
+        from core.services import generate_qr_base64
+        qr_base64 = generate_qr_base64(s.id, s.card_version)
+        qr_url = f"data:image/png;base64,{qr_base64}"
         school_info = school_dict.get(s.admission_number, {})
         name_front = school_info.get('full_name', 'Student')
         student_class = school_info.get('current_class', 'N/A')

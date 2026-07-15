@@ -1,8 +1,10 @@
 import qrcode
 from io import BytesIO
+import base64
 from django.core.files.base import ContentFile
 from django.db import connections
 import logging
+
 
 logger = logging.getLogger('onecard')
 
@@ -82,3 +84,15 @@ def get_next_student_id():
             pass
     
     return f'STU-{max_num + 1:03d}'
+
+
+def generate_qr_base64(student_id, version=1):
+    """Generate QR code as base64 string for embedding in HTML."""
+    qr = qrcode.QRCode(version=1, box_size=10, border=4)
+    qr_data = f"{student_id}:v{version}"
+    qr.add_data(qr_data)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    buffer = BytesIO()
+    img.save(buffer, format='PNG')
+    return base64.b64encode(buffer.getvalue()).decode()
