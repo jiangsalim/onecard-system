@@ -512,19 +512,17 @@ def process_scan(request):
         if qr_version < student.card_version:
             return JsonResponse({
                 'success': False,
-                'error': f'CARD REPLACED — This card (v{qr_version}) was replaced on {student.last_reprint_date}. Current card is v{student.card_version}.',
+                'error': f'CARD REPLACED — v{qr_version} replaced on {student.last_reprint_date}.',
                 'error_code': 'CARD_REPLACED',
             }, status=410)
         
         info = get_student_info_from_existing_db(student.admission_number)
         if not info:
-            return JsonResponse({'success': False, 'error': 'Cannot fetch student data.', 'error_code': 'DB_UNAVAILABLE'}, status=503)
+            return JsonResponse({'success': False, 'error': 'Cannot fetch student data.'}, status=503)
         
         photo_url = build_photo_url(request, info.get('photo', ''))
         
         today = date.today()
-        school = student.school
-        
         already_marked = Attendance.objects.filter(student=student, scan_date=today).exists()
         if not already_marked:
             Attendance.objects.create(
@@ -534,9 +532,9 @@ def process_scan(request):
             )
             # Invalidate caches after new attendance
             invalidate_cache(
-                make_key('present', school.id, today),
-                make_key('gate_present', school.id, today),
-                make_key('attendance_report', school.id, today),
+                make_key('present', today),
+                make_key('gate_present', today),
+                make_key('attendance_report', today),
             )
         attendance_marked = not already_marked
         
@@ -547,10 +545,9 @@ def process_scan(request):
                 now_time = datetime.now().time()
                 existing.time_in = now_time
                 existing.save()
-                # Invalidate movement caches
                 invalidate_cache(
-                    make_key('outside', school.id, today),
-                    make_key('gate_outside', school.id, today),
+                    make_key('outside', today),
+                    make_key('gate_outside', today),
                 )
                 out_dt = datetime.combine(today, existing.time_out)
                 in_dt = datetime.combine(today, now_time)
@@ -565,10 +562,9 @@ def process_scan(request):
                     'attendance': {'marked': attendance_marked, 'already_marked': already_marked}
                 })
             else:
-                # Invalidate movement caches for new exit
                 invalidate_cache(
-                    make_key('outside', school.id, today),
-                    make_key('gate_outside', school.id, today),
+                    make_key('outside', today),
+                    make_key('gate_outside', today),
                 )
                 return JsonResponse({
                     'success': True,
@@ -583,31 +579,43 @@ def process_scan(request):
             meal_type = meal_settings.get_current_meal()
             
             if not meal_type:
-                return JsonResponse({'success': False, 'error': 'Not meal time.', 'error_code': 'NOT_MEAL_TIME'})
+                return JsonResponse({'success': False, 'error': 'Not meal time.'})
             
             student_category = student.category if hasattr(student, 'category') else 'day'
             
             if student_category == 'day' and meal_type != 'lunch':
                 violation_type = 'day_supper' if meal_type == 'supper' else 'day_breakfast'
                 MealViolation.objects.create(student=student, meal_type=meal_type, violation_type=violation_type, location=location)
-                invalidate_cache(make_key('meal_violations', school.id))
+                invalidate_cache(make_key('meal_violations'))
                 return JsonResponse({'success': False, 'error': f'DAY SCHOLAR — {meal_type.title()} not available.'})
             
             already_eaten = MealLog.objects.filter(student=student, meal_date=today, meal_type=meal_type).first()
             if already_eaten:
                 MealViolation.objects.create(student=student, meal_type=meal_type, violation_type='double_serving', location=location)
-                invalidate_cache(make_key('meal_violations', school.id))
+                invalidate_cache(make_key('meal_violations'))
                 return JsonResponse({'success': False, 'error': f'ALREADY SERVED at {already_eaten.time_scanned}'})
             
-            # ... rest of meal tracking (unchanged) ...
+            student_class = info.get('class', '')
+            rule = MealAccessRule.objects.filter(class_name=student_class, category=student_category, term='Term 2', academic_year='2026').first()
+            
+            if rule:
+                total_paid = get_payment_balance(student.payment_code)
+                fee = FeeStructure.objects.filter(class_name=student_class, category=student_category).first()
+                total_fees = float(fee.total_fees) if fee else 800000
+                balance = total_fees - float(total_paid)
+                if balance > float(rule.max_balance):
+                    MealViolation.objects.create(student=student, meal_type=meal_type, violation_type='balance_high', location=location)
+                    invalidate_cache(make_key('meal_violations'))
+                    return JsonResponse({'success': False, 'error': f'MEAL DENIED — Balance too high.'})
+            
             MealLog.objects.create(student=student, meal_date=today, meal_type=meal_type, time_scanned=now, location=location, marked_by=request.user.get_full_name() or request.user.username)
-            invalidate_cache(make_key('meal_violations', school.id))
+            invalidate_cache(make_key('meal_violations'))
             
             return JsonResponse({
                 'success': True,
                 'meal': {'type': meal_type, 'category': student_category, 'time': str(now)},
                 'student': {'id': student.id, 'name': info['name'], 'class': info['class'], 'stream': info['stream'], 'photo': photo_url},
-                'attendance': {'marked': attendance_marked, 'already_marked': already_marked}
+                'attendance': {'marked': attendance_marked}
             })
         
         # Attendance / Balance mode
@@ -616,7 +624,7 @@ def process_scan(request):
         fee = FeeStructure.objects.filter(class_name=info['class'], category=student_category).first()
         
         if not fee:
-            return JsonResponse({'success': False, 'error': f'Fee structure not set.'}, status=400)
+            return JsonResponse({'success': False, 'error': 'Fee structure not set.'}, status=400)
         
         total_fees = float(fee.total_fees)
         balance = total_fees - float(total_paid)
@@ -630,7 +638,7 @@ def process_scan(request):
             'success': True,
             'student': {'id': student.id, 'name': info['name'], 'class': info['class'], 'stream': info['stream'], 'admission': student.admission_number, 'payment_code': student.payment_code, 'photo': photo_url},
             'fees': {'total': total_fees, 'paid': float(total_paid), 'balance': balance, 'status': status},
-            'attendance': {'marked': attendance_marked, 'already_marked': already_marked}
+            'attendance': {'marked': attendance_marked}
         })
         
     except json.JSONDecodeError:
@@ -638,7 +646,7 @@ def process_scan(request):
     except Exception as e:
         logger.error(f"Scan error: {str(e)}", exc_info=True)
         return JsonResponse({'success': False, 'error': 'Internal server error'}, status=500)
-
+    
 @login_required
 def api_students_list(request):
     """Paginated student list from school DB — excludes already imported."""
