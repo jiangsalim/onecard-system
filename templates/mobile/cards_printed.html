@@ -4,39 +4,181 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
-    <title>Printed Cards - OneCard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Printed Cards - OneCard | Jinja SS</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 70px; }
-        .header { background: #1a237e; color: white; padding: 14px 16px; }
-        .header .title { font-size: 16px; font-weight: 600; }
-        .student-list { padding: 12px 16px; }
-        .student-card { background: white; border-radius: 10px; padding: 14px; margin-bottom: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-        .student-card .top { display: flex; justify-content: space-between; }
-        .student-card .name { font-weight: 600; font-size: 14px; }
-        .student-card .detail { font-size: 11px; color: #888; }
-        .badge { padding: 3px 8px; border-radius: 8px; font-size: 11px; font-weight: 600; }
-        .badge-info { background: #e3f2fd; color: #1565c0; }
+        body { 
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif; 
+            background: #F8F9FA; 
+            padding-bottom: 30px;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .header { 
+            background: linear-gradient(135deg, #0A1F3F, #132D52); 
+            color: white; 
+            padding: 18px 20px; 
+            box-shadow: 0 4px 20px rgba(10, 31, 63, 0.3);
+        }
+        
+        .header .title { 
+            font-size: 17px; 
+            font-weight: 700; 
+            letter-spacing: 0.3px;
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .header .subtitle {
+            font-size: 11px;
+            color: #00C2BA;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-top: 3px;
+        }
+        
+        .student-list { 
+            padding: 16px 16px; 
+        }
+        
+        .summary-banner {
+            background: white;
+            border-radius: 16px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 12px rgba(10, 31, 63, 0.06);
+            border: 1px solid #f0f0f0;
+        }
+        
+        .summary-banner .count {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: #00C2BA;
+        }
+        
+        .summary-banner .count-label {
+            font-size: 12px;
+            color: #9CA3AF;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .student-card { 
+            background: white; 
+            border-radius: 14px; 
+            padding: 16px; 
+            margin-bottom: 10px; 
+            box-shadow: 0 2px 8px rgba(10, 31, 63, 0.05);
+            border: 1px solid #f0f0f0;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .student-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(10, 31, 63, 0.1);
+        }
+        
+        .student-card .top { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+        }
+        
+        .student-card .name { 
+            font-weight: 600; 
+            font-size: 14px; 
+            color: #0A1F3F;
+        }
+        
+        .student-card .detail { 
+            font-size: 11px; 
+            color: #9CA3AF; 
+            margin-top: 3px;
+        }
+        
+        .badge { 
+            padding: 5px 12px; 
+            border-radius: 20px; 
+            font-size: 11px; 
+            font-weight: 600; 
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        
+        .badge-info { 
+            background: rgba(0, 194, 186, 0.1); 
+            color: #00A8A0; 
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        
+        .empty-state svg {
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+        
+        .empty-state p {
+            color: #9CA3AF;
+            font-size: 15px;
+            font-weight: 500;
+        }
     </style>
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
-    <div class="header"><div class="title">Printed Cards ({{ students.count }})</div></div>
+    <div class="header">
+        <div class="title">Printed Cards</div>
+        <div class="subtitle">{{ students.count }} cards printed</div>
+    </div>
+    
     <div class="student-list">
+        {% if students %}
+        <div class="summary-banner">
+            <div>
+                <div class="count">{{ students.count }}</div>
+                <div class="count-label">Cards Printed</div>
+            </div>
+            <div style="text-align:right;">
+                <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#00C2BA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6,9 6,2 18,2 18,9"/>
+                    <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-2"/>
+                    <rect x="6" y="14" width="12" height="8"/>
+                </svg>
+            </div>
+        </div>
+        
         {% for s in students %}
         <div class="student-card">
             <div class="top">
-                <div><div class="name">{{ s.id }}</div><div class="detail">{{ s.admission_number }} | {{ s.card_printed_date|date:"d M Y" }}</div></div>
-                <span class="badge badge-info">v{{ s.card_version }}{% if s.reprint_count > 0 %} ({{ s.reprint_count }}x){% endif %}</span>
+                <div>
+                    <div class="name">{{ s.id }}</div>
+                    <div class="detail">{{ s.admission_number }} · Printed {{ s.card_printed_date|date:"d M Y" }}</div>
+                </div>
+                <span class="badge badge-info">
+                    v{{ s.card_version }}{% if s.reprint_count > 0 %} ({{ s.reprint_count }}x){% endif %}
+                </span>
             </div>
         </div>
-        {% empty %}
-        <p style="text-align:center;color:#999;padding:40px;">No cards printed yet.</p>
         {% endfor %}
+        
+        {% else %}
+        <div class="empty-state">
+            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6,9 6,2 18,2 18,9"/>
+                <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-2"/>
+                <rect x="6" y="14" width="12" height="8"/>
+            </svg>
+            <p>No cards printed yet.</p>
+        </div>
+        {% endif %}
     </div>
-
-
-
 
 <script>
 console.log("╔══════════════════════════════════════╗");
@@ -51,9 +193,3 @@ console.log("╚═════════════════════�
 </script>
 </body>
 </html>
-
-
-
-
-
-

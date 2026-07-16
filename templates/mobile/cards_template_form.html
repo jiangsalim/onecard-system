@@ -4,48 +4,189 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
-    <title>Template Form - OneCard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>{% if template %}Edit{% else %}Create{% endif %} Template - OneCard | Jinja SS</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 70px; }
-        .header { background: #1a237e; color: white; padding: 14px 16px; }
-        .header .title { font-size: 16px; font-weight: 600; }
-        .form-card { background: white; border-radius: 12px; padding: 20px; margin: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-        .form-group { margin-bottom: 16px; }
-        .form-group label { display: block; font-weight: 600; font-size: 13px; color: #333; margin-bottom: 5px; }
-        .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
-        .btn-primary { background: #1a237e; color: white; }
-        .btn-cancel { background: #e0e0e0; color: #333; margin-top: 8px; }
+        body { 
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif; 
+            background: #F8F9FA; 
+            padding-bottom: 40px;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .header { 
+            background: linear-gradient(135deg, #0A1F3F, #132D52); 
+            color: white; 
+            padding: 18px 20px; 
+            box-shadow: 0 4px 20px rgba(10, 31, 63, 0.3);
+        }
+        
+        .header .title { 
+            font-size: 17px; 
+            font-weight: 700; 
+            letter-spacing: 0.3px;
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .form-card { 
+            background: white; 
+            border-radius: 16px; 
+            padding: 24px; 
+            margin: 16px; 
+            box-shadow: 0 2px 12px rgba(10, 31, 63, 0.06);
+            border: 1px solid #f0f0f0;
+        }
+        
+        .form-card .section-title {
+            font-size: 13px;
+            color: #9CA3AF;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .form-group { 
+            margin-bottom: 18px; 
+        }
+        
+        .form-group label { 
+            display: block; 
+            font-weight: 600; 
+            font-size: 13px; 
+            color: #0A1F3F; 
+            margin-bottom: 6px;
+        }
+        
+        .form-group input, .form-group select { 
+            width: 100%; 
+            padding: 14px 16px; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 12px; 
+            font-size: 14px; 
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .form-group input[type="color"] {
+            height: 50px;
+            padding: 6px;
+            cursor: pointer;
+        }
+        
+        .form-group input:focus, .form-group select:focus {
+            border-color: #00C2BA;
+            box-shadow: 0 0 0 3px rgba(0, 194, 186, 0.1);
+        }
+        
+        .form-row { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 12px; 
+        }
+        
+        .btn { 
+            width: 100%; 
+            padding: 14px; 
+            border: none; 
+            border-radius: 12px; 
+            font-size: 14px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.3px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary { 
+            background: linear-gradient(135deg, #00C2BA, #00A8A0); 
+            color: #0A1F3F; 
+        }
+        
+        .btn-primary:hover {
+            box-shadow: 0 8px 25px rgba(0, 194, 186, 0.3);
+            transform: translateY(-1px);
+        }
+        
+        .btn-cancel { 
+            background: #F8F9FA; 
+            color: #9CA3AF; 
+            margin-top: 10px;
+            text-align: center;
+            text-decoration: none;
+            display: block;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .btn-cancel:hover {
+            background: #f0f0f0;
+            color: #374151;
+        }
     </style>
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
-    <div class="header"><div class="title">{% if template %}Edit{% else %}Create{% endif %} Template</div></div>
+    <div class="header">
+        <div class="title">{% if template %}Edit Template{% else %}Create New Template{% endif %}</div>
+    </div>
+    
     <div class="form-card">
+        <div class="section-title">Template Details</div>
         <form method="post">
             {% csrf_token %}
-            <div class="form-group"><label>Template Name</label><input type="text" name="name" value="{{ template.name|default:'' }}" required></div>
-            <div class="form-row">
-                <div class="form-group"><label>Level</label><select name="class_level"><option value="O" {% if template.class_level == 'O' %}selected{% endif %}>O'LEVEL</option><option value="A" {% if template.class_level == 'A' %}selected{% endif %}>A'LEVEL</option></select></div>
-                <div class="form-group"><label>Color Name</label><input type="text" name="color_name" value="{{ template.color_name|default:'' }}" required></div>
+            
+            <div class="form-group">
+                <label>Template Name</label>
+                <input type="text" name="name" value="{{ template.name|default:'' }}" placeholder="e.g. O-Level Standard" required>
             </div>
+            
             <div class="form-row">
-                <div class="form-group"><label>Background</label><input type="color" name="background_color" value="{{ template.background_color|default:'#FFFFFF' }}"></div>
-                <div class="form-group"><label>Border</label><input type="color" name="border_color" value="{{ template.border_color|default:'#000000' }}"></div>
+                <div class="form-group">
+                    <label>Level</label>
+                    <select name="class_level">
+                        <option value="O" {% if template.class_level == 'O' %}selected{% endif %}>O'LEVEL</option>
+                        <option value="A" {% if template.class_level == 'A' %}selected{% endif %}>A'LEVEL</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Color Name</label>
+                    <input type="text" name="color_name" value="{{ template.color_name|default:'' }}" placeholder="e.g. Navy Blue" required>
+                </div>
             </div>
+            
+            <div class="section-title" style="margin-top:8px;">Appearance</div>
+            
             <div class="form-row">
-                <div class="form-group"><label>Badge Text</label><input type="text" name="badge_text" value="{{ template.badge_text|default:"O'LEVEL" }}"></div>
-                <div class="form-group"><label>Badge Color</label><input type="color" name="badge_color" value="{{ template.badge_color|default:'#000000' }}"></div>
+                <div class="form-group">
+                    <label>Background Color</label>
+                    <input type="color" name="background_color" value="{{ template.background_color|default:'#FFFFFF' }}">
+                </div>
+                <div class="form-group">
+                    <label>Border Color</label>
+                    <input type="color" name="border_color" value="{{ template.border_color|default:'#0A1F3F' }}">
+                </div>
             </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Badge Text</label>
+                    <input type="text" name="badge_text" value="{{ template.badge_text|default:"O'LEVEL" }}" placeholder="e.g. O'LEVEL">
+                </div>
+                <div class="form-group">
+                    <label>Badge Color</label>
+                    <input type="color" name="badge_color" value="{{ template.badge_color|default:'#0A1F3F' }}">
+                </div>
+            </div>
+            
             <button type="submit" class="btn btn-primary">Save Template</button>
-            <a href="{% url 'template_list' %}" class="btn btn-cancel" style="display:block;text-align:center;text-decoration:none;">Cancel</a>
+            <a href="{% url 'template_list' %}" class="btn btn-cancel">Cancel</a>
         </form>
     </div>
-
-
-
 
 <script>
 console.log("╔══════════════════════════════════════╗");
@@ -60,9 +201,3 @@ console.log("╚═════════════════════�
 </script>
 </body>
 </html>
-
-
-
-
-
-

@@ -4,43 +4,230 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
-    <title>Edit Student - OneCard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Edit Student - OneCard | Jinja SS</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 20px; }
-        .header { background: #1a237e; color: white; padding: 14px 16px; }
-        .header .title { font-size: 16px; font-weight: 600; }
-        .card-white { background: white; border-radius: 12px; padding: 20px; margin: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-        .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
-        .info-row strong { color: #1a237e; }
-        .form-group { margin-bottom: 14px; }
-        .form-group label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 4px; }
-        .form-group select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
-        .btn-primary { background: #1a237e; color: white; }
-        .btn-cancel { background: #e0e0e0; color: #333; margin-top: 8px; display: block; text-align: center; text-decoration: none; }
+        body { 
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif; 
+            background: #F8F9FA; 
+            padding-bottom: 40px;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .header { 
+            background: linear-gradient(135deg, #0A1F3F, #132D52); 
+            color: white; 
+            padding: 18px 20px; 
+            box-shadow: 0 4px 20px rgba(10, 31, 63, 0.3);
+        }
+        
+        .header .title { 
+            font-size: 17px; 
+            font-weight: 700; 
+            letter-spacing: 0.3px;
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .header .subtitle {
+            font-size: 11px;
+            color: #00C2BA;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-top: 3px;
+        }
+        
+        .card-white { 
+            background: white; 
+            border-radius: 16px; 
+            padding: 24px; 
+            margin: 16px; 
+            box-shadow: 0 2px 12px rgba(10, 31, 63, 0.06);
+            border: 1px solid #f0f0f0;
+        }
+        
+        .student-banner {
+            background: #F8F9FA;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border: 1px solid #f0f0f0;
+        }
+        
+        .student-banner .student-id {
+            font-family: 'Playfair Display', serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: #0A1F3F;
+        }
+        
+        .info-row { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            padding: 10px 0; 
+            border-bottom: 1px solid #f5f5f5; 
+            font-size: 13px; 
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .info-row .label { 
+            color: #9CA3AF; 
+            font-weight: 500;
+        }
+        
+        .info-row .value { 
+            color: #0A1F3F; 
+            font-weight: 600;
+        }
+        
+        .section-title {
+            font-size: 13px;
+            color: #9CA3AF;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .form-group { 
+            margin-bottom: 16px; 
+        }
+        
+        .form-group label { 
+            display: block; 
+            font-weight: 600; 
+            font-size: 13px; 
+            color: #0A1F3F;
+            margin-bottom: 6px; 
+        }
+        
+        .form-group select { 
+            width: 100%; 
+            padding: 14px 16px; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 12px; 
+            font-size: 14px; 
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: all 0.3s ease;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .form-group select:focus {
+            border-color: #00C2BA;
+            box-shadow: 0 0 0 3px rgba(0, 194, 186, 0.1);
+        }
+        
+        .btn { 
+            width: 100%; 
+            padding: 14px; 
+            border: none; 
+            border-radius: 12px; 
+            font-size: 14px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.3px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary { 
+            background: linear-gradient(135deg, #00C2BA, #00A8A0); 
+            color: #0A1F3F; 
+        }
+        
+        .btn-primary:hover {
+            box-shadow: 0 8px 25px rgba(0, 194, 186, 0.3);
+            transform: translateY(-1px);
+        }
+        
+        .btn-cancel { 
+            background: #F8F9FA; 
+            color: #9CA3AF; 
+            margin-top: 10px; 
+            display: block; 
+            text-align: center; 
+            text-decoration: none;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .btn-cancel:hover {
+            background: #f0f0f0;
+            color: #374151;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        
+        .badge-version {
+            background: rgba(0, 194, 186, 0.1);
+            color: #00A8A0;
+        }
     </style>
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
-    <div class="header"><div class="title">Edit {{ student.id }}</div></div>
+    <div class="header">
+        <div class="title">Edit Student</div>
+        <div class="subtitle">{{ student.id }}</div>
+    </div>
+    
     <div class="card-white">
-        <div style="margin-bottom:16px;">
-            <div class="info-row"><strong>Admission:</strong><span>{{ student.admission_number }}</span></div>
-            <div class="info-row"><strong>Payment:</strong><span>{{ student.payment_code }}</span></div>
-            <div class="info-row"><strong>Version:</strong><span>v{{ student.card_version }}</span></div>
+        <div class="student-banner">
+            <div class="student-id">{{ student.id }}</div>
+            <div style="margin-top:10px;">
+                <div class="info-row">
+                    <span class="label">Admission</span>
+                    <span class="value">{{ student.admission_number }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Payment Code</span>
+                    <span class="value">{{ student.payment_code }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Card Version</span>
+                    <span class="badge badge-version">v{{ student.card_version }}</span>
+                </div>
+            </div>
         </div>
+        
+        <div class="section-title">Edit Details</div>
+        
         <form method="post">
             {% csrf_token %}
-            <div class="form-group"><label>Category</label><select name="category"><option value="day" {% if student.category == 'day' %}selected{% endif %}>Day Scholar</option><option value="hostel" {% if student.category == 'hostel' %}selected{% endif %}>Hostel Student</option></select></div>
-            <div class="form-group"><label>Status</label><select name="status"><option value="active" {% if student.status == 'active' %}selected{% endif %}>Active</option><option value="inactive" {% if student.status == 'inactive' %}selected{% endif %}>Inactive</option></select></div>
+            <div class="form-group">
+                <label>Category</label>
+                <select name="category">
+                    <option value="day" {% if student.category == 'day' %}selected{% endif %}>Day Scholar</option>
+                    <option value="hostel" {% if student.category == 'hostel' %}selected{% endif %}>Hostel Student</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Status</label>
+                <select name="status">
+                    <option value="active" {% if student.status == 'active' %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if student.status == 'inactive' %}selected{% endif %}>Inactive</option>
+                </select>
+            </div>
+            
             <button type="submit" class="btn btn-primary">Save Changes</button>
             <a href="{% url 'view_students' %}" class="btn btn-cancel">Cancel</a>
         </form>
     </div>
-
-
-
 
 <script>
 console.log("╔══════════════════════════════════════╗");
@@ -55,9 +242,3 @@ console.log("╚═════════════════════�
 </script>
 </body>
 </html>
-
-
-
-
-
-

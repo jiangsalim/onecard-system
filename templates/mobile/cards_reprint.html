@@ -4,57 +4,262 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
-    <title>Reprint - OneCard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Reprint Card - OneCard | Jinja SS</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 70px; }
-        .header { background: #1a237e; color: white; padding: 14px 16px; }
-        .header .title { font-size: 16px; font-weight: 600; }
-        .card-white { background: white; border-radius: 12px; padding: 20px; margin: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-        .form-group { margin-bottom: 14px; }
-        .form-group label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 5px; }
-        .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
-        .btn-primary { background: #1a237e; color: white; }
-        .btn-warning { background: #e65100; color: white; margin-top: 10px; }
-        .info-text { font-size: 14px; padding: 10px 0; }
-        .warning-box { background: #fff3e0; padding: 12px; border-radius: 8px; font-size: 13px; color: #e65100; margin-top: 12px; }
-        .badge { padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 600; }
-        .badge-info { background: #e3f2fd; color: #1565c0; }
+        body { 
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif; 
+            background: #F8F9FA; 
+            padding-bottom: 40px;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .header { 
+            background: linear-gradient(135deg, #0A1F3F, #132D52); 
+            color: white; 
+            padding: 18px 20px; 
+            box-shadow: 0 4px 20px rgba(10, 31, 63, 0.3);
+        }
+        
+        .header .title { 
+            font-size: 17px; 
+            font-weight: 700; 
+            letter-spacing: 0.3px;
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .header .subtitle {
+            font-size: 11px;
+            color: #00C2BA;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-top: 3px;
+        }
+        
+        .card-white { 
+            background: white; 
+            border-radius: 16px; 
+            padding: 20px; 
+            margin: 16px; 
+            box-shadow: 0 2px 12px rgba(10, 31, 63, 0.06);
+            border: 1px solid #f0f0f0;
+        }
+        
+        .card-white h3 {
+            font-size: 15px;
+            color: #0A1F3F;
+            margin-bottom: 16px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .form-group { 
+            margin-bottom: 16px; 
+        }
+        
+        .form-group label { 
+            display: block; 
+            font-weight: 600; 
+            font-size: 13px; 
+            margin-bottom: 6px; 
+            color: #0A1F3F;
+        }
+        
+        .form-group input, .form-group select { 
+            width: 100%; 
+            padding: 14px 16px; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 12px; 
+            font-size: 14px; 
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .form-group input:focus, .form-group select:focus {
+            border-color: #00C2BA;
+            box-shadow: 0 0 0 3px rgba(0, 194, 186, 0.1);
+        }
+        
+        .btn { 
+            width: 100%; 
+            padding: 14px; 
+            border: none; 
+            border-radius: 12px; 
+            font-size: 14px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.3px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary { 
+            background: linear-gradient(135deg, #0A1F3F, #132D52); 
+            color: white; 
+        }
+        
+        .btn-primary:hover {
+            box-shadow: 0 8px 25px rgba(10, 31, 63, 0.2);
+            transform: translateY(-1px);
+        }
+        
+        .btn-warning { 
+            background: linear-gradient(135deg, #e65100, #ff6d00); 
+            color: white; 
+            margin-top: 12px; 
+        }
+        
+        .btn-warning:hover {
+            box-shadow: 0 8px 25px rgba(230, 81, 0, 0.25);
+            transform: translateY(-1px);
+        }
+        
+        .info-text { 
+            font-size: 14px; 
+            padding: 12px 0; 
+        }
+        
+        .info-text strong {
+            font-family: 'Playfair Display', serif;
+            font-size: 18px;
+            color: #0A1F3F;
+        }
+        
+        .info-text small {
+            color: #9CA3AF;
+            font-size: 12px;
+        }
+        
+        .student-detail-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 13px;
+        }
+        
+        .warning-box { 
+            background: rgba(230, 81, 0, 0.05); 
+            border: 1px solid rgba(230, 81, 0, 0.2);
+            padding: 14px; 
+            border-radius: 12px; 
+            font-size: 13px; 
+            color: #e65100; 
+            margin-top: 14px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .warning-box svg {
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+        
+        .badge { 
+            padding: 5px 12px; 
+            border-radius: 20px; 
+            font-size: 11px; 
+            font-weight: 600; 
+            letter-spacing: 0.5px;
+        }
+        
+        .badge-info { 
+            background: rgba(0, 194, 186, 0.1); 
+            color: #00A8A0; 
+        }
+        
+        .reprint-history {
+            margin-top: 12px;
+            font-size: 12px;
+            color: #9CA3AF;
+        }
+        
+        .reprint-history div {
+            padding: 6px 0;
+            border-bottom: 1px solid #f8f8f8;
+        }
+        
+        .reprint-history div:last-child {
+            border-bottom: none;
+        }
     </style>
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
-    <div class="header"><div class="title">Reprint Card</div></div>
+    <div class="header">
+        <div class="title">Reprint Student Card</div>
+        <div class="subtitle">Replace lost or damaged cards</div>
+    </div>
+    
     <div class="card-white">
+        <h3>Lookup Student</h3>
         <form method="post">
             {% csrf_token %}
-            <div class="form-group"><label>Student ID</label><input type="text" name="student_id" value="{{ student.id|default:'' }}" placeholder="e.g. STU-001" required></div>
+            <div class="form-group">
+                <label>Student ID</label>
+                <input type="text" name="student_id" value="{{ student.id|default:'' }}" placeholder="e.g. STU-001" required>
+            </div>
             <button type="submit" name="lookup" class="btn btn-primary">Lookup Student</button>
         </form>
     </div>
+    
     {% if student %}
     <div class="card-white">
-        <div class="info-text"><strong>{{ student.id }}</strong><br><small style="color:#888;">{{ student.admission_number }} | v{{ student.card_version }}</small></div>
-        <div style="font-size:13px;">Current Reprints: <span class="badge badge-info">{{ student.reprint_count }}</span></div>
+        <h3>Student Details</h3>
+        <div class="info-text">
+            <strong>{{ student.id }}</strong><br>
+            <small>{{ student.admission_number }}</small>
+        </div>
+        
+        <div class="student-detail-row">
+            <span style="color:#9CA3AF;">Card Version</span>
+            <span class="badge badge-info">v{{ student.card_version }}</span>
+        </div>
+        <div class="student-detail-row">
+            <span style="color:#9CA3AF;">Current Reprints</span>
+            <span class="badge badge-info">{{ student.reprint_count }}</span>
+        </div>
+        
         {% if reprints %}
-        <div style="margin-top:10px;font-size:12px;color:#888;">
-            {% for r in reprints %}<div>#{{ r.reprint_number }}: {{ r.get_reason_display }} � {{ r.reprinted_at|date:"d M Y" }}</div>{% endfor %}
+        <div class="reprint-history">
+            <div style="font-weight:600; color:#0A1F3F; padding-bottom:8px;">Reprint History</div>
+            {% for r in reprints %}
+            <div>#{{ r.reprint_number }}: {{ r.get_reason_display }} · {{ r.reprinted_at|date:"d M Y" }}</div>
+            {% endfor %}
         </div>
         {% endif %}
-        <div class="warning-box">? Reprinting deactivates the old card. The student's QR code stays the same.</div>
+        
+        <div class="warning-box">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <span>Reprinting deactivates the old card. The student's QR code and payment code remain the same.</span>
+        </div>
+        
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="student_id" value="{{ student.id }}">
             <input type="hidden" name="confirm" value="yes">
-            <div class="form-group" style="margin-top:12px;"><label>Reason</label><select name="reason"><option value="lost">Lost</option><option value="damaged">Damaged</option><option value="correction">Correction</option><option value="other">Other</option></select></div>
+            <div class="form-group" style="margin-top:14px;">
+                <label>Reason for Reprint</label>
+                <select name="reason">
+                    <option value="lost">Lost</option>
+                    <option value="damaged">Damaged</option>
+                    <option value="correction">Correction</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
             <button type="submit" class="btn btn-warning">Confirm Reprint</button>
         </form>
     </div>
     {% endif %}
-
-
-
 
 <script>
 console.log("╔══════════════════════════════════════╗");
@@ -69,9 +274,3 @@ console.log("╚═════════════════════�
 </script>
 </body>
 </html>
-
-
-
-
-
-

@@ -4,33 +4,213 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
-    <title>Import - OneCard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Import Students - OneCard | Jinja SS</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 70px; }
-        .header { background: #1a237e; color: white; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; }
-        .header .title { font-size: 16px; font-weight: 600; }
-        .header a { color: white; text-decoration: none; font-size: 13px; }
-        .filter-bar { padding: 10px 16px; background: white; display: flex; gap: 8px; border-bottom: 1px solid #e0e0e0; }
-        .filter-bar select, .filter-bar input { padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; flex: 1; }
-        .stats { padding: 10px 16px; display: flex; gap: 16px; font-size: 13px; color: #666; flex-wrap: wrap; }
-        .stats strong { color: #1a237e; }
-        .action-bar { padding: 8px 16px; display: flex; gap: 8px; flex-wrap: wrap; }
-        .btn { padding: 10px 16px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
-        .btn-primary { background: #1a237e; color: white; }
-        .btn-success { background: #2e7d32; color: white; }
-        .btn-warning { background: #e65100; color: white; flex: 1; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .student-list { padding: 8px 16px; }
-        .student-card { background: white; border-radius: 8px; padding: 12px; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .student-card input[type=checkbox] { width: 20px; height: 20px; }
-        .student-card .info { flex: 1; }
-        .student-card .name { font-weight: 600; font-size: 14px; }
-        .student-card .detail { font-size: 11px; color: #888; }
-        .progress-container { padding: 8px 16px; display: none; }
-        .progress { height: 16px; background: #e0e0e0; border-radius: 8px; overflow: hidden; }
-        .progress-bar { height: 100%; background: linear-gradient(90deg, #2e7d32, #4caf50); border-radius: 8px; width: 0%; display: flex; align-items: center; justify-content: center; color: white; font-size: 10px; font-weight: 600; transition: width 0.5s ease; }
-        .progress-text { text-align: center; font-size: 12px; color: #666; margin-top: 4px; }
+        body { 
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif; 
+            background: #F8F9FA; 
+            padding-bottom: 40px;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .header { 
+            background: linear-gradient(135deg, #0A1F3F, #132D52); 
+            color: white; 
+            padding: 18px 20px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 4px 20px rgba(10, 31, 63, 0.3);
+        }
+        
+        .header .title { 
+            font-size: 17px; 
+            font-weight: 700; 
+            letter-spacing: 0.3px;
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .header a { 
+            color: #00C2BA; 
+            text-decoration: none; 
+            font-size: 13px; 
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 194, 186, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .header a:hover {
+            background: rgba(0, 194, 186, 0.1);
+        }
+        
+        .filter-bar { 
+            padding: 14px 16px; 
+            background: white; 
+            display: flex; 
+            gap: 10px; 
+            border-bottom: 1px solid #f0f0f0; 
+        }
+        
+        .filter-bar select, .filter-bar input { 
+            padding: 12px 14px; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 10px; 
+            font-size: 13px; 
+            font-family: 'Inter', sans-serif;
+            flex: 1;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-bar select:focus, .filter-bar input:focus {
+            border-color: #00C2BA;
+            box-shadow: 0 0 0 3px rgba(0, 194, 186, 0.1);
+        }
+        
+        .stats { 
+            padding: 14px 16px; 
+            display: flex; 
+            gap: 20px; 
+            font-size: 13px; 
+            color: #9CA3AF; 
+            flex-wrap: wrap; 
+        }
+        
+        .stats strong { 
+            color: #0A1F3F; 
+        }
+        
+        .action-bar { 
+            padding: 8px 16px 16px; 
+            display: flex; 
+            gap: 8px; 
+            flex-wrap: wrap; 
+        }
+        
+        .btn { 
+            padding: 10px 18px; 
+            border: none; 
+            border-radius: 10px; 
+            font-size: 13px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.3px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary { 
+            background: #0A1F3F; 
+            color: white; 
+        }
+        
+        .btn-primary:hover { background: #132D52; }
+        
+        .btn-success { 
+            background: linear-gradient(135deg, #00C2BA, #00A8A0); 
+            color: #0A1F3F; 
+        }
+        
+        .btn-success:hover {
+            box-shadow: 0 8px 25px rgba(0, 194, 186, 0.3);
+        }
+        
+        .btn-warning { 
+            background: linear-gradient(135deg, #e65100, #ff6d00); 
+            color: white; 
+            flex: 1; 
+        }
+        
+        .btn-warning:hover {
+            box-shadow: 0 8px 25px rgba(230, 81, 0, 0.25);
+        }
+        
+        .btn:disabled { 
+            opacity: 0.5; 
+            cursor: not-allowed; 
+        }
+        
+        .student-list { 
+            padding: 8px 16px; 
+        }
+        
+        .student-card { 
+            background: white; 
+            border-radius: 12px; 
+            padding: 14px; 
+            margin-bottom: 8px; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            box-shadow: 0 2px 8px rgba(10, 31, 63, 0.04);
+            border: 1px solid #f0f0f0;
+            transition: transform 0.3s ease;
+        }
+        
+        .student-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(10, 31, 63, 0.08);
+        }
+        
+        .student-card input[type=checkbox] { 
+            width: 20px; 
+            height: 20px; 
+            accent-color: #00C2BA;
+            cursor: pointer;
+        }
+        
+        .student-card .info { 
+            flex: 1; 
+        }
+        
+        .student-card .name { 
+            font-weight: 600; 
+            font-size: 14px; 
+            color: #0A1F3F;
+        }
+        
+        .student-card .detail { 
+            font-size: 11px; 
+            color: #9CA3AF; 
+            margin-top: 2px;
+        }
+        
+        .progress-container { 
+            padding: 8px 16px; 
+            display: none; 
+        }
+        
+        .progress { 
+            height: 20px; 
+            background: #e0e0e0; 
+            border-radius: 10px; 
+            overflow: hidden; 
+        }
+        
+        .progress-bar { 
+            height: 100%; 
+            background: linear-gradient(90deg, #00C2BA, #00A8A0); 
+            border-radius: 10px; 
+            width: 0%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: white; 
+            font-size: 10px; 
+            font-weight: 700; 
+            transition: width 0.5s ease; 
+        }
+        
+        .progress-text { 
+            text-align: center; 
+            font-size: 12px; 
+            color: #9CA3AF; 
+            margin-top: 6px; 
+        }
     </style>
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
@@ -39,17 +219,26 @@
         <div class="title">Import Students</div>
         <a href="{% url 'view_students' %}">View All</a>
     </div>
+    
     <div class="filter-bar">
-        <select id="filterClass"><option value="">All Classes</option><option>Senior 1</option><option>Senior 2</option><option>Senior 3</option><option>Senior 4</option><option>Senior 5</option><option>Senior 6</option></select>
-        <select id="filterStream"><option value="">All Streams</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option></select>
+        <select id="filterClass">
+            <option value="">All Classes</option>
+            <option>Senior 1</option><option>Senior 2</option><option>Senior 3</option>
+            <option>Senior 4</option><option>Senior 5</option><option>Senior 6</option>
+        </select>
+        <select id="filterStream">
+            <option value="">All Streams</option>
+            <option>A</option><option>B</option><option>C</option><option>D</option>
+            <option>E</option><option>F</option><option>G</option><option>H</option>
+        </select>
     </div>
+    
     <div class="stats">
         <span>Remaining: <strong id="totalCount">0</strong></span>
         <span>Imported: <strong id="importedCount">0</strong></span>
         <span>Selected: <strong id="selectedCount">0</strong></span>
     </div>
     
-    <!-- Live Progress Bar -->
     <div class="progress-container" id="progressContainer">
         <div class="progress">
             <div class="progress-bar" id="progressBar">0%</div>
@@ -58,11 +247,12 @@
     </div>
     
     <div class="action-bar">
-        <button class="btn btn-primary" onclick="selectAll()">All</button>
-        <button class="btn btn-primary" onclick="deselectAll()">None</button>
+        <button class="btn btn-primary" onclick="selectAll()">Select All</button>
+        <button class="btn btn-primary" onclick="deselectAll()">Deselect</button>
         <button class="btn btn-warning" id="importAllBtn" onclick="importAll()">Import All</button>
-        <button class="btn btn-success" id="importBtn" onclick="importSelected()">Import</button>
+        <button class="btn btn-success" id="importBtn" onclick="importSelected()">Import Selected</button>
     </div>
+    
     <div class="student-list" id="studentList"></div>
 
     <script>
@@ -72,7 +262,7 @@
         function loadStudents(page) {
             currentPage = page;
             const cls = document.getElementById('filterClass').value, stream = document.getElementById('filterStream').value;
-            document.getElementById('studentList').innerHTML = '<p style="text-align:center;padding:20px;">Loading...</p>';
+            document.getElementById('studentList').innerHTML = '<p style="text-align:center;padding:20px;color:#9CA3AF;">Loading...</p>';
             fetch(`/api/students-list/?cls=${cls}&stream=${stream}&page=${page}&per_page=${PER_PAGE}`)
             .then(r => r.json()).then(data => {
                 allStudents = data.students;
@@ -86,7 +276,7 @@
         function renderList() {
             const list = document.getElementById('studentList');
             if (allStudents.length === 0) { 
-                list.innerHTML = '<p style="text-align:center;color:#2e7d32;padding:30px;">All students imported!</p>'; 
+                list.innerHTML = '<p style="text-align:center;color:#00C2BA;padding:30px;font-weight:500;">All students imported!</p>'; 
                 return; 
             }
             list.innerHTML = allStudents.map(s => `
@@ -94,7 +284,7 @@
                     <input type="checkbox" value="${s.admission_number}" ${selectedSet.has(s.admission_number)?'checked':''} onchange="toggleStudent(this)">
                     <div class="info">
                         <div class="name">${s.full_name}</div>
-                        <div class="detail">${s.admission_number} | ${s.current_class} ${s.stream} | ${s.payment_code}</div>
+                        <div class="detail">${s.admission_number} · ${s.current_class} ${s.stream} · ${s.payment_code}</div>
                     </div>
                 </div>
             `).join('');
@@ -173,9 +363,6 @@
         loadStudents(1);
     </script>
 
-
-
-
 <script>
 console.log("╔══════════════════════════════════════╗");
 console.log("║        ONECARD SYSTEM               ║");
@@ -189,7 +376,3 @@ console.log("╚═════════════════════�
 </script>
 </body>
 </html>
-
-
-
-

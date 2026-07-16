@@ -4,46 +4,224 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
-    <title>Meal Violations - OneCard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Meal Violations - OneCard | Jinja SS</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 20px; }
-        .header { background: #1a237e; color: white; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; }
-        .header .title { font-size: 16px; font-weight: 600; }
-        .header .back { color: white; text-decoration: none; font-size: 13px; }
-        .section { margin: 12px 16px; }
-        .section-title { font-size: 14px; font-weight: 600; color: #333; margin-bottom: 8px; }
-        .card { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 12px; }
-        .violation-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
-        .violation-item:last-child { border-bottom: none; }
-        .violation-item .info { flex: 1; }
-        .violation-item .name { font-weight: 600; font-size: 14px; }
-        .violation-item .detail { font-size: 11px; color: #888; margin-top: 2px; }
-        .badge { padding: 3px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
-        .badge-double { background: #ffebee; color: #c62828; }
-        .badge-day { background: #fff3e0; color: #e65100; }
-        .badge-balance { background: #fce4ec; color: #880e4f; }
-        .btn-resolve { background: #2e7d32; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-size: 12px; text-decoration: none; font-weight: 500; }
-        .btn-resolve-all { display: block; text-align: center; background: #c62828; color: white; padding: 10px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 13px; margin-top: 8px; }
-        .empty-state { text-align: center; padding: 20px; color: #888; font-size: 13px; }
-        .alert { padding: 10px 14px; border-radius: 8px; margin-bottom: 10px; font-size: 13px; }
-        .alert-success { background: #e8f5e9; color: #2e7d32; }
-        .resolved-item { padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 12px; display: flex; justify-content: space-between; }
-        .resolved-item:last-child { border-bottom: none; }
+        body { 
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif; 
+            background: #F8F9FA; 
+            padding-bottom: 30px;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .header { 
+            background: linear-gradient(135deg, #0A1F3F, #132D52); 
+            color: white; 
+            padding: 18px 20px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 4px 20px rgba(10, 31, 63, 0.3);
+        }
+        
+        .header .title { 
+            font-size: 17px; 
+            font-weight: 700; 
+            letter-spacing: 0.3px;
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .header .back { 
+            color: #00C2BA; 
+            text-decoration: none; 
+            font-size: 13px; 
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 194, 186, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .header .back:hover {
+            background: rgba(0, 194, 186, 0.1);
+        }
+        
+        .section { 
+            margin: 16px 16px; 
+        }
+        
+        .section-title { 
+            font-size: 13px; 
+            font-weight: 700; 
+            color: #0A1F3F; 
+            margin-bottom: 10px; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .section-title .count {
+            color: #00C2BA;
+            font-weight: 700;
+        }
+        
+        .card { 
+            background: white; 
+            border-radius: 16px; 
+            padding: 16px; 
+            box-shadow: 0 2px 12px rgba(10, 31, 63, 0.06);
+            border: 1px solid #f0f0f0;
+            margin-bottom: 12px; 
+        }
+        
+        .violation-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 14px 0; 
+            border-bottom: 1px solid #f5f5f5; 
+        }
+        
+        .violation-item:last-child { 
+            border-bottom: none; 
+        }
+        
+        .violation-item .info { 
+            flex: 1; 
+        }
+        
+        .violation-item .name { 
+            font-weight: 600; 
+            font-size: 14px; 
+            color: #0A1F3F;
+        }
+        
+        .violation-item .detail { 
+            font-size: 11px; 
+            color: #9CA3AF; 
+            margin-top: 3px;
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        
+        .badge { 
+            padding: 4px 10px; 
+            border-radius: 20px; 
+            font-size: 10px; 
+            font-weight: 600; 
+            letter-spacing: 0.5px;
+        }
+        
+        .badge-double { 
+            background: rgba(198, 40, 40, 0.1); 
+            color: #c62828; 
+        }
+        
+        .badge-day { 
+            background: rgba(230, 81, 0, 0.1); 
+            color: #e65100; 
+        }
+        
+        .badge-balance { 
+            background: rgba(136, 14, 79, 0.1); 
+            color: #880e4f; 
+        }
+        
+        .btn-resolve { 
+            background: #00C2BA; 
+            color: #0A1F3F; 
+            border: none; 
+            padding: 8px 16px; 
+            border-radius: 10px; 
+            font-size: 12px; 
+            text-decoration: none; 
+            font-weight: 700; 
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-resolve:hover {
+            background: #00A8A0;
+        }
+        
+        .btn-resolve-all { 
+            display: block; 
+            text-align: center; 
+            background: rgba(198, 40, 40, 0.1); 
+            color: #c62828; 
+            padding: 12px; 
+            border-radius: 12px; 
+            text-decoration: none; 
+            font-weight: 700; 
+            font-size: 13px; 
+            margin-top: 12px;
+            border: 1px solid rgba(198, 40, 40, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-resolve-all:hover {
+            background: rgba(198, 40, 40, 0.2);
+        }
+        
+        .empty-state { 
+            text-align: center; 
+            padding: 30px; 
+            color: #9CA3AF; 
+            font-size: 14px; 
+        }
+        
+        .alert { 
+            padding: 12px 16px; 
+            border-radius: 12px; 
+            margin: 0 16px 12px; 
+            font-size: 13px; 
+            font-weight: 500;
+        }
+        
+        .alert-success { 
+            background: rgba(0, 194, 186, 0.1); 
+            color: #00A8A0; 
+            border: 1px solid rgba(0, 194, 186, 0.2);
+        }
+        
+        .resolved-item { 
+            padding: 12px 0; 
+            border-bottom: 1px solid #f5f5f5; 
+            font-size: 13px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+        }
+        
+        .resolved-item:last-child { 
+            border-bottom: none; 
+        }
+        
+        .resolved-item strong {
+            color: #0A1F3F;
+        }
+        
+        .resolved-item .time {
+            color: #9CA3AF;
+            font-size: 11px;
+        }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="title">Meal Violations</div>
-        <a href="{% url 'dashboard' %}" class="back">← Back</a>
+        <a href="{% url 'dashboard' %}" class="back">← Dashboard</a>
     </div>
 
     {% if messages %}
-    {% for m in messages %}<div style="padding:0 16px;"><div class="alert alert-success">{{ m }}</div></div>{% endfor %}
+    {% for m in messages %}
+    <div class="alert alert-success">{{ m }}</div>
+    {% endfor %}
     {% endif %}
 
     <div class="section">
-        <div class="section-title">⚠ Unresolved ({{ unresolved_count }})</div>
+        <div class="section-title">Unresolved · <span class="count">{{ unresolved_count }}</span></div>
         <div class="card">
             {% if violations %}
                 {% for v in violations %}
@@ -60,35 +238,32 @@
                             {% else %}
                                 {{ v.get_violation_type_display }}
                             {% endif %}
-                            | {{ v.meal_type|title }} | {{ v.occurred_at|time:"H:i" }}
+                            · {{ v.meal_type|title }} · {{ v.occurred_at|time:"H:i" }}
                         </div>
                     </div>
                     <a href="{% url 'resolve_violation' v.id %}" class="btn-resolve">Resolve</a>
                 </div>
                 {% endfor %}
-                <a href="{% url 'resolve_all_violations' %}" class="btn-resolve-all" onclick="return confirm('Resolve ALL?')">Resolve All ({{ unresolved_count }})</a>
+                <a href="{% url 'resolve_all_violations' %}" class="btn-resolve-all" onclick="return confirm('Resolve ALL violations?')">Resolve All ({{ unresolved_count }})</a>
             {% else %}
-                <div class="empty-state">✅ No unresolved violations</div>
+                <div class="empty-state">No unresolved violations</div>
             {% endif %}
         </div>
     </div>
 
     {% if resolved %}
     <div class="section">
-        <div class="section-title">✅ Recently Resolved</div>
+        <div class="section-title">Recently Resolved</div>
         <div class="card">
             {% for v in resolved %}
             <div class="resolved-item">
                 <span><strong>{{ v.student.id }}</strong> — {{ v.get_violation_type_display }}</span>
-                <span style="color:#888; font-size:11px;">{{ v.resolved_at|date:"M d, H:i" }}</span>
+                <span class="time">{{ v.resolved_at|date:"M d, H:i" }}</span>
             </div>
             {% endfor %}
         </div>
     </div>
     {% endif %}
-
-
-
 
 <script>
 console.log("╔══════════════════════════════════════╗");
@@ -103,7 +278,3 @@ console.log("╚═════════════════════�
 </script>
 </body>
 </html>
-
-
-
-

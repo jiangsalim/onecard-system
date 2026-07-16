@@ -4,61 +4,222 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
-    <title>Meals - OneCard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Meals - OneCard | Jinja SS</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 70px; }
-        .header { background: #1a237e; color: white; padding: 14px 16px; }
-        .header .title { font-size: 16px; font-weight: 600; }
-        .meal-tabs { display: flex; padding: 10px 16px; gap: 8px; background: white; }
-        .meal-tab { flex: 1; padding: 10px; text-align: center; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; }
-        .tab-breakfast { background: #fff3e0; color: #e65100; }
-        .tab-lunch { background: #e8f5e9; color: #2e7d32; }
-        .tab-supper { background: #e3f2fd; color: #1565c0; }
-        .tab-active { border: 2px solid #1a237e; }
-        .student-list { padding: 8px 16px; }
-        .student-card { background: white; border-radius: 10px; padding: 12px 14px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .student-card .info .name { font-weight: 600; font-size: 14px; }
-        .student-card .info .detail { font-size: 11px; color: #888; }
-        .badge { padding: 3px 8px; border-radius: 8px; font-size: 11px; font-weight: 600; }
-        .badge-day { background: #ECEFF1; color: #546E7A; }
-        .badge-hostel { background: #FFF3E0; color: #E65100; }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; border-top: 1px solid #e0e0e0; }
-        .bottom-nav a { flex: 1; text-align: center; padding: 10px 0; color: #888; text-decoration: none; font-size: 11px; }
+        body { 
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif; 
+            background: #F8F9FA; 
+            padding-bottom: 80px;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .header { 
+            background: linear-gradient(135deg, #0A1F3F, #132D52); 
+            color: white; 
+            padding: 18px 20px; 
+            box-shadow: 0 4px 20px rgba(10, 31, 63, 0.3);
+        }
+        
+        .header .title { 
+            font-size: 17px; 
+            font-weight: 700; 
+            letter-spacing: 0.3px;
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .header .subtitle {
+            font-size: 11px;
+            color: #00C2BA;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-top: 3px;
+        }
+        
+        .meal-tabs { 
+            display: flex; 
+            padding: 14px 16px; 
+            gap: 10px; 
+            background: white;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .meal-tab { 
+            flex: 1; 
+            padding: 12px 8px; 
+            text-align: center; 
+            border-radius: 12px; 
+            font-size: 12px; 
+            font-weight: 700; 
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .meal-tab .count {
+            display: block;
+            font-size: 18px;
+            font-family: 'Playfair Display', serif;
+            margin-bottom: 2px;
+        }
+        
+        .tab-breakfast { 
+            background: rgba(230, 81, 0, 0.08); 
+            color: #e65100; 
+            border: 1px solid rgba(230, 81, 0, 0.15);
+        }
+        
+        .tab-lunch { 
+            background: rgba(0, 194, 186, 0.08); 
+            color: #00A8A0; 
+            border: 1px solid rgba(0, 194, 186, 0.15);
+        }
+        
+        .tab-supper { 
+            background: rgba(21, 101, 192, 0.08); 
+            color: #1565c0; 
+            border: 1px solid rgba(21, 101, 192, 0.15);
+        }
+        
+        .tab-active { 
+            border-width: 2px !important; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-1px);
+        }
+        
+        .student-list { 
+            padding: 12px 16px; 
+        }
+        
+        .student-card { 
+            background: white; 
+            border-radius: 14px; 
+            padding: 14px 16px; 
+            margin-bottom: 8px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 2px 10px rgba(10, 31, 63, 0.04);
+            border: 1px solid #f0f0f0;
+            transition: transform 0.3s ease;
+        }
+        
+        .student-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(10, 31, 63, 0.08);
+        }
+        
+        .student-card .info .name { 
+            font-weight: 600; 
+            font-size: 14px; 
+            color: #0A1F3F;
+        }
+        
+        .student-card .info .detail { 
+            font-size: 11px; 
+            color: #9CA3AF; 
+            margin-top: 2px;
+        }
+        
+        .badge { 
+            padding: 5px 12px; 
+            border-radius: 20px; 
+            font-size: 10px; 
+            font-weight: 700; 
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        
+        .badge-day { 
+            background: rgba(158, 158, 158, 0.1); 
+            color: #757575; 
+        }
+        
+        .badge-hostel { 
+            background: rgba(230, 81, 0, 0.1); 
+            color: #e65100; 
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #9CA3AF;
+            font-size: 14px;
+        }
+        
+        .bottom-nav { 
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            right: 0; 
+            background: white; 
+            display: flex; 
+            border-top: 1px solid #f0f0f0;
+            box-shadow: 0 -4px 20px rgba(10, 31, 63, 0.08);
+            z-index: 100;
+        }
+        
+        .bottom-nav a { 
+            flex: 1; 
+            text-align: center; 
+            padding: 10px 0 8px; 
+            color: #9CA3AF; 
+            text-decoration: none; 
+            font-size: 10px; 
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .bottom-nav a.active { 
+            color: #00C2BA; 
+        }
     </style>
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
-    <div class="header"><div class="title">Meals � {{ today|date:"d M Y" }}</div></div>
-    <div class="meal-tabs">
-        <a href="?meal=breakfast" class="meal-tab tab-breakfast {% if meal_type == 'breakfast' %}tab-active{% endif %}">Breakfast ({{ breakfast_count }})</a>
-        <a href="?meal=lunch" class="meal-tab tab-lunch {% if meal_type == 'lunch' %}tab-active{% endif %}">Lunch ({{ lunch_count }})</a>
-        <a href="?meal=supper" class="meal-tab tab-supper {% if meal_type == 'supper' %}tab-active{% endif %}">Supper ({{ supper_count }})</a>
+    <div class="header">
+        <div class="title">Meal Tracking</div>
+        <div class="subtitle">{{ today|date:"d M Y" }}</div>
     </div>
+    
+    <div class="meal-tabs">
+        <a href="?meal=breakfast" class="meal-tab tab-breakfast {% if meal_type == 'breakfast' %}tab-active{% endif %}">
+            <span class="count">{{ breakfast_count }}</span>
+            Breakfast
+        </a>
+        <a href="?meal=lunch" class="meal-tab tab-lunch {% if meal_type == 'lunch' %}tab-active{% endif %}">
+            <span class="count">{{ lunch_count }}</span>
+            Lunch
+        </a>
+        <a href="?meal=supper" class="meal-tab tab-supper {% if meal_type == 'supper' %}tab-active{% endif %}">
+            <span class="count">{{ supper_count }}</span>
+            Supper
+        </a>
+    </div>
+    
     <div class="student-list">
         {% for m in meals %}
         <div class="student-card">
             <div class="info">
                 <div class="name">{{ m.student.id }}</div>
-                <div class="detail">{{ m.student.admission_number }} | {{ m.time_scanned }} | {{ m.location }}</div>
+                <div class="detail">{{ m.student.admission_number }} · {{ m.time_scanned }} · {{ m.location }}</div>
             </div>
             <span class="badge {% if m.student.category == 'hostel' %}badge-hostel{% else %}badge-day{% endif %}">
                 {% if m.student.category == 'hostel' %}Hostel{% else %}Day{% endif %}
             </span>
         </div>
         {% empty %}
-        <p style="text-align:center;color:#999;padding:40px;">No records for {{ meal_type }} today.</p>
+        <div class="empty-state">No records for {{ meal_type }} today.</div>
         {% endfor %}
     </div>
+    
     <div class="bottom-nav">
         <a href="{% url 'dashboard' %}">Home</a>
         <a href="{% url 'attendance_report' %}">Attendance</a>
-        <a href="#" style="color:#1a237e;">Meals</a>
+        <a href="#" class="active">Meals</a>
         <a href="{% url 'movement_history' %}">Movement</a>
     </div>
-
-
-
 
 <script>
 console.log("╔══════════════════════════════════════╗");
@@ -73,9 +234,3 @@ console.log("╚═════════════════════�
 </script>
 </body>
 </html>
-
-
-
-
-
-

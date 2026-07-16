@@ -4,41 +4,225 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
-    <title>Students - OneCard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Students - OneCard | Jinja SS</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 70px; }
-        .header { background: #1a237e; color: white; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; }
-        .header .title { font-size: 16px; font-weight: 600; }
-        .header a { color: white; text-decoration: none; font-size: 13px; }
-        .search-bar { padding: 12px 16px; background: white; border-bottom: 1px solid #e0e0e0; }
-        .search-bar input { width: 100%; padding: 12px 16px; border: 1px solid #ddd; border-radius: 10px; font-size: 14px; }
-        .student-list { padding: 8px 16px; }
-        .student-card { background: white; border-radius: 10px; padding: 14px; margin-bottom: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-        .student-card .top { display: flex; justify-content: space-between; align-items: center; }
-        .student-card .id { font-weight: 700; color: #1a237e; font-size: 15px; }
-        .student-card .adm { font-size: 12px; color: #888; }
-        .student-card .row { display: flex; gap: 8px; margin-top: 6px; }
-        .badge { padding: 3px 8px; border-radius: 8px; font-size: 11px; font-weight: 600; }
-        .badge-day { background: #ECEFF1; color: #546E7A; }
-        .badge-hostel { background: #FFF3E0; color: #E65100; }
-        .badge-printed { background: #e8f5e9; color: #2e7d32; }
-        .badge-notprinted { background: #fff3e0; color: #e65100; }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; border-top: 1px solid #e0e0e0; }
-        .bottom-nav a { flex: 1; text-align: center; padding: 10px 0; color: #888; text-decoration: none; font-size: 11px; }
-        .bottom-nav a.active { color: #1a237e; }
-        .bottom-nav a svg { display: block; margin: 0 auto 3px; }
+        body { 
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif; 
+            background: #F8F9FA; 
+            padding-bottom: 80px;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .header { 
+            background: linear-gradient(135deg, #0A1F3F, #132D52); 
+            color: white; 
+            padding: 18px 20px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 4px 20px rgba(10, 31, 63, 0.3);
+        }
+        
+        .header .title { 
+            font-size: 17px; 
+            font-weight: 700; 
+            letter-spacing: 0.3px;
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .header .count {
+            color: #00C2BA;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .header a { 
+            color: #00C2BA; 
+            text-decoration: none; 
+            font-size: 13px; 
+            font-weight: 700;
+            padding: 8px 16px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 194, 186, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .header a:hover {
+            background: rgba(0, 194, 186, 0.1);
+        }
+        
+        .search-bar { 
+            padding: 14px 16px; 
+            background: white; 
+            border-bottom: 1px solid #f0f0f0; 
+        }
+        
+        .search-bar .search-wrapper {
+            position: relative;
+        }
+        
+        .search-bar .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9CA3AF;
+        }
+        
+        .search-bar input { 
+            width: 100%; 
+            padding: 14px 16px 14px 46px; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 14px; 
+            font-size: 14px; 
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .search-bar input:focus {
+            border-color: #00C2BA;
+            box-shadow: 0 0 0 3px rgba(0, 194, 186, 0.1);
+        }
+        
+        .student-list { 
+            padding: 12px 16px; 
+        }
+        
+        .student-card { 
+            background: white; 
+            border-radius: 14px; 
+            padding: 16px; 
+            margin-bottom: 8px; 
+            box-shadow: 0 2px 10px rgba(10, 31, 63, 0.04);
+            border: 1px solid #f0f0f0;
+            transition: transform 0.3s ease;
+        }
+        
+        .student-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(10, 31, 63, 0.08);
+        }
+        
+        .student-card .top { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        
+        .student-card .id { 
+            font-weight: 700; 
+            color: #0A1F3F; 
+            font-size: 15px; 
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .student-card .adm { 
+            font-size: 12px; 
+            color: #9CA3AF; 
+        }
+        
+        .student-card .row { 
+            display: flex; 
+            gap: 8px; 
+            margin-top: 8px; 
+            flex-wrap: wrap;
+        }
+        
+        .badge { 
+            padding: 4px 10px; 
+            border-radius: 20px; 
+            font-size: 10px; 
+            font-weight: 700; 
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        
+        .badge-day { 
+            background: rgba(158, 158, 158, 0.1); 
+            color: #757575; 
+        }
+        
+        .badge-hostel { 
+            background: rgba(230, 81, 0, 0.1); 
+            color: #e65100; 
+        }
+        
+        .badge-printed { 
+            background: rgba(0, 194, 186, 0.1); 
+            color: #00A8A0; 
+        }
+        
+        .badge-notprinted { 
+            background: rgba(230, 81, 0, 0.1); 
+            color: #e65100; 
+        }
+        
+        .version-badge {
+            font-size: 11px;
+            color: #9CA3AF;
+            font-weight: 500;
+        }
+        
+        .bottom-nav { 
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            right: 0; 
+            background: white; 
+            display: flex; 
+            border-top: 1px solid #f0f0f0;
+            box-shadow: 0 -4px 20px rgba(10, 31, 63, 0.08);
+            z-index: 100;
+        }
+        
+        .bottom-nav a { 
+            flex: 1; 
+            text-align: center; 
+            padding: 10px 0 8px; 
+            color: #9CA3AF; 
+            text-decoration: none; 
+            font-size: 10px; 
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .bottom-nav a.active { 
+            color: #00C2BA; 
+        }
+        
+        .bottom-nav a svg { 
+            display: block; 
+            margin: 0 auto 4px; 
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9CA3AF;
+            font-size: 14px;
+        }
     </style>
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
     <div class="header">
-        <div class="title">Students ({{ students|length }})</div>
+        <div class="title">Students <span class="count">({{ students|length }})</span></div>
         <a href="{% url 'import_students' %}">+ Import</a>
     </div>
+    
     <div class="search-bar">
-        <input type="text" id="searchInput" placeholder="Search by ID or Admission #..." onkeyup="filterList()">
+        <div class="search-wrapper">
+            <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="searchInput" placeholder="Search by ID or Admission Number..." onkeyup="filterList()">
+        </div>
     </div>
+    
     <div class="student-list" id="studentList">
         {% for s in students %}
         <div class="student-card" data-search="{{ s.id }} {{ s.admission_number }}">
@@ -53,19 +237,33 @@
                 <span class="badge {% if s.card_printed %}badge-printed{% else %}badge-notprinted{% endif %}">
                     {% if s.card_printed %}Printed{% else %}Not Printed{% endif %}
                 </span>
-                <span style="font-size:11px; color:#888;">v{{ s.card_version }}</span>
+                <span class="version-badge">v{{ s.card_version }}</span>
             </div>
         </div>
         {% empty %}
-        <p style="text-align:center; color:#999; padding:40px;">No students yet.</p>
+        <div class="empty-state">No students imported yet.</div>
         {% endfor %}
     </div>
+    
     <div class="bottom-nav">
-        <a href="#" class="active"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Home</a>
-        <a href="{% url 'view_students' %}"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Students</a>
-        <a href="{% url 'import_students' %}"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Import</a>
-        <a href="{% url 'dashboard' %}"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</a>
+        <a href="#" class="active">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            Home
+        </a>
+        <a href="{% url 'view_students' %}">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            Students
+        </a>
+        <a href="{% url 'import_students' %}">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Import
+        </a>
+        <a href="{% url 'dashboard' %}">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            Dashboard
+        </a>
     </div>
+    
     <script>
         function filterList() {
             const q = document.getElementById('searchInput').value.toLowerCase();
@@ -74,9 +272,6 @@
             });
         }
     </script>
-
-
-
 
 <script>
 console.log("╔══════════════════════════════════════╗");
@@ -91,9 +286,3 @@ console.log("╚═════════════════════�
 </script>
 </body>
 </html>
-
-
-
-
-
-

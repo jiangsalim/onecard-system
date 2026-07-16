@@ -4,46 +4,304 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
-    <title>Scanner - OneCard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Scanner - OneCard | Jinja SS</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #1a1a2e; color: #e0e0e0; padding: 16px; min-height: 100vh; }
-        .header { text-align: center; margin-bottom: 16px; }
-        .header h1 { font-size: 18px; color: white; }
-        .controls { display: flex; gap: 8px; margin-bottom: 12px; }
-        .controls select { flex: 1; padding: 12px; border-radius: 10px; background: #16213e; color: #e0e0e0; border: 1px solid #333; font-size: 14px; }
-        #reader { width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 12px; display: none; }
-        .result-card { background: #16213e; border-radius: 12px; padding: 20px; display: none; border: 1px solid #2a2a4a; margin-bottom: 12px; }
-        .result-card.show { display: block; }
-        .result-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-        .result-photo { width: 50px; height: 65px; border-radius: 8px; object-fit: cover; border: 2px solid #3f51b5; flex-shrink: 0; }
-        .result-photo-placeholder { width: 50px; height: 65px; border-radius: 8px; background: #1a237e; color: white; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; flex-shrink: 0; border: 2px solid #3f51b5; }
-        .result-icon svg { width: 36px; height: 36px; }
-        .result-name { font-size: 18px; font-weight: 700; }
-        .result-detail { font-size: 12px; color: #8899aa; }
-        .fees-box { background: #0f3460; border-radius: 8px; padding: 14px; margin: 10px 0; }
-        .fees-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; }
-        .fees-total { font-size: 18px; font-weight: 700; padding-top: 8px; border-top: 1px solid #1a4a7a; }
-        .badge { display: inline-block; padding: 4px 12px; border-radius: 16px; font-size: 12px; font-weight: 600; }
-        .badge-success { background: #1b5e20; color: #a5d6a7; }
-        .badge-warning { background: #e65100; color: #ffcc80; }
-        .badge-error { background: #b71c1c; color: #ef9a9a; }
-        .manual-entry { margin-top: 16px; }
-        .manual-entry .input-row { display: flex; gap: 8px; }
-        .manual-entry input { flex: 1; padding: 14px; border-radius: 10px; border: 1px solid #333; background: #16213e; color: white; font-size: 16px; }
-        .manual-entry button { padding: 14px 20px; border-radius: 10px; background: #3f51b5; color: white; border: none; font-weight: 600; font-size: 14px; }
-        .status-text { text-align: center; font-size: 12px; color: #8899aa; margin: 10px 0; }
-        .close-btn { background: #c62828; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; }
-        .toggle-camera { text-align: center; margin: 10px 0; }
-        .toggle-camera button { padding: 12px 24px; border-radius: 10px; border: 1px solid #3f51b5; background: transparent; color: #3f51b5; font-size: 14px; cursor: pointer; width: 100%; }
+        body { 
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif; 
+            background: linear-gradient(135deg, #0A1F3F, #132D52);
+            color: #e0e0e0; 
+            padding: 16px; 
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .header { 
+            text-align: center; 
+            margin-bottom: 20px; 
+        }
+        
+        .header h1 { 
+            font-family: 'Playfair Display', serif;
+            font-size: 22px; 
+            color: white;
+            font-weight: 700;
+        }
+        
+        .header .subtitle {
+            font-size: 11px;
+            color: #00C2BA;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 4px;
+        }
+        
+        .controls { 
+            display: flex; 
+            gap: 8px; 
+            margin-bottom: 14px; 
+        }
+        
+        .controls select { 
+            flex: 1; 
+            padding: 14px; 
+            border-radius: 12px; 
+            background: rgba(255, 255, 255, 0.08);
+            color: white; 
+            border: 1px solid rgba(255, 255, 255, 0.15); 
+            font-size: 14px; 
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .controls select:focus {
+            border-color: #00C2BA;
+            box-shadow: 0 0 0 3px rgba(0, 194, 186, 0.15);
+        }
+        
+        .controls select option {
+            background: #0A1F3F;
+            color: white;
+        }
+        
+        #reader { 
+            width: 100%; 
+            border-radius: 16px; 
+            overflow: hidden; 
+            margin-bottom: 14px; 
+            display: none;
+            border: 2px solid rgba(0, 194, 186, 0.2);
+        }
+        
+        .result-card { 
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 16px; 
+            padding: 20px; 
+            display: none; 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            margin-bottom: 14px; 
+        }
+        
+        .result-card.show { 
+            display: block; 
+        }
+        
+        .result-header { 
+            display: flex; 
+            align-items: center; 
+            gap: 14px; 
+            margin-bottom: 16px; 
+        }
+        
+        .result-photo { 
+            width: 56px; 
+            height: 70px; 
+            border-radius: 10px; 
+            object-fit: cover; 
+            border: 2px solid rgba(0, 194, 186, 0.3);
+            flex-shrink: 0; 
+        }
+        
+        .result-photo-placeholder { 
+            width: 56px; 
+            height: 70px; 
+            border-radius: 10px; 
+            background: rgba(0, 194, 186, 0.15); 
+            color: #00C2BA; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 22px; 
+            font-weight: 700; 
+            flex-shrink: 0; 
+            border: 2px solid rgba(0, 194, 186, 0.3); 
+        }
+        
+        .result-icon svg { 
+            width: 40px; 
+            height: 40px; 
+        }
+        
+        .result-name { 
+            font-family: 'Playfair Display', serif;
+            font-size: 20px; 
+            font-weight: 700; 
+            color: white;
+        }
+        
+        .result-detail { 
+            font-size: 12px; 
+            color: rgba(255, 255, 255, 0.6); 
+            margin-top: 2px;
+        }
+        
+        .fees-box { 
+            background: rgba(0, 0, 0, 0.2); 
+            border-radius: 12px; 
+            padding: 16px; 
+            margin: 12px 0; 
+        }
+        
+        .fees-row { 
+            display: flex; 
+            justify-content: space-between; 
+            padding: 8px 0; 
+            font-size: 14px; 
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .fees-total { 
+            font-size: 20px; 
+            font-weight: 700; 
+            padding-top: 10px; 
+            border-top: 1px solid rgba(255, 255, 255, 0.1); 
+            color: #00C2BA;
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .badge { 
+            display: inline-block; 
+            padding: 5px 14px; 
+            border-radius: 20px; 
+            font-size: 12px; 
+            font-weight: 700; 
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        
+        .badge-success { 
+            background: rgba(0, 194, 186, 0.2); 
+            color: #80cbc4; 
+        }
+        
+        .badge-warning { 
+            background: rgba(230, 81, 0, 0.2); 
+            color: #ffcc80; 
+        }
+        
+        .badge-error { 
+            background: rgba(198, 40, 40, 0.2); 
+            color: #ef9a9a; 
+        }
+        
+        .manual-entry { 
+            margin-top: 18px; 
+        }
+        
+        .manual-entry .input-row { 
+            display: flex; 
+            gap: 8px; 
+        }
+        
+        .manual-entry input { 
+            flex: 1; 
+            padding: 16px; 
+            border-radius: 14px; 
+            border: 1px solid rgba(255, 255, 255, 0.15); 
+            background: rgba(255, 255, 255, 0.08); 
+            color: white; 
+            font-size: 16px; 
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .manual-entry input:focus {
+            border-color: #00C2BA;
+            box-shadow: 0 0 0 3px rgba(0, 194, 186, 0.15);
+        }
+        
+        .manual-entry input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .manual-entry button { 
+            padding: 16px 24px; 
+            border-radius: 14px; 
+            background: linear-gradient(135deg, #00C2BA, #00A8A0); 
+            color: #0A1F3F; 
+            border: none; 
+            font-weight: 700; 
+            font-size: 14px; 
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .manual-entry button:hover {
+            box-shadow: 0 4px 15px rgba(0, 194, 186, 0.3);
+        }
+        
+        .status-text { 
+            text-align: center; 
+            font-size: 12px; 
+            color: rgba(255, 255, 255, 0.5); 
+            margin: 12px 0; 
+        }
+        
+        .close-btn { 
+            background: rgba(198, 40, 40, 0.2); 
+            color: #ff8a80; 
+            border: 1px solid rgba(198, 40, 40, 0.3);
+            padding: 8px 18px; 
+            border-radius: 10px; 
+            font-size: 13px; 
+            cursor: pointer; 
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+        }
+        
+        .toggle-camera { 
+            text-align: center; 
+            margin: 12px 0; 
+        }
+        
+        .toggle-camera button { 
+            padding: 14px 28px; 
+            border-radius: 14px; 
+            border: 1px solid rgba(0, 194, 186, 0.3); 
+            background: rgba(0, 194, 186, 0.1); 
+            color: #00C2BA; 
+            font-size: 14px; 
+            font-weight: 600;
+            cursor: pointer; 
+            width: 100%; 
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+        }
+        
+        .toggle-camera button:hover {
+            background: rgba(0, 194, 186, 0.2);
+        }
+        
+        #attendanceConfirm {
+            text-align: center;
+            padding: 12px;
+            border-radius: 10px;
+            margin-top: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            display: none;
+        }
     </style>
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
-    <div class="header"><h1>OneCard Scanner</h1></div>
+    <div class="header">
+        <h1>OneCard Scanner</h1>
+        <div class="subtitle">Jinja Senior Secondary School</div>
+    </div>
+    
     <div class="controls">
-        <select id="location"><option value="Main Gate">Main Gate</option><option value="Dining Hall">Dining Hall</option><option value="Bursar Office">Bursar Office</option></select>
+        <select id="location">
+            <option value="Main Gate">Main Gate</option>
+            <option value="Dining Hall">Dining Hall</option>
+            <option value="Bursar Office">Bursar Office</option>
+        </select>
         <select id="mode" onchange="onModeChange()">
             <option value="attendance_balance">Attendance</option>
             <option value="balance_only">Balance</option>
@@ -51,23 +309,34 @@
             <option value="meal_tracking">Meal</option>
         </select>
     </div>
+    
     <div class="toggle-camera"><button onclick="toggleCamera()">Open Camera</button></div>
     <div id="reader"></div>
     <div class="status-text" id="statusText">Enter Student ID below</div>
 
     <div id="result" class="result-card">
-        <div style="text-align:right; margin-bottom:8px;"><button class="close-btn" onclick="closeResult()">Close</button></div>
+        <div style="text-align:right; margin-bottom:10px;"><button class="close-btn" onclick="closeResult()">Close</button></div>
         <div class="result-header">
             <img id="resultPhoto" class="result-photo" src="" alt="Photo" style="display:none;">
             <div id="resultPhotoPlaceholder" class="result-photo-placeholder" style="display:none;"></div>
             <div class="result-icon" id="resultIcon"></div>
-            <div><div class="result-name" id="resultName"></div><div class="result-detail" id="resultDetail"></div></div>
+            <div>
+                <div class="result-name" id="resultName"></div>
+                <div class="result-detail" id="resultDetail"></div>
+            </div>
         </div>
-        <div id="feesContainer"><div class="fees-box"><div class="fees-row"><span>Total</span><span id="feesTotal"></span></div><div class="fees-row"><span>Paid</span><span id="feesPaid"></span></div><div class="fees-row fees-total"><span>Balance</span><span id="feesBalance"></span></div></div><div style="text-align:center;" id="feesStatus"></div></div>
-        <div id="passoutContainer" style="display:none;"><div id="passoutForm"></div></div>
+        <div id="feesContainer">
+            <div class="fees-box">
+                <div class="fees-row"><span>Total</span><span id="feesTotal"></span></div>
+                <div class="fees-row"><span>Paid</span><span id="feesPaid"></span></div>
+                <div class="fees-row fees-total"><span>Balance</span><span id="feesBalance"></span></div>
+            </div>
+            <div style="text-align:center;" id="feesStatus"></div>
+        </div>
+        <div id="passoutContainer" style="display:none;"></div>
         <div id="returnContainer" style="display:none;"></div>
         <div id="mealContainer" style="display:none;"></div>
-        <div id="attendanceConfirm" style="text-align:center; padding:10px; border-radius:8px; margin-top:10px; font-size:13px; display:none;"></div>
+        <div id="attendanceConfirm"></div>
     </div>
 
     <div class="manual-entry">
@@ -77,7 +346,7 @@
         </div>
     </div>
 
-    <template id="icon-success"><svg viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="8,12 11,15 16,9"/></svg></template>
+    <template id="icon-success"><svg viewBox="0 0 24 24" fill="none" stroke="#00C2BA" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="8,12 11,15 16,9"/></svg></template>
     <template id="icon-warning"><svg viewBox="0 0 24 24" fill="none" stroke="#ff9800" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="7" x2="12" y2="13"/><circle cx="12" cy="16" r="0.5" fill="#ff9800" stroke="none"/></svg></template>
     <template id="icon-error"><svg viewBox="0 0 24 24" fill="none" stroke="#f44336" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg></template>
 
@@ -123,14 +392,11 @@
             const s=data.student,f=data.fees;
             document.getElementById('feesContainer').style.display='block'; document.getElementById('passoutContainer').style.display='none'; document.getElementById('returnContainer').style.display='none'; document.getElementById('mealContainer').style.display='none';
             setIcon(f.status==='CLEARED'?'icon-success':'icon-warning');
-            document.getElementById('resultName').textContent=s.name; document.getElementById('resultDetail').textContent=`${s.class} ${s.stream} | ${s.admission}`;
-            
-            // Show photo
+            document.getElementById('resultName').textContent=s.name; document.getElementById('resultDetail').textContent=`${s.class} ${s.stream} · ${s.admission}`;
             setPhoto(s.photo || '', s.name);
-            
             document.getElementById('feesTotal').textContent=f.total.toLocaleString()+' UGX'; document.getElementById('feesPaid').textContent=f.paid.toLocaleString()+' UGX'; document.getElementById('feesBalance').textContent=f.balance.toLocaleString()+' UGX';
             document.getElementById('feesStatus').innerHTML=f.status==='CLEARED'?'<span class="badge badge-success">CLEARED</span>':'<span class="badge badge-warning">NOT CLEARED</span>';
-            if(data.attendance&&data.attendance.marked){document.getElementById('attendanceConfirm').textContent='Attendance Recorded'; document.getElementById('attendanceConfirm').style.display='block'; document.getElementById('attendanceConfirm').style.background='#1b5e20'; document.getElementById('attendanceConfirm').style.color='#a5d6a7';}
+            if(data.attendance&&data.attendance.marked){document.getElementById('attendanceConfirm').textContent='Attendance Recorded'; document.getElementById('attendanceConfirm').style.display='block'; document.getElementById('attendanceConfirm').style.background='rgba(0,194,186,0.15)'; document.getElementById('attendanceConfirm').style.color='#80cbc4';}
             document.getElementById('result').classList.add('show');
         }
         function closeResult() { document.getElementById('result').classList.remove('show'); }
@@ -138,9 +404,6 @@
         function getCookie(name) { let v=document.cookie.match('(^|;) ?'+name+'=([^;]*)(;|$)'); return v?v[2]:null; }
         document.getElementById('manualId').addEventListener('keypress',function(e){if(e.key==='Enter')manualLookup();});
     </script>
-
-
-
 
 <script>
 console.log("╔══════════════════════════════════════╗");
@@ -155,7 +418,3 @@ console.log("╚═════════════════════�
 </script>
 </body>
 </html>
-
-
-
-

@@ -4,26 +4,176 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
-    <title>Chat - OneCard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Chat - OneCard | Jinja SS</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; display: flex; flex-direction: column; height: 100vh; }
-        .header { background: #1a237e; color: white; padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
-        .header .back { color: white; text-decoration: none; font-size: 20px; }
-        .chat-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
-        .chat-avatar-letter { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.2); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
-        .header .name { font-weight: 600; font-size: 15px; }
-        .header .role { font-size: 11px; opacity: 0.8; }
-        .messages-container { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
-        .message { max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.4; }
-        .message.sent { align-self: flex-end; background: #1a237e; color: white; border-bottom-right-radius: 4px; }
-        .message.received { align-self: flex-start; background: white; border: 1px solid #e0e0e0; border-bottom-left-radius: 4px; }
-        .message .sender-name { font-size: 10px; color: #888; margin-bottom: 2px; }
-        .message .time { font-size: 10px; opacity: 0.7; margin-top: 4px; text-align: right; }
-        .chat-input { background: white; padding: 10px 12px; border-top: 1px solid #e0e0e0; display: flex; gap: 8px; }
-        .chat-input input { flex: 1; padding: 10px 14px; border: 1px solid #ddd; border-radius: 20px; font-size: 14px; outline: none; }
-        .chat-input button { background: #1a237e; color: white; border: none; padding: 10px 18px; border-radius: 20px; font-weight: 600; font-size: 14px; cursor: pointer; }
-        .empty-chat { text-align: center; color: #888; padding: 40px; }
+        body { 
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif; 
+            background: #F8F9FA; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .header { 
+            background: linear-gradient(135deg, #0A1F3F, #132D52); 
+            color: white; 
+            padding: 14px 16px; 
+            display: flex; 
+            align-items: center; 
+            gap: 14px; 
+            box-shadow: 0 4px 20px rgba(10, 31, 63, 0.3);
+        }
+        
+        .header .back { 
+            color: #00C2BA; 
+            text-decoration: none; 
+            font-size: 20px; 
+            font-weight: 700;
+            transition: color 0.3s;
+        }
+        
+        .header .back:hover { color: #00E5D4; }
+        
+        .chat-avatar { 
+            width: 40px; 
+            height: 40px; 
+            border-radius: 50%; 
+            object-fit: cover; 
+            border: 2px solid rgba(0, 194, 186, 0.3);
+        }
+        
+        .chat-avatar-letter { 
+            width: 40px; 
+            height: 40px; 
+            border-radius: 50%; 
+            background: rgba(0, 194, 186, 0.15); 
+            color: #00C2BA; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-weight: 700; 
+            font-size: 16px; 
+            border: 2px solid rgba(0, 194, 186, 0.3);
+        }
+        
+        .header .name { 
+            font-weight: 600; 
+            font-size: 15px; 
+        }
+        
+        .header .role { 
+            font-size: 11px; 
+            color: #00C2BA; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .messages-container { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 16px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px; 
+        }
+        
+        .message { 
+            max-width: 80%; 
+            padding: 12px 16px; 
+            border-radius: 16px; 
+            font-size: 14px; 
+            line-height: 1.5; 
+            word-wrap: break-word;
+        }
+        
+        .message.sent { 
+            align-self: flex-end; 
+            background: linear-gradient(135deg, #00C2BA, #00A8A0); 
+            color: #0A1F3F; 
+            border-bottom-right-radius: 4px; 
+        }
+        
+        .message.received { 
+            align-self: flex-start; 
+            background: white; 
+            border: 1px solid #e0e0e0; 
+            color: #374151;
+            border-bottom-left-radius: 4px; 
+        }
+        
+        .message .sender-name { 
+            font-size: 10px; 
+            color: #9CA3AF; 
+            margin-bottom: 3px; 
+            font-weight: 600;
+        }
+        
+        .message .time { 
+            font-size: 10px; 
+            opacity: 0.7; 
+            margin-top: 4px; 
+            text-align: right; 
+        }
+        
+        .message.sent .time { color: rgba(10, 31, 63, 0.6); }
+        .message.received .time { color: #9CA3AF; }
+        
+        .chat-input { 
+            background: white; 
+            padding: 12px 14px; 
+            border-top: 1px solid #f0f0f0; 
+            display: flex; 
+            gap: 10px; 
+            box-shadow: 0 -4px 20px rgba(10, 31, 63, 0.06);
+        }
+        
+        .chat-input input { 
+            flex: 1; 
+            padding: 12px 18px; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 25px; 
+            font-size: 14px; 
+            font-family: 'Inter', sans-serif;
+            outline: none; 
+            transition: all 0.3s ease;
+        }
+        
+        .chat-input input:focus {
+            border-color: #00C2BA;
+            box-shadow: 0 0 0 3px rgba(0, 194, 186, 0.1);
+        }
+        
+        .chat-input button { 
+            background: linear-gradient(135deg, #00C2BA, #00A8A0); 
+            color: #0A1F3F; 
+            border: none; 
+            padding: 12px 22px; 
+            border-radius: 25px; 
+            font-weight: 700; 
+            font-size: 14px; 
+            font-family: 'Inter', sans-serif;
+            cursor: pointer; 
+            transition: all 0.3s ease;
+        }
+        
+        .chat-input button:hover {
+            box-shadow: 0 4px 15px rgba(0, 194, 186, 0.3);
+        }
+        
+        .empty-chat { 
+            text-align: center; 
+            color: #9CA3AF; 
+            padding: 60px 20px; 
+        }
+        
+        .empty-chat .empty-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
     </style>
 </head>
 <body>
@@ -48,7 +198,10 @@
             <div class="time">{{ msg.created_at|time:"H:i" }}</div>
         </div>
         {% empty %}
-        <div class="empty-chat">No messages yet 👋</div>
+        <div class="empty-chat">
+            <div class="empty-icon">💬</div>
+            No messages yet. Say hello!
+        </div>
         {% endfor %}
     </div>
 
@@ -111,9 +264,6 @@
         function getCookie(name) { let v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)'); return v ? v[2] : null; }
     </script>
 
-
-
-
 <script>
 console.log("╔══════════════════════════════════════╗");
 console.log("║        ONECARD SYSTEM               ║");
@@ -127,7 +277,3 @@ console.log("╚═════════════════════�
 </script>
 </body>
 </html>
-
-
-
-

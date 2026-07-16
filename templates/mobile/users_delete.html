@@ -4,38 +4,163 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
-    <title>Delete User - OneCard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Delete User - OneCard | Jinja SS</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-        .card { background: white; border-radius: 16px; padding: 28px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); text-align: center; max-width: 380px; width: 100%; }
-        .card h2 { color: #c62828; font-size: 18px; margin-bottom: 10px; }
-        .card p { color: #666; font-size: 14px; margin-bottom: 16px; }
-        .user-info { background: #fff3e0; padding: 12px; border-radius: 8px; margin-bottom: 16px; text-align: left; font-size: 13px; line-height: 1.6; }
-        .btn { padding: 12px 24px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; }
-        .btn-danger { background: #c62828; color: white; }
-        .btn-cancel { background: #e0e0e0; color: #333; margin-left: 8px; }
+        body { 
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif; 
+            background: linear-gradient(135deg, #0A1F3F, #132D52);
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            padding: 20px;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .card { 
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px; 
+            padding: 36px 28px; 
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4); 
+            text-align: center; 
+            max-width: 400px; 
+            width: 100%; 
+        }
+        
+        .icon-container {
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 20px;
+            background: rgba(198, 40, 40, 0.1);
+            border: 1px solid rgba(198, 40, 40, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .card h2 { 
+            font-family: 'Playfair Display', serif;
+            color: #ff8a80; 
+            font-size: 22px; 
+            margin-bottom: 8px; 
+        }
+        
+        .card p { 
+            color: rgba(255, 255, 255, 0.6); 
+            font-size: 14px; 
+            margin-bottom: 20px; 
+        }
+        
+        .user-info { 
+            background: rgba(255, 255, 255, 0.05); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px; 
+            border-radius: 14px; 
+            margin-bottom: 24px; 
+            text-align: left; 
+            font-size: 13px; 
+            line-height: 1.8; 
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .user-info strong {
+            color: white;
+            font-size: 15px;
+        }
+        
+        .user-info .role-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            background: rgba(0, 194, 186, 0.15);
+            color: #00C2BA;
+            margin-top: 4px;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn { 
+            flex: 1;
+            padding: 14px 20px; 
+            border: none; 
+            border-radius: 14px; 
+            font-size: 14px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            text-decoration: none; 
+            display: inline-block;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.3px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-danger { 
+            background: rgba(198, 40, 40, 0.2); 
+            color: #ff8a80; 
+            border: 1px solid rgba(198, 40, 40, 0.3);
+        }
+        
+        .btn-danger:hover {
+            background: rgba(198, 40, 40, 0.3);
+            box-shadow: 0 8px 25px rgba(198, 40, 40, 0.2);
+        }
+        
+        .btn-cancel { 
+            background: rgba(255, 255, 255, 0.05); 
+            color: rgba(255, 255, 255, 0.7); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .btn-cancel:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .footer-text {
+            margin-top: 24px;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.3);
+        }
     </style>
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
     <div class="card">
+        <div class="icon-container">
+            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#ff8a80" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+        </div>
         <h2>Delete User</h2>
-        <p>This cannot be undone.</p>
+        <p>This action cannot be undone. All data associated with this user will be permanently removed.</p>
         <div class="user-info">
             <strong>{{ target_user.username }}</strong><br>
             {{ target_user.get_full_name }}<br>
-            {{ target_user.get_role_display }}
+            <span class="role-badge">{{ target_user.get_role_display }}</span>
         </div>
         <form method="post">
             {% csrf_token %}
-            <button type="submit" class="btn btn-danger">Delete</button>
-            <a href="{% url 'user_management' %}" class="btn btn-cancel">Cancel</a>
+            <div class="btn-group">
+                <a href="{% url 'user_management' %}" class="btn btn-cancel">Cancel</a>
+                <button type="submit" class="btn btn-danger">Delete Permanently</button>
+            </div>
         </form>
+        <div class="footer-text">OneCard · Jinja SS</div>
     </div>
-
-
-
 
 <script>
 console.log("╔══════════════════════════════════════╗");
@@ -50,9 +175,3 @@ console.log("╚═════════════════════�
 </script>
 </body>
 </html>
-
-
-
-
-
-

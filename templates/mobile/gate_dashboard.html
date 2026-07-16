@@ -4,35 +4,177 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
-    <title>Gate - OneCard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Gate Dashboard - OneCard | Jinja SS</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 70px; }
-        .header { background: #1a237e; color: white; padding: 16px 20px; }
-        .header .top { display: flex; justify-content: space-between; align-items: center; }
-        .header .name { font-size: 16px; font-weight: 600; }
-        .header .location { font-size: 12px; opacity: 0.8; }
-        .header .logout { color: #ff8a80; text-decoration: none; font-size: 13px; }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 16px; }
-        .stat-card { background: white; border-radius: 12px; padding: 16px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-        .stat-card .value { font-size: 24px; font-weight: 700; }
-        .stat-card .label { font-size: 12px; color: #888; }
-        .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px; margin-bottom: 16px; }
-        .action-btn {
-            background: white; border-radius: 12px; padding: 20px; text-align: center;
-            text-decoration: none; color: #1a237e; font-weight: 600; font-size: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex;
-            flex-direction: column; align-items: center; gap: 8px;
+        body { 
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif; 
+            background: #F8F9FA; 
+            padding-bottom: 80px;
+            -webkit-font-smoothing: antialiased;
         }
-        .action-btn svg { width: 32px; height: 32px; }
-        .action-btn.scan { background: #1a237e; color: white; }
-        .action-btn.exit { background: #e65100; color: white; }
-        .action-btn.meal { background: #2e7d32; color: white; }
-        .action-btn.movement { background: #0d47a1; color: white; }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; border-top: 1px solid #e0e0e0; }
-        .bottom-nav a { flex: 1; text-align: center; padding: 10px 0; color: #888; text-decoration: none; font-size: 11px; }
-        .bottom-nav a.active { color: #1a237e; }
-        .bottom-nav a svg { display: block; margin: 0 auto 3px; }
+        
+        .header { 
+            background: linear-gradient(135deg, #0A1F3F, #132D52); 
+            color: white; 
+            padding: 18px 20px; 
+            box-shadow: 0 4px 20px rgba(10, 31, 63, 0.3);
+        }
+        
+        .header .top { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        
+        .header .name { 
+            font-size: 16px; 
+            font-weight: 600; 
+            letter-spacing: 0.3px;
+        }
+        
+        .header .location { 
+            font-size: 11px; 
+            color: #00C2BA; 
+            text-transform: uppercase; 
+            letter-spacing: 1.5px;
+            margin-top: 2px;
+        }
+        
+        .header .logout { 
+            color: #ff8a80; 
+            text-decoration: none; 
+            font-size: 13px; 
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 138, 128, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .header .logout:hover {
+            background: rgba(255, 138, 128, 0.1);
+        }
+        
+        .stats-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 10px; 
+            padding: 20px 16px; 
+        }
+        
+        .stat-card { 
+            background: white; 
+            border-radius: 16px; 
+            padding: 18px; 
+            text-align: center; 
+            box-shadow: 0 2px 12px rgba(10, 31, 63, 0.06);
+            border: 1px solid #f0f0f0;
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .stat-card .value { 
+            font-size: 28px; 
+            font-weight: 700; 
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .stat-card .label { 
+            font-size: 11px; 
+            color: #9CA3AF; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+        
+        .quick-actions { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 10px; 
+            padding: 0 16px 20px; 
+        }
+        
+        .action-btn {
+            background: white; 
+            border-radius: 16px; 
+            padding: 24px 16px; 
+            text-align: center;
+            text-decoration: none; 
+            font-weight: 700; 
+            font-size: 14px;
+            box-shadow: 0 2px 12px rgba(10, 31, 63, 0.06);
+            border: 1px solid #f0f0f0;
+            display: flex;
+            flex-direction: column; 
+            align-items: center; 
+            gap: 10px;
+            transition: all 0.3s ease;
+            color: white;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .action-btn svg { 
+            width: 36px; 
+            height: 36px; 
+        }
+        
+        .action-btn.scan { 
+            background: linear-gradient(135deg, #0A1F3F, #132D52); 
+        }
+        
+        .action-btn.exit { 
+            background: linear-gradient(135deg, #e65100, #ff6d00); 
+        }
+        
+        .action-btn.meal { 
+            background: linear-gradient(135deg, #00C2BA, #00A8A0); 
+            color: #0A1F3F;
+        }
+        
+        .action-btn.movement { 
+            background: linear-gradient(135deg, #132D52, #1A3A6B); 
+        }
+        
+        .bottom-nav { 
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            right: 0; 
+            background: white; 
+            display: flex; 
+            border-top: 1px solid #f0f0f0;
+            box-shadow: 0 -4px 20px rgba(10, 31, 63, 0.08);
+            z-index: 100;
+        }
+        
+        .bottom-nav a { 
+            flex: 1; 
+            text-align: center; 
+            padding: 10px 0 8px; 
+            color: #9CA3AF; 
+            text-decoration: none; 
+            font-size: 10px; 
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .bottom-nav a.active { 
+            color: #00C2BA; 
+        }
+        
+        .bottom-nav a svg { 
+            display: block; 
+            margin: 0 auto 4px; 
+        }
     </style>
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
@@ -41,7 +183,7 @@
         <div class="top">
             <div>
                 <div class="name">{{ user.get_full_name|default:user.username }}</div>
-                <div class="location">{{ user.assigned_location|default:"Main Gate" }} | Gate Staff</div>
+                <div class="location">{{ user.assigned_location|default:"Main Gate" }} · Gate Staff</div>
             </div>
             <a href="{% url 'logout' %}" class="logout">Logout</a>
         </div>
@@ -49,7 +191,7 @@
 
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="value" style="color:#2e7d32;">{{ stats.present }}</div>
+            <div class="value" style="color:#00C2BA;">{{ stats.present }}</div>
             <div class="label">Checked In</div>
         </div>
         <div class="stat-card">
@@ -61,7 +203,7 @@
             <div class="label">Absent</div>
         </div>
         <div class="stat-card">
-            <div class="value" style="font-size:16px;">{{ stats.last_scan }}</div>
+            <div class="value" style="font-size:16px; color:#0A1F3F;">{{ stats.last_scan }}</div>
             <div class="label">Last Scan</div>
         </div>
     </div>
@@ -104,9 +246,6 @@
         </a>
     </div>
 
-
-
-
 <script>
 console.log("╔══════════════════════════════════════╗");
 console.log("║        ONECARD SYSTEM               ║");
@@ -120,9 +259,3 @@ console.log("╚═════════════════════�
 </script>
 </body>
 </html>
-
-
-
-
-
-

@@ -4,28 +4,110 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
-    <title>Server Error - OneCard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Server Error - OneCard | Jinja SS</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-        .card { background: white; border-radius: 16px; padding: 36px; text-align: center; box-shadow: 0 8px 30px rgba(0,0,0,0.1); max-width: 340px; }
-        .card .code { font-size: 64px; font-weight: 700; color: #c62828; }
-        .card h2 { color: #333; margin: 8px 0; }
-        .card p { color: #666; font-size: 14px; margin-bottom: 20px; }
-        .btn { padding: 12px 28px; background: #1a237e; color: white; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block; }
+        body { 
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif; 
+            background: linear-gradient(135deg, #0A1F3F, #132D52);
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            padding: 20px;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .card { 
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px; 
+            padding: 48px 36px; 
+            text-align: center; 
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            max-width: 380px;
+            width: 100%;
+        }
+        
+        .icon-container {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: rgba(255, 152, 0, 0.1);
+            border: 1px solid rgba(255, 152, 0, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .code { 
+            font-family: 'Playfair Display', serif;
+            font-size: 72px; 
+            font-weight: 700; 
+            color: #ffcc80;
+            line-height: 1;
+        }
+        
+        .card h2 { 
+            font-family: 'Playfair Display', serif;
+            color: #FFFFFF; 
+            margin: 16px 0 8px; 
+            font-size: 22px;
+            font-weight: 700;
+        }
+        
+        .card p { 
+            color: rgba(255, 255, 255, 0.6); 
+            font-size: 14px; 
+            margin-bottom: 28px; 
+            line-height: 1.6;
+        }
+        
+        .btn { 
+            padding: 14px 32px; 
+            background: linear-gradient(135deg, #00C2BA, #00A8A0); 
+            color: #0A1F3F; 
+            border-radius: 12px; 
+            text-decoration: none; 
+            font-weight: 700; 
+            font-size: 14px;
+            display: inline-block;
+            letter-spacing: 0.3px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            box-shadow: 0 8px 25px rgba(0, 194, 186, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .footer-text {
+            margin-top: 32px;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.3);
+        }
     </style>
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
     <div class="card">
+        <div class="icon-container">
+            <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#ffcc80" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+        </div>
         <div class="code">500</div>
         <h2>Server Error</h2>
-        <p>Something went wrong. Please try again.</p>
-        <a href="/dashboard/" class="btn">Go Home</a>
+        <p>Something went wrong on our end. Please try again in a moment. If the problem persists, contact support.</p>
+        <a href="/dashboard/" class="btn">Go to Dashboard</a>
+        <div class="footer-text">OneCard · Jinja SS</div>
     </div>
-
-
-
 
 <script>
 console.log("╔══════════════════════════════════════╗");
@@ -40,9 +122,3 @@ console.log("╚═════════════════════�
 </script>
 </body>
 </html>
-
-
-
-
-
-

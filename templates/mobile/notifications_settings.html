@@ -4,42 +4,180 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
-    <title>Notification Settings - OneCard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Alert Settings - OneCard | Jinja SS</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 20px; }
-        .header { background: #1a237e; color: white; padding: 14px 16px; }
-        .header .title { font-size: 16px; font-weight: 600; }
-        .card-white { background: white; border-radius: 12px; padding: 20px; margin: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-        .form-group { margin-bottom: 14px; }
-        .form-group label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 4px; }
-        .form-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
-        .checkbox-group { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 14px; }
-        .checkbox-group input { width: 20px; height: 20px; }
-        .btn { width: 100%; padding: 14px; background: #1a237e; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
+        body { 
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif; 
+            background: #F8F9FA; 
+            padding-bottom: 40px;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .header { 
+            background: linear-gradient(135deg, #0A1F3F, #132D52); 
+            color: white; 
+            padding: 18px 20px; 
+            box-shadow: 0 4px 20px rgba(10, 31, 63, 0.3);
+        }
+        
+        .header .title { 
+            font-size: 17px; 
+            font-weight: 700; 
+            letter-spacing: 0.3px;
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .header .subtitle {
+            font-size: 11px;
+            color: #00C2BA;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-top: 3px;
+        }
+        
+        .card-white { 
+            background: white; 
+            border-radius: 16px; 
+            padding: 24px; 
+            margin: 16px; 
+            box-shadow: 0 2px 12px rgba(10, 31, 63, 0.06);
+            border: 1px solid #f0f0f0;
+        }
+        
+        .card-white .section-title {
+            font-size: 13px;
+            color: #9CA3AF;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .form-group { 
+            margin-bottom: 18px; 
+        }
+        
+        .form-group label { 
+            display: block; 
+            font-weight: 600; 
+            font-size: 13px; 
+            color: #0A1F3F;
+            margin-bottom: 6px; 
+        }
+        
+        .form-group input { 
+            width: 100%; 
+            padding: 14px 16px; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 12px; 
+            font-size: 14px; 
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus {
+            border-color: #00C2BA;
+            box-shadow: 0 0 0 3px rgba(0, 194, 186, 0.1);
+        }
+        
+        .form-group small {
+            display: block;
+            margin-top: 6px;
+            font-size: 11px;
+            color: #9CA3AF;
+        }
+        
+        .checkbox-group { 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            margin-bottom: 14px; 
+            font-size: 14px; 
+            color: #0A1F3F;
+            font-weight: 500;
+            padding: 12px 16px;
+            background: #F8F9FA;
+            border-radius: 12px;
+        }
+        
+        .checkbox-group input { 
+            width: 20px; 
+            height: 20px; 
+            accent-color: #00C2BA;
+            cursor: pointer;
+        }
+        
+        .btn { 
+            width: 100%; 
+            padding: 16px; 
+            background: linear-gradient(135deg, #00C2BA, #00A8A0); 
+            color: #0A1F3F; 
+            border: none; 
+            border-radius: 14px; 
+            font-size: 15px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.3px;
+            transition: all 0.3s ease;
+            margin-top: 8px;
+        }
+        
+        .btn:hover {
+            box-shadow: 0 8px 25px rgba(0, 194, 186, 0.3);
+            transform: translateY(-1px);
+        }
     </style>
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
-    <div class="header"><div class="title">Alert Settings</div></div>
+    <div class="header">
+        <div class="title">Alert Settings</div>
+        <div class="subtitle">Configure notification thresholds</div>
+    </div>
+    
     <div class="card-white">
+        <div class="section-title">Threshold Configuration</div>
         <form method="post">
             {% csrf_token %}
-            <div class="form-group"><label>Fee Balance Alert (UGX)</label><input type="number" name="fee_balance_threshold" value="{{ settings.fee_balance_threshold }}"></div>
-            <div class="form-group"><label>Consecutive Days Absent</label><input type="number" name="attendance_consecutive_days" value="{{ settings.attendance_consecutive_days }}"></div>
-            <div class="form-group"><label>Student Outside Alert (Hours)</label><input type="number" name="movement_hours_outside" value="{{ settings.movement_hours_outside }}"></div>
+            
+            <div class="form-group">
+                <label>Fee Balance Alert (UGX)</label>
+                <input type="number" name="fee_balance_threshold" value="{{ settings.fee_balance_threshold }}" placeholder="e.g. 500000">
+                <small>Notify when student balance exceeds this amount</small>
+            </div>
+            
+            <div class="form-group">
+                <label>Consecutive Days Absent</label>
+                <input type="number" name="attendance_consecutive_days" value="{{ settings.attendance_consecutive_days }}" placeholder="e.g. 3">
+                <small>Alert after this many consecutive absences</small>
+            </div>
+            
+            <div class="form-group">
+                <label>Student Outside Alert (Hours)</label>
+                <input type="number" name="movement_hours_outside" value="{{ settings.movement_hours_outside }}" placeholder="e.g. 6">
+                <small>Alert when student has been outside longer than this</small>
+            </div>
+            
             <div class="form-group">
                 <label>Late Arrival Cutoff Time</label>
                 <input type="time" name="late_cutoff_time" value="{{ settings.late_cutoff_time|time:'H:i'|default:'08:00' }}">
-                <small style="color:#888;">Students scanned after this time are marked Late</small>
+                <small>Students scanned after this time are marked as Late</small>
             </div>
-            <div class="checkbox-group"><input type="checkbox" name="show_in_dashboard" {% if settings.show_in_dashboard %}checked{% endif %}><span>Show in dashboard</span></div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" name="show_in_dashboard" {% if settings.show_in_dashboard %}checked{% endif %}>
+                <span>Show alerts in dashboard</span>
+            </div>
+            
             <button type="submit" class="btn">Save Settings</button>
         </form>
     </div>
-
-
-
 
 <script>
 console.log("╔══════════════════════════════════════╗");
@@ -54,9 +192,3 @@ console.log("╚═════════════════════�
 </script>
 </body>
 </html>
-
-
-
-
-
-

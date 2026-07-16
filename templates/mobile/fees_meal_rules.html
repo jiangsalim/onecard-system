@@ -4,55 +4,232 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
-    <title>Meal Access Rules - OneCard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Meal Access Rules - OneCard | Jinja SS</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 70px; }
-        .header { background: #1a237e; color: white; padding: 14px 16px; }
-        .header .title { font-size: 16px; font-weight: 600; }
-        .card-white { background: white; border-radius: 12px; padding: 16px; margin: 12px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-        .form-group label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; }
-        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
-        .rule-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
-        .rule-row .cls { font-weight: 600; font-size: 13px; }
-        .rule-row input { width: 100px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; text-align: right; font-size: 13px; }
-        .btn { width: 100%; padding: 14px; background: #2e7d32; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px; }
-        .cat-label { font-size: 11px; color: #888; }
-        p.hint { font-size: 12px; color: #888; margin-bottom: 10px; }
+        body { 
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif; 
+            background: #F8F9FA; 
+            padding-bottom: 40px;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .header { 
+            background: linear-gradient(135deg, #0A1F3F, #132D52); 
+            color: white; 
+            padding: 18px 20px; 
+            box-shadow: 0 4px 20px rgba(10, 31, 63, 0.3);
+        }
+        
+        .header .title { 
+            font-size: 17px; 
+            font-weight: 700; 
+            letter-spacing: 0.3px;
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .header .subtitle {
+            font-size: 11px;
+            color: #00C2BA;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-top: 3px;
+        }
+        
+        .card-white { 
+            background: white; 
+            border-radius: 16px; 
+            padding: 20px; 
+            margin: 16px; 
+            box-shadow: 0 2px 12px rgba(10, 31, 63, 0.06);
+            border: 1px solid #f0f0f0;
+        }
+        
+        .card-white .section-title {
+            font-size: 13px;
+            color: #9CA3AF;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+            margin-bottom: 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .info-banner {
+            background: rgba(0, 194, 186, 0.05);
+            border: 1px solid rgba(0, 194, 186, 0.15);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #00A8A0;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .info-banner svg {
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+        
+        .form-row { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 12px; 
+            margin-bottom: 20px; 
+        }
+        
+        .form-group label { 
+            display: block; 
+            font-size: 13px; 
+            font-weight: 600; 
+            color: #0A1F3F;
+            margin-bottom: 6px; 
+        }
+        
+        .form-group input, .form-group select { 
+            width: 100%; 
+            padding: 12px 14px; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 10px; 
+            font-size: 14px; 
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .form-group input:focus, .form-group select:focus {
+            border-color: #00C2BA;
+            box-shadow: 0 0 0 3px rgba(0, 194, 186, 0.1);
+        }
+        
+        .class-section {
+            background: #F8F9FA;
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 12px;
+            border: 1px solid #f0f0f0;
+        }
+        
+        .class-section .class-name {
+            font-weight: 700;
+            font-size: 14px;
+            color: #0A1F3F;
+            margin-bottom: 10px;
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .rule-row { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 8px 0; 
+        }
+        
+        .rule-row .cat-label { 
+            font-size: 12px; 
+            color: #9CA3AF; 
+            font-weight: 500;
+        }
+        
+        .rule-row input { 
+            width: 140px; 
+            padding: 10px 12px; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 10px; 
+            text-align: right; 
+            font-size: 13px; 
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .rule-row input:focus {
+            border-color: #00C2BA;
+            box-shadow: 0 0 0 3px rgba(0, 194, 186, 0.1);
+        }
+        
+        .btn { 
+            width: 100%; 
+            padding: 16px; 
+            background: linear-gradient(135deg, #00C2BA, #00A8A0); 
+            color: #0A1F3F; 
+            border: none; 
+            border-radius: 14px; 
+            font-size: 15px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            margin-top: 16px;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.3px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            box-shadow: 0 8px 25px rgba(0, 194, 186, 0.3);
+            transform: translateY(-1px);
+        }
     </style>
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
-    <div class="header"><div class="title">Meal Access Rules</div></div>
+    <div class="header">
+        <div class="title">Meal Access Rules</div>
+        <div class="subtitle">Set balance limits for meal access</div>
+    </div>
+    
     <div class="card-white">
-        <p class="hint">Max balance allowed to access meals. Students with higher balances are denied.</p>
+        <div class="info-banner">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="16" x2="12" y2="12"/>
+                <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+            <span>Maximum balance allowed to access meals. Students with balances above this limit will be denied meal access.</span>
+        </div>
+        
+        <div class="section-title">Term & Year</div>
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="action" value="save">
             <div class="form-row">
-                <div class="form-group"><label>Term</label><select name="term"><option>Term 1</option><option selected>Term 2</option><option>Term 3</option></select></div>
-                <div class="form-group"><label>Year</label><input type="text" name="academic_year" value="{{ year|default:'2026' }}"></div>
+                <div class="form-group">
+                    <label>Term</label>
+                    <select name="term">
+                        <option>Term 1</option>
+                        <option selected>Term 2</option>
+                        <option>Term 3</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Year</label>
+                    <input type="text" name="academic_year" value="{{ year|default:'2026' }}">
+                </div>
             </div>
+            
+            <div class="section-title">Balance Limits</div>
+            
             {% for class_name in classes %}
-            <div style="margin-bottom:10px;">
-                <strong style="font-size:13px;">{{ class_name }}</strong>
+            <div class="class-section">
+                <div class="class-name">{{ class_name }}</div>
                 <div class="rule-row">
-                    <span class="cat-label">? Day</span>
+                    <span class="cat-label">Day Scholar</span>
                     <input type="number" name="rule_{{ class_name }}_day" value="{{ existing_rules|get_item:class_name|add:'_day'|default:'' }}" placeholder="Max UGX">
                 </div>
                 <div class="rule-row">
-                    <span class="cat-label">?? Hostel</span>
+                    <span class="cat-label">Hostel Student</span>
                     <input type="number" name="rule_{{ class_name }}_hostel" value="{{ existing_rules|get_item:class_name|add:'_hostel'|default:'' }}" placeholder="Max UGX">
                 </div>
             </div>
             {% endfor %}
-            <button type="submit" class="btn">Save Rules</button>
+            
+            <button type="submit" class="btn">Save Meal Rules</button>
         </form>
     </div>
-
-
-
 
 <script>
 console.log("╔══════════════════════════════════════╗");
@@ -67,9 +244,3 @@ console.log("╚═════════════════════�
 </script>
 </body>
 </html>
-
-
-
-
-
-

@@ -4,27 +4,186 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
-    <title>Print Cards - OneCard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Print Cards - OneCard | Jinja SS</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 70px; }
-        .header { background: #1a237e; color: white; padding: 14px 16px; }
-        .header .title { font-size: 16px; font-weight: 600; }
-        .section { margin: 12px 16px; }
-        .card-white { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-        .card-white h3 { font-size: 14px; color: #1a237e; margin-bottom: 12px; }
-        .class-list { display: flex; flex-wrap: wrap; gap: 8px; }
-        .class-chip { padding: 10px 16px; border: 2px solid #e0e0e0; border-radius: 20px; font-size: 13px; cursor: pointer; background: white; }
-        .class-chip.selected { border-color: #1a237e; background: #e8eaf6; }
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px; }
-        .btn-primary { background: #1a237e; color: white; }
-        .btn-success { background: #2e7d32; color: white; }
-        .btn-outline { background: white; color: #1a237e; border: 2px solid #1a237e; }
+        body { 
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif; 
+            background: #F8F9FA; 
+            padding-bottom: 90px;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .header { 
+            background: linear-gradient(135deg, #0A1F3F, #132D52); 
+            color: white; 
+            padding: 18px 20px; 
+            box-shadow: 0 4px 20px rgba(10, 31, 63, 0.3);
+        }
+        
+        .header .title { 
+            font-size: 17px; 
+            font-weight: 700; 
+            letter-spacing: 0.3px;
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .section { 
+            margin: 16px 16px; 
+        }
+        
+        .card-white { 
+            background: white; 
+            border-radius: 16px; 
+            padding: 20px; 
+            box-shadow: 0 2px 12px rgba(10, 31, 63, 0.06);
+            border: 1px solid #f0f0f0;
+        }
+        
+        .card-white h3 { 
+            font-size: 15px; 
+            color: #0A1F3F; 
+            margin-bottom: 14px; 
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .class-list { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 10px; 
+        }
+        
+        .class-chip { 
+            padding: 12px 18px; 
+            border: 2px solid #e0e0e0; 
+            border-radius: 25px; 
+            font-size: 13px; 
+            cursor: pointer; 
+            background: white;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+        
+        .class-chip:hover {
+            border-color: #00C2BA;
+            background: rgba(0, 194, 186, 0.05);
+        }
+        
+        .class-chip.selected { 
+            border-color: #00C2BA; 
+            background: rgba(0, 194, 186, 0.1); 
+            color: #0A1F3F;
+            font-weight: 600;
+        }
+        
+        .btn { 
+            width: 100%; 
+            padding: 14px; 
+            border: none; 
+            border-radius: 12px; 
+            font-size: 14px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            margin-top: 12px;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.3px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary { 
+            background: linear-gradient(135deg, #0A1F3F, #132D52); 
+            color: white; 
+        }
+        
+        .btn-primary:hover {
+            box-shadow: 0 8px 25px rgba(10, 31, 63, 0.2);
+            transform: translateY(-1px);
+        }
+        
+        .btn-success { 
+            background: linear-gradient(135deg, #00C2BA, #00A8A0); 
+            color: #0A1F3F; 
+        }
+        
+        .btn-success:hover {
+            box-shadow: 0 8px 25px rgba(0, 194, 186, 0.3);
+            transform: translateY(-1px);
+        }
+        
+        .btn-outline { 
+            background: white; 
+            color: #0A1F3F; 
+            border: 2px solid #0A1F3F; 
+        }
+        
+        .btn-outline:hover {
+            background: #0A1F3F;
+            color: white;
+        }
+        
+        .student-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.3s ease;
+        }
+        
+        .student-row:hover {
+            background: #F8F9FA;
+            margin: 0 -20px;
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+        
+        .student-row input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #00C2BA;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        
+        .student-row .student-info {
+            flex: 1;
+        }
+        
+        .student-row .student-info strong {
+            color: #0A1F3F;
+            font-size: 13px;
+        }
+        
+        .student-row .student-info small {
+            color: #9CA3AF;
+            font-size: 11px;
+        }
+        
+        .student-row img {
+            width: 42px;
+            height: 42px;
+            border-radius: 8px;
+            border: 1px solid #f0f0f0;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+        
+        .student-count {
+            color: #00C2BA;
+            font-weight: 600;
+        }
     </style>
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
-    <div class="header"><div class="title">Print Cards</div></div>
+    <div class="header">
+        <div class="title">Print Student Cards</div>
+    </div>
+    
     <div class="section">
         <form method="post">
             {% csrf_token %}
@@ -42,37 +201,41 @@
             </div>
         </form>
     </div>
+    
     {% if students %}
     <div class="section">
         <div class="card-white">
-            <h3>{{ selected_class }} � {{ students.count }} cards</h3>
+            <h3>{{ selected_class }} · <span class="student-count">{{ students.count }} cards</span></h3>
             <form method="post" id="printForm">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="print_selected">
                 {% for s in students %}
-                <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0;">
-                    <input type="checkbox" name="selected_students" value="{{ s.id }}" style="width:20px;height:20px;">
-                    <div style="flex:1;"><strong>{{ s.id }}</strong><br><small style="color:#888;">{{ s.admission_number }}</small></div>
-                    {% if s.qr_code %}<img src="{{ s.qr_code.url }}" style="width:40px;height:40px;">{% endif %}
+                <div class="student-row">
+                    <input type="checkbox" name="selected_students" value="{{ s.id }}">
+                    <div class="student-info">
+                        <strong>{{ s.id }}</strong><br>
+                        <small>{{ s.admission_number }}</small>
+                    </div>
+                    {% if s.qr_code %}
+                    <img src="{{ s.qr_code.url }}" alt="QR">
+                    {% endif %}
                 </div>
                 {% endfor %}
-                <button type="submit" class="btn btn-success" style="margin-top:12px;">Mark as Printed</button>
-                <button type="button" class="btn btn-outline" onclick="downloadPDF()" style="margin-top:6px;">Download PDF</button>
+                <button type="submit" class="btn btn-success">Mark as Printed</button>
+                <button type="button" class="btn btn-outline" onclick="downloadPDF()">Download PDF</button>
             </form>
         </div>
     </div>
     {% endif %}
+    
     <script>
         function downloadPDF() {
             const ids = [];
             document.querySelectorAll('input[name="selected_students"]:checked').forEach(cb => ids.push(cb.value));
-            if (ids.length === 0) { alert('Select cards first.'); return; }
+            if (ids.length === 0) { alert('Select at least one card to download.'); return; }
             window.open('/cards/download-cards-pdf/?ids=' + ids.join('&ids='), '_blank');
         }
     </script>
-
-
-
 
 <script>
 console.log("╔══════════════════════════════════════╗");
@@ -87,9 +250,3 @@ console.log("╚═════════════════════�
 </script>
 </body>
 </html>
-
-
-
-
-
-

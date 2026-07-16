@@ -4,53 +4,250 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
-    <title>Attendance - OneCard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Attendance - OneCard | Jinja SS</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 70px; }
-        .header { background: #1a237e; color: white; padding: 14px 16px; }
-        .header .title { font-size: 16px; font-weight: 600; }
-        .header .subtitle { font-size: 11px; opacity: 0.8; }
-        .gender-tabs { display: flex; gap: 6px; padding: 10px 16px; background: white; }
-        .gender-tab { flex: 1; padding: 8px; text-align: center; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; }
-        .tab-all { background: #1a237e; color: white; }
-        .tab-male { background: #1565c0; color: white; }
-        .tab-female { background: #c62828; color: white; }
-        .tab-inactive { background: #e0e0e0; color: #666; }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px 16px; }
-        .stat-card { background: white; border-radius: 10px; padding: 16px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-        .stat-card .val { font-size: 26px; font-weight: 700; }
-        .stat-card .lbl { font-size: 12px; color: #888; }
-        .gender-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 16px; margin-bottom: 12px; }
-        .gender-card { border-radius: 10px; padding: 14px; text-align: center; }
-        .gender-card.male { background: #e3f2fd; }
-        .gender-card.female { background: #fce4ec; }
-        .gender-card .label { font-size: 12px; font-weight: 600; margin-bottom: 4px; }
-        .gender-card .count { font-size: 22px; font-weight: 700; }
-        .gender-card .rate { font-size: 16px; font-weight: 600; margin-top: 2px; }
-        .student-list { padding: 8px 16px; }
-        .student-card { background: white; border-radius: 10px; padding: 12px 14px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .student-card .info .name { font-weight: 600; font-size: 14px; }
-        .student-card .info .detail { font-size: 11px; color: #888; }
-        .student-card .time { font-size: 13px; color: #2e7d32; font-weight: 600; }
-        .section-title { font-size: 14px; font-weight: 600; color: #333; padding: 8px 16px; }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; border-top: 1px solid #e0e0e0; }
-        .bottom-nav a { flex: 1; text-align: center; padding: 10px 0; color: #888; text-decoration: none; font-size: 11px; }
-        .bottom-nav a.active { color: #1a237e; }
+        body { 
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif; 
+            background: #F8F9FA; 
+            padding-bottom: 80px;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .header { 
+            background: linear-gradient(135deg, #0A1F3F, #132D52); 
+            color: white; 
+            padding: 18px 20px; 
+            box-shadow: 0 4px 20px rgba(10, 31, 63, 0.3);
+        }
+        
+        .header .title { 
+            font-size: 17px; 
+            font-weight: 700; 
+            letter-spacing: 0.3px;
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .header .subtitle { 
+            font-size: 11px; 
+            color: #00C2BA; 
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-top: 3px;
+        }
+        
+        .gender-tabs { 
+            display: flex; 
+            gap: 8px; 
+            padding: 14px 16px; 
+            background: white;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .gender-tab { 
+            flex: 1; 
+            padding: 10px; 
+            text-align: center; 
+            border-radius: 12px; 
+            font-size: 13px; 
+            font-weight: 700; 
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-all { 
+            background: #0A1F3F; 
+            color: white; 
+        }
+        
+        .tab-male { 
+            background: #1565c0; 
+            color: white; 
+        }
+        
+        .tab-female { 
+            background: #c62828; 
+            color: white; 
+        }
+        
+        .tab-inactive { 
+            background: #f0f0f0; 
+            color: #9CA3AF; 
+        }
+        
+        .tab-inactive:hover {
+            background: #e0e0e0;
+        }
+        
+        .gender-cards { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 10px; 
+            padding: 16px; 
+        }
+        
+        .gender-card { 
+            border-radius: 16px; 
+            padding: 18px; 
+            text-align: center; 
+        }
+        
+        .gender-card.male { 
+            background: rgba(21, 101, 192, 0.08); 
+            border: 1px solid rgba(21, 101, 192, 0.15);
+        }
+        
+        .gender-card.female { 
+            background: rgba(198, 40, 40, 0.08); 
+            border: 1px solid rgba(198, 40, 40, 0.15);
+        }
+        
+        .gender-card .label { 
+            font-size: 11px; 
+            font-weight: 600; 
+            margin-bottom: 6px; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .gender-card .count { 
+            font-size: 24px; 
+            font-weight: 700; 
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .gender-card .rate { 
+            font-size: 14px; 
+            font-weight: 600; 
+            margin-top: 2px; 
+        }
+        
+        .stats-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 10px; 
+            padding: 0 16px 16px; 
+        }
+        
+        .stat-card { 
+            background: white; 
+            border-radius: 16px; 
+            padding: 18px; 
+            text-align: center; 
+            box-shadow: 0 2px 12px rgba(10, 31, 63, 0.06);
+            border: 1px solid #f0f0f0;
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .stat-card .val { 
+            font-size: 28px; 
+            font-weight: 700; 
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .stat-card .lbl { 
+            font-size: 11px; 
+            color: #9CA3AF; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+        
+        .section-title { 
+            font-size: 13px; 
+            font-weight: 700; 
+            color: #0A1F3F; 
+            padding: 8px 16px; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .student-list { 
+            padding: 8px 16px; 
+        }
+        
+        .student-card { 
+            background: white; 
+            border-radius: 14px; 
+            padding: 14px 16px; 
+            margin-bottom: 8px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 2px 10px rgba(10, 31, 63, 0.04);
+            border: 1px solid #f0f0f0;
+            transition: transform 0.3s ease;
+        }
+        
+        .student-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(10, 31, 63, 0.08);
+        }
+        
+        .student-card .info .name { 
+            font-weight: 600; 
+            font-size: 14px; 
+            color: #0A1F3F;
+        }
+        
+        .student-card .info .detail { 
+            font-size: 11px; 
+            color: #9CA3AF; 
+            margin-top: 2px;
+        }
+        
+        .student-card .time { 
+            font-size: 13px; 
+            color: #00C2BA; 
+            font-weight: 700; 
+        }
+        
+        .bottom-nav { 
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            right: 0; 
+            background: white; 
+            display: flex; 
+            border-top: 1px solid #f0f0f0;
+            box-shadow: 0 -4px 20px rgba(10, 31, 63, 0.08);
+            z-index: 100;
+        }
+        
+        .bottom-nav a { 
+            flex: 1; 
+            text-align: center; 
+            padding: 10px 0 8px; 
+            color: #9CA3AF; 
+            text-decoration: none; 
+            font-size: 10px; 
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .bottom-nav a.active { 
+            color: #00C2BA; 
+        }
     </style>
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
     <div class="header">
-        <div class="title">Attendance{% if class_filter %} � {{ class_filter }} {{ stream_filter }}{% endif %}</div>
+        <div class="title">Attendance{% if class_filter %} · {{ class_filter }} {{ stream_filter }}{% endif %}</div>
         {% if gender_filter == 'M' %}
         <div class="subtitle">Showing Males Only</div>
         {% elif gender_filter == 'F' %}
         <div class="subtitle">Showing Females Only</div>
+        {% else %}
+        <div class="subtitle">All Students</div>
         {% endif %}
     </div>
 
-    <!-- Gender Tabs -->
     <div class="gender-tabs">
         <a href="?{% if class_filter %}class={{ class_filter }}{% endif %}{% if stream_filter %}&stream={{ stream_filter }}{% endif %}" 
            class="gender-tab {% if not gender_filter %}tab-all{% else %}tab-inactive{% endif %}">All</a>
@@ -60,7 +257,6 @@
            class="gender-tab {% if gender_filter == 'F' %}tab-female{% else %}tab-inactive{% endif %}">Females</a>
     </div>
 
-    <!-- Gender Stats Cards -->
     <div class="gender-cards">
         <div class="gender-card male">
             <div class="label" style="color:#1565c0;">Males</div>
@@ -74,12 +270,11 @@
         </div>
     </div>
 
-    <!-- Overall Stats -->
     <div class="stats-grid">
-        <div class="stat-card"><div class="val" style="color:#2e7d32;">{{ stats.on_time }}</div><div class="lbl">On Time</div></div>
+        <div class="stat-card"><div class="val" style="color:#00C2BA;">{{ stats.on_time }}</div><div class="lbl">On Time</div></div>
         <div class="stat-card"><div class="val" style="color:#e65100;">{{ stats.late }}</div><div class="lbl">Late</div></div>
         <div class="stat-card"><div class="val" style="color:#c62828;">{{ stats.absent }}</div><div class="lbl">Absent</div></div>
-        <div class="stat-card"><div class="val">{{ stats.rate }}%</div><div class="lbl">Rate</div></div>
+        <div class="stat-card"><div class="val" style="color:#0A1F3F;">{{ stats.rate }}%</div><div class="lbl">Rate</div></div>
     </div>
 
     <div class="section-title">Today's Records</div>
@@ -88,23 +283,21 @@
         <div class="student-card">
             <div class="info">
                 <div class="name">{{ a.student.id }}</div>
-                <div class="detail">{{ a.student.admission_number }} | {{ a.scan_location }}</div>
+                <div class="detail">{{ a.student.admission_number }} · {{ a.scan_location }}</div>
             </div>
             <div class="time">{{ a.time_in }}</div>
         </div>
         {% empty %}
-        <p style="text-align:center;color:#999;padding:30px;">No records today.</p>
+        <p style="text-align:center;color:#9CA3AF;padding:30px;">No records today.</p>
         {% endfor %}
     </div>
+    
     <div class="bottom-nav">
         <a href="{% url 'dashboard' %}">Home</a>
         <a href="#" class="active">Attendance</a>
         <a href="{% url 'fee_report' %}">Fees</a>
         <a href="{% url 'movement_history' %}">Movement</a>
     </div>
-
-
-
 
 <script>
 console.log("╔══════════════════════════════════════╗");
@@ -119,7 +312,3 @@ console.log("╚═════════════════════�
 </script>
 </body>
 </html>
-
-
-
-

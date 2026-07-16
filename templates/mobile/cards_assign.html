@@ -4,24 +4,132 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
-    <title>Assign Templates - OneCard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Assign Templates - OneCard | Jinja SS</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 70px; }
-        .header { background: #1a237e; color: white; padding: 14px 16px; }
-        .header .title { font-size: 16px; font-weight: 600; }
-        .form-card { background: white; border-radius: 12px; padding: 20px; margin: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-        .assign-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
-        .assign-row .class-name { font-weight: 600; font-size: 14px; }
-        .assign-row select { padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; max-width: 160px; }
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 12px; }
-        .btn-primary { background: #1a237e; color: white; }
+        body { 
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif; 
+            background: #F8F9FA; 
+            padding-bottom: 30px;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .header { 
+            background: linear-gradient(135deg, #0A1F3F, #132D52); 
+            color: white; 
+            padding: 18px 20px; 
+            box-shadow: 0 4px 20px rgba(10, 31, 63, 0.3);
+        }
+        
+        .header .title { 
+            font-size: 17px; 
+            font-weight: 700; 
+            letter-spacing: 0.3px;
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .form-card { 
+            background: white; 
+            border-radius: 16px; 
+            padding: 20px; 
+            margin: 20px 16px; 
+            box-shadow: 0 2px 12px rgba(10, 31, 63, 0.06);
+            border: 1px solid #f0f0f0;
+        }
+        
+        .form-card h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 16px;
+            color: #0A1F3F;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+        
+        .assign-row { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 14px 0; 
+            border-bottom: 1px solid #f0f0f0; 
+            gap: 12px;
+        }
+        
+        .assign-row:last-child {
+            border-bottom: none;
+        }
+        
+        .assign-row .class-name { 
+            font-weight: 600; 
+            font-size: 14px; 
+            color: #0A1F3F;
+            flex-shrink: 0;
+        }
+        
+        .assign-row select { 
+            padding: 10px 14px; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 10px; 
+            font-size: 13px; 
+            font-family: 'Inter', sans-serif;
+            background: white;
+            color: #374151;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            max-width: 180px;
+            width: 100%;
+        }
+        
+        .assign-row select:focus {
+            border-color: #00C2BA;
+            box-shadow: 0 0 0 3px rgba(0, 194, 186, 0.1);
+        }
+        
+        .assign-row select option:checked {
+            background: #00C2BA;
+            color: white;
+        }
+        
+        .btn { 
+            width: 100%; 
+            padding: 16px; 
+            border: none; 
+            border-radius: 14px; 
+            font-size: 15px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            margin-top: 20px;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.3px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary { 
+            background: linear-gradient(135deg, #00C2BA, #00A8A0); 
+            color: #0A1F3F; 
+        }
+        
+        .btn-primary:hover {
+            box-shadow: 0 8px 25px rgba(0, 194, 186, 0.3);
+            transform: translateY(-1px);
+        }
+        
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
     </style>
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
-    <div class="header"><div class="title">Assign Templates</div></div>
+    <div class="header">
+        <div class="title">Assign Templates</div>
+    </div>
+    
     <div class="form-card">
+        <h3>Class Template Assignment</h3>
         <form method="post">
             {% csrf_token %}
             {% for class_name in classes %}
@@ -39,9 +147,6 @@
         </form>
     </div>
 
-
-
-
 <script>
 console.log("╔══════════════════════════════════════╗");
 console.log("║        ONECARD SYSTEM               ║");
@@ -55,9 +160,3 @@ console.log("╚═════════════════════�
 </script>
 </body>
 </html>
-
-
-
-
-
-

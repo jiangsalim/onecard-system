@@ -4,63 +4,204 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
-    <title>Card Designs - OneCard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Card Designs - OneCard | Jinja SS</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding-bottom: 70px; }
-        .header { background: #1a237e; color: white; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; }
-        .header .title { font-size: 16px; font-weight: 600; }
-        .header a { color: #ffcc80; text-decoration: none; font-size: 14px; font-weight: 600; }
-        .template-list { padding: 12px 16px; }
-        .template-card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); display: flex; justify-content: space-between; align-items: center; }
-        .template-card .info .name { font-weight: 600; font-size: 15px; }
-        .template-card .info .level { font-size: 12px; color: #888; }
-        .template-card .colors { display: flex; gap: 6px; margin-top: 6px; }
-        .color-dot { width: 16px; height: 16px; border-radius: 50%; border: 1px solid #ddd; }
-        .btn { padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; border: none; cursor: pointer; text-decoration: none; }
-        .btn-edit { background: #1a237e; color: white; }
-        .btn-del { background: #c62828; color: white; }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; border-top: 1px solid #e0e0e0; }
-        .bottom-nav a { flex: 1; text-align: center; padding: 10px 0; color: #888; text-decoration: none; font-size: 11px; }
-        .bottom-nav a.active { color: #1a237e; }
+        body { 
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif; 
+            background: #F8F9FA; 
+            padding-bottom: 80px;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .header { 
+            background: linear-gradient(135deg, #0A1F3F, #132D52); 
+            color: white; 
+            padding: 18px 20px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 4px 20px rgba(10, 31, 63, 0.3);
+        }
+        
+        .header .title { 
+            font-size: 17px; 
+            font-weight: 700; 
+            letter-spacing: 0.3px;
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .header a { 
+            color: #00C2BA; 
+            text-decoration: none; 
+            font-size: 13px; 
+            font-weight: 700; 
+            padding: 8px 16px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 194, 186, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .header a:hover {
+            background: rgba(0, 194, 186, 0.1);
+        }
+        
+        .template-list { 
+            padding: 16px 16px; 
+        }
+        
+        .template-card { 
+            background: white; 
+            border-radius: 14px; 
+            padding: 18px; 
+            margin-bottom: 10px; 
+            box-shadow: 0 2px 10px rgba(10, 31, 63, 0.06);
+            border: 1px solid #f0f0f0;
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .template-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(10, 31, 63, 0.1);
+        }
+        
+        .template-card .info .name { 
+            font-weight: 600; 
+            font-size: 15px; 
+            color: #0A1F3F;
+        }
+        
+        .template-card .info .level { 
+            font-size: 12px; 
+            color: #9CA3AF; 
+            margin-top: 2px;
+        }
+        
+        .template-card .colors { 
+            display: flex; 
+            gap: 8px; 
+            margin-top: 8px; 
+        }
+        
+        .color-dot { 
+            width: 20px; 
+            height: 20px; 
+            border-radius: 50%; 
+            border: 2px solid #e0e0e0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .btn { 
+            padding: 8px 16px; 
+            border-radius: 10px; 
+            font-size: 12px; 
+            font-weight: 700; 
+            border: none; 
+            cursor: pointer; 
+            text-decoration: none;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.3px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-edit { 
+            background: #0A1F3F; 
+            color: white; 
+        }
+        
+        .btn-edit:hover {
+            background: #132D52;
+        }
+        
+        .btn-del { 
+            background: rgba(198, 40, 40, 0.1); 
+            color: #c62828; 
+        }
+        
+        .btn-del:hover {
+            background: rgba(198, 40, 40, 0.2);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        
+        .empty-state p {
+            color: #9CA3AF;
+            font-size: 15px;
+            font-weight: 500;
+        }
+        
+        .bottom-nav { 
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            right: 0; 
+            background: white; 
+            display: flex; 
+            border-top: 1px solid #f0f0f0;
+            box-shadow: 0 -4px 20px rgba(10, 31, 63, 0.08);
+            z-index: 100;
+        }
+        
+        .bottom-nav a { 
+            flex: 1; 
+            text-align: center; 
+            padding: 10px 0 8px; 
+            color: #9CA3AF; 
+            text-decoration: none; 
+            font-size: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .bottom-nav a.active { 
+            color: #00C2BA; 
+        }
     </style>
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
     <div class="header">
         <div class="title">Card Designs</div>
-        <a href="{% url 'template_create' %}">+ New</a>
+        <a href="{% url 'template_create' %}">+ New Template</a>
     </div>
+    
     <div class="template-list">
         {% for t in templates %}
         <div class="template-card">
             <div class="info">
                 <div class="name">{{ t.name }}</div>
-                <div class="level">{{ t.get_class_level_display }} | {{ t.color_name }}</div>
+                <div class="level">{{ t.get_class_level_display }} · {{ t.color_name }}</div>
                 <div class="colors">
                     <div class="color-dot" style="background:{{ t.background_color }};"></div>
                     <div class="color-dot" style="background:{{ t.border_color }};"></div>
                     <div class="color-dot" style="background:{{ t.badge_color }};"></div>
                 </div>
             </div>
-            <div style="display:flex; gap:6px;">
+            <div style="display:flex; gap:8px;">
                 <a href="{% url 'template_edit' t.id %}" class="btn btn-edit">Edit</a>
-                <a href="{% url 'template_delete' t.id %}" class="btn btn-del" onclick="return confirm('Delete?')">Del</a>
+                <a href="{% url 'template_delete' t.id %}" class="btn btn-del" onclick="return confirm('Delete this template?')">Delete</a>
             </div>
         </div>
         {% empty %}
-        <p style="text-align:center;color:#999;padding:40px;">No templates yet.</p>
+        <div class="empty-state">
+            <p>No templates created yet.</p>
+        </div>
         {% endfor %}
     </div>
+    
     <div class="bottom-nav">
         <a href="{% url 'template_list' %}" class="active">Designs</a>
         <a href="{% url 'assign_templates' %}">Assign</a>
         <a href="{% url 'print_cards' %}">Print</a>
         <a href="{% url 'printed_cards' %}">Printed</a>
     </div>
-
-
-
 
 <script>
 console.log("╔══════════════════════════════════════╗");
@@ -75,9 +216,3 @@ console.log("╚═════════════════════�
 </script>
 </body>
 </html>
-
-
-
-
-
-
