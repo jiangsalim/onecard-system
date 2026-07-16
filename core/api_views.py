@@ -26,6 +26,13 @@ def build_photo_url(request, photo_path):
     """Convert a photo path to a full URL, or return empty string."""
     if not photo_path:
         return ''
+    # If already a full URL (Cloudinary), return as-is
+    if photo_path.startswith('http'):
+        return photo_path
+    # If it's a local path but we're on Render, use Cloudinary
+    if photo_path.startswith('student_photos/'):
+        admission = photo_path.replace('student_photos/', '').replace('.jpg', '')
+        return f'https://res.cloudinary.com/lj8ucjmr/image/upload/v1783967518/onecard-jinja-sss/student_photos/{admission}.jpg'
     return request.build_absolute_uri(settings.MEDIA_URL + photo_path)
 
 
