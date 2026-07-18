@@ -381,24 +381,46 @@
         function onScanFailure(err) {}
         function showLoading() { setIcon('icon-warning'); document.getElementById('resultName').textContent='Processing...'; document.getElementById('resultDetail').textContent=''; document.getElementById('feesContainer').style.display='none'; setPhoto('', ''); document.getElementById('result').classList.add('show'); }
         function processScan(studentId) {
-            const mode = document.getElementById('mode').value, location = document.getElementById('location').value;
-            fetch('/api/scan/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},body:JSON.stringify({student_id:studentId,location:location,mode:mode})})
-            .then(r=>r.json()).then(data=>{
-                if(data.success) showBalanceResult(data);
-                else { setIcon('icon-error'); document.getElementById('resultName').textContent='Error'; document.getElementById('resultDetail').textContent=data.error; setPhoto('', ''); document.getElementById('result').classList.add('show'); }
-            }).catch(()=>{ setIcon('icon-error'); document.getElementById('resultName').textContent='Error'; document.getElementById('resultDetail').textContent='Connection failed'; setPhoto('', ''); document.getElementById('result').classList.add('show'); });
+    const mode = document.getElementById('mode').value, location = document.getElementById('location').value;
+    fetch('/api/scan/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},body:JSON.stringify({student_id:studentId,location:location,mode:mode})})
+    .then(r=>r.json()).then(data=>{
+        if(data.success) {
+            if (data.movement && data.movement.action === 'exit') {
+                // Pass out mode - show exit confirmation
+                showPassOutResult(data);
+            } else if (data.meal) {
+                showMealResult(data);
+            } else {
+                showBalanceResult(data);
+            }
+        } else {
+            setIcon('icon-error'); 
+            document.getElementById('resultName').textContent='Error'; 
+            document.getElementById('resultDetail').textContent=data.error; 
+            setPhoto('', ''); 
+            document.getElementById('result').classList.add('show'); 
         }
-        function showBalanceResult(data) {
-            const s=data.student,f=data.fees;
-            document.getElementById('feesContainer').style.display='block'; document.getElementById('passoutContainer').style.display='none'; document.getElementById('returnContainer').style.display='none'; document.getElementById('mealContainer').style.display='none';
-            setIcon(f.status==='CLEARED'?'icon-success':'icon-warning');
-            document.getElementById('resultName').textContent=s.name; document.getElementById('resultDetail').textContent=`${s.class} ${s.stream} · ${s.admission}`;
-            setPhoto(s.photo || '', s.name);
-            document.getElementById('feesTotal').textContent=f.total.toLocaleString()+' UGX'; document.getElementById('feesPaid').textContent=f.paid.toLocaleString()+' UGX'; document.getElementById('feesBalance').textContent=f.balance.toLocaleString()+' UGX';
-            document.getElementById('feesStatus').innerHTML=f.status==='CLEARED'?'<span class="badge badge-success">CLEARED</span>':'<span class="badge badge-warning">NOT CLEARED</span>';
-            if(data.attendance&&data.attendance.marked){document.getElementById('attendanceConfirm').textContent='Attendance Recorded'; document.getElementById('attendanceConfirm').style.display='block'; document.getElementById('attendanceConfirm').style.background='rgba(0,194,186,0.15)'; document.getElementById('attendanceConfirm').style.color='#80cbc4';}
-            document.getElementById('result').classList.add('show');
-        }
+    }).catch(()=>{ 
+        setIcon('icon-error'); 
+        document.getElementById('resultName').textContent='Error'; 
+        document.getElementById('resultDetail').textContent='Connection failed'; 
+        setPhoto('', ''); 
+        document.getElementById('result').classList.add('show'); 
+    });
+}
+
+      function showPassOutResult(data) {
+          const s = data.student;
+          setIcon('icon-success');
+          document.getElementById('resultName').textContent = s.name;
+          document.getElementById('resultName').style.color = '#4caf50';
+          document.getElementById('resultDetail').textContent = 'Exit Logged — Student may leave';
+          document.getElementById('feesContainer').style.display = 'none';
+          document.getElementById('passoutContainer').style.display = 'block';
+          document.getElementById('passoutContainer').innerHTML = '<p style="text-align:center; color:#a5d6a7; padding:20px;">✅ Exit Logged Successfully</p>';
+          document.getElementById('result').classList.add('show');
+}
+        
         function closeResult() { document.getElementById('result').classList.remove('show'); }
         function manualLookup() { const id=document.getElementById('manualId').value.trim(); if(!id) return; showLoading(); processScan(id); document.getElementById('manualId').value=''; }
         function getCookie(name) { let v=document.cookie.match('(^|;) ?'+name+'=([^;]*)(;|$)'); return v?v[2]:null; }
