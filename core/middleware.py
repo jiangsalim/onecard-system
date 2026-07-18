@@ -38,7 +38,7 @@ class RateLimitMiddleware:
     
     RATE_LIMITS = {
         '/api/scan/': (60, 60),
-        '/login/': (10, 300),           # 10 attempts per 5 minutes
+        '/login/': (30, 300),           # 30 attempts per 5 minutes
         '/api/pass-out/': (30, 60),
     }
     
