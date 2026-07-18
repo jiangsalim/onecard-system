@@ -291,6 +291,7 @@
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
     <div class="header">
         <h1>OneCard Scanner</h1>
         <div class="subtitle">Jinja Senior Secondary School</div>
@@ -351,81 +352,255 @@
     <template id="icon-error"><svg viewBox="0 0 24 24" fill="none" stroke="#f44336" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg></template>
 
     <script>
-        let cameraActive = false;
-        const html5QrCode = new Html5Qrcode("reader");
-        function setIcon(id) { const d = document.getElementById('resultIcon'); d.innerHTML = ''; d.appendChild(document.getElementById(id).content.cloneNode(true)); }
-        
-        function setPhoto(photoUrl, name) {
-            const img = document.getElementById('resultPhoto');
-            const placeholder = document.getElementById('resultPhotoPlaceholder');
-            if (photoUrl) {
-                img.src = photoUrl;
-                img.style.display = 'block';
-                placeholder.style.display = 'none';
-            } else if (name) {
-                img.style.display = 'none';
-                placeholder.textContent = name.charAt(0).toUpperCase();
-                placeholder.style.display = 'flex';
-            } else {
-                img.style.display = 'none';
-                placeholder.style.display = 'none';
-            }
-        }
+let cameraActive = false;
+let currentStudentData = null;
+let lastScanTime = 0;
+const html5QrCode = new Html5Qrcode("reader");
 
-        function onModeChange() { document.getElementById('statusText').textContent = 'Enter Student ID below'; }
-        function toggleCamera() {
-            if (cameraActive) { html5QrCode.stop().then(() => { cameraActive = false; document.getElementById('reader').style.display = 'none'; }).catch(()=>{}); }
-            else { document.getElementById('reader').style.display = 'block'; html5QrCode.start({facingMode:"environment"},{fps:10,qrbox:{width:250,height:250}},onScanSuccess,onScanFailure).then(()=>{cameraActive=true;}).catch(()=>{document.getElementById('reader').style.display='none';alert('Camera unavailable');}); }
-        }
-        function onScanSuccess(decodedText) { html5QrCode.pause(); processScan(decodedText); }
-        function onScanFailure(err) {}
-        function showLoading() { setIcon('icon-warning'); document.getElementById('resultName').textContent='Processing...'; document.getElementById('resultDetail').textContent=''; document.getElementById('feesContainer').style.display='none'; setPhoto('', ''); document.getElementById('result').classList.add('show'); }
-        function processScan(studentId) {
+function setIcon(id) { const d = document.getElementById('resultIcon'); d.innerHTML = ''; d.appendChild(document.getElementById(id).content.cloneNode(true)); }
+
+function setPhoto(photoUrl, name) {
+    const img = document.getElementById('resultPhoto');
+    const placeholder = document.getElementById('resultPhotoPlaceholder');
+    if (photoUrl) {
+        img.src = photoUrl;
+        img.style.display = 'block';
+        placeholder.style.display = 'none';
+    } else if (name) {
+        img.style.display = 'none';
+        placeholder.textContent = name.charAt(0).toUpperCase();
+        placeholder.style.display = 'flex';
+    } else {
+        img.style.display = 'none';
+        placeholder.style.display = 'none';
+    }
+}
+
+function getCSRFToken() {
+    let token = getCookie('csrftoken');
+    if (token) return token;
+    const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    if (input) return input.value;
+    return '';
+}
+
+function onModeChange() { document.getElementById('statusText').textContent = 'Enter Student ID below'; }
+function toggleCamera() {
+    if (cameraActive) { html5QrCode.stop().then(() => { cameraActive = false; document.getElementById('reader').style.display = 'none'; }).catch(()=>{}); }
+    else { document.getElementById('reader').style.display = 'block'; html5QrCode.start({facingMode:"environment"},{fps:10,qrbox:{width:250,height:250}},onScanSuccess,onScanFailure).then(()=>{cameraActive=true;}).catch(()=>{document.getElementById('reader').style.display='none';alert('Camera unavailable');}); }
+}
+function onScanSuccess(decodedText) { 
+    const now = Date.now();
+    if (now - lastScanTime < 3000) return;
+    lastScanTime = now;
+    html5QrCode.pause(); 
+    showLoading(); 
+    processScan(decodedText); 
+}
+function onScanFailure(err) {}
+
+function showLoading() { 
+    setIcon('icon-warning'); 
+    document.getElementById('resultName').textContent='Processing...'; 
+    document.getElementById('resultDetail').textContent=''; 
+    document.getElementById('feesContainer').style.display='none'; 
+    document.getElementById('passoutContainer').style.display='none'; 
+    document.getElementById('returnContainer').style.display='none'; 
+    document.getElementById('mealContainer').style.display='none'; 
+    setPhoto('', ''); 
+    document.getElementById('result').classList.add('show'); 
+}
+
+function processScan(studentId) {
     const mode = document.getElementById('mode').value, location = document.getElementById('location').value;
-    fetch('/api/scan/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},body:JSON.stringify({student_id:studentId,location:location,mode:mode})})
+    const csrfToken = getCSRFToken();
+    fetch('/api/scan/',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-CSRFToken':csrfToken},
+        body:JSON.stringify({student_id:studentId,location:location,mode:mode})
+    })
     .then(r=>r.json()).then(data=>{
         if(data.success) {
-            if (data.movement && data.movement.action === 'exit') {
-                // Pass out mode - show exit confirmation
-                showPassOutResult(data);
-            } else if (data.meal) {
-                showMealResult(data);
+            if (mode === 'pass_out' && data.movement) {
+                if (data.movement.action === 'exit') showPassOutForm(data);
+                else if (data.movement.action === 'return') showReturnConfirmation(data);
+            } else if (mode === 'meal_tracking') {
+                if (data.meal) showMealResult(data);
+                else showMealError(data);
             } else {
                 showBalanceResult(data);
             }
         } else {
-            setIcon('icon-error'); 
-            document.getElementById('resultName').textContent='Error'; 
-            document.getElementById('resultDetail').textContent=data.error; 
-            setPhoto('', ''); 
-            document.getElementById('result').classList.add('show'); 
+            if (mode === 'meal_tracking') showMealError(data);
+            else showError(data.error, data.error_code);
         }
-    }).catch(()=>{ 
-        setIcon('icon-error'); 
-        document.getElementById('resultName').textContent='Error'; 
-        document.getElementById('resultDetail').textContent='Connection failed'; 
-        setPhoto('', ''); 
-        document.getElementById('result').classList.add('show'); 
-    });
+    }).catch(()=>{ showError('Cannot reach server.', 'NETWORK_ERROR'); })
+    .finally(()=>{ if (cameraActive) html5QrCode.resume().catch(()=>{}); });
 }
 
-      function showPassOutResult(data) {
-          const s = data.student;
-          setIcon('icon-success');
-          document.getElementById('resultName').textContent = s.name;
-          document.getElementById('resultName').style.color = '#4caf50';
-          document.getElementById('resultDetail').textContent = 'Exit Logged — Student may leave';
-          document.getElementById('feesContainer').style.display = 'none';
-          document.getElementById('passoutContainer').style.display = 'block';
-          document.getElementById('passoutContainer').innerHTML = '<p style="text-align:center; color:#a5d6a7; padding:20px;">✅ Exit Logged Successfully</p>';
-          document.getElementById('result').classList.add('show');
+function showBalanceResult(data) {
+    const s = data.student, f = data.fees;
+    document.getElementById('feesContainer').style.display = 'block';
+    document.getElementById('passoutContainer').style.display = 'none';
+    document.getElementById('returnContainer').style.display = 'none';
+    document.getElementById('mealContainer').style.display = 'none';
+    
+    if (f.status === 'CLEARED') { setIcon('icon-success'); document.getElementById('resultName').style.color = '#4caf50'; }
+    else if (f.status === 'OVERPAID') { setIcon('icon-warning'); document.getElementById('resultName').style.color = '#2196f3'; }
+    else if (f.status === 'NOT PAID') { setIcon('icon-error'); document.getElementById('resultName').style.color = '#f44336'; }
+    else { setIcon('icon-warning'); document.getElementById('resultName').style.color = '#ff9800'; }
+    
+    document.getElementById('resultName').textContent = s.name;
+    document.getElementById('resultDetail').textContent = `${s.class} ${s.stream} | ${s.admission}`;
+    setPhoto(s.photo || '', s.name);
+    document.getElementById('feesTotal').textContent = f.total.toLocaleString() + ' UGX';
+    document.getElementById('feesPaid').textContent = f.paid.toLocaleString() + ' UGX';
+    document.getElementById('feesBalance').textContent = f.balance.toLocaleString() + ' UGX';
+    document.getElementById('feesStatus').innerHTML = f.status === 'CLEARED' ? '<span class="badge badge-success">CLEARED</span>' : f.status === 'OVERPAID' ? '<span class="badge badge-info">OVERPAID</span>' : f.status === 'NOT PAID' ? '<span class="badge badge-error">NOT PAID</span>' : '<span class="badge badge-warning">NOT CLEARED</span>';
+    
+    if (data.attendance) {
+        const attEl = document.getElementById('attendanceConfirm');
+        if (data.attendance.marked) {
+            attEl.textContent = 'Attendance Recorded — ' + new Date().toLocaleTimeString();
+            attEl.style.display = 'block';
+            attEl.style.background = '#1b5e20';
+            attEl.style.color = '#a5d6a7';
+        } else if (data.attendance.already_marked) {
+            attEl.textContent = 'Already Marked Present Today';
+            attEl.style.display = 'block';
+            attEl.style.background = '#0d47a1';
+            attEl.style.color = '#90caf9';
+        }
+    }
+    document.getElementById('result').classList.add('show');
 }
-        
-        function closeResult() { document.getElementById('result').classList.remove('show'); }
-        function manualLookup() { const id=document.getElementById('manualId').value.trim(); if(!id) return; showLoading(); processScan(id); document.getElementById('manualId').value=''; }
-        function getCookie(name) { let v=document.cookie.match('(^|;) ?'+name+'=([^;]*)(;|$)'); return v?v[2]:null; }
-        document.getElementById('manualId').addEventListener('keypress',function(e){if(e.key==='Enter')manualLookup();});
-    </script>
+
+function showPassOutForm(data) {
+    const s = data.student;
+    document.getElementById('feesContainer').style.display = 'none';
+    document.getElementById('returnContainer').style.display = 'none';
+    document.getElementById('mealContainer').style.display = 'none';
+    document.getElementById('passoutContainer').style.display = 'block';
+    setIcon('icon-exit');
+    document.getElementById('resultName').textContent = s.name;
+    document.getElementById('resultName').style.color = '#ff9800';
+    document.getElementById('resultDetail').textContent = `${s.class} ${s.stream} | ${s.admission}`;
+    setPhoto(s.photo || '', s.name);
+    currentStudentData = data;
+    document.getElementById('passoutContainer').innerHTML = `
+        <div class="passout-form">
+            <label style="color:#8899aa; font-size:13px; display:block; margin-top:8px;">Reason for leaving</label>
+            <select id="passReason" style="width:100%; padding:10px; margin:6px 0; border-radius:6px; border:1px solid #333; background:#1a1a2e; color:#fff; font-size:14px;">
+                <option value="sick">Sick</option><option value="home">Home</option><option value="emergency">Emergency</option><option value="other">Other</option>
+            </select>
+            <label style="color:#8899aa; font-size:13px; display:block; margin-top:8px;">Authorized by</label>
+            <input type="text" id="passAuthorizedBy" placeholder="Name of authorizing staff" style="width:100%; padding:10px; margin:6px 0; border-radius:6px; border:1px solid #333; background:#1a1a2e; color:#fff; font-size:14px;">
+            <button onclick="confirmPassOut()" style="width:100%; padding:12px; margin-top:10px; border-radius:6px; border:none; font-size:15px; font-weight:600; background:#e65100; color:white;">Confirm Exit</button>
+        </div>`;
+    document.getElementById('result').classList.add('show');
+}
+
+function showReturnConfirmation(data) {
+    const m = data.movement;
+    const s = data.student;
+    document.getElementById('feesContainer').style.display = 'none';
+    document.getElementById('passoutContainer').style.display = 'none';
+    document.getElementById('mealContainer').style.display = 'none';
+    document.getElementById('returnContainer').style.display = 'block';
+    setIcon('icon-return');
+    document.getElementById('resultName').textContent = s.name;
+    document.getElementById('resultName').style.color = '#4caf50';
+    document.getElementById('resultDetail').textContent = 'Student has returned';
+    setPhoto(s.photo || '', s.name);
+    document.getElementById('returnContainer').innerHTML = `
+        <div style="background:#0d47a1; border-radius:8px; padding:12px; text-align:center; margin:10px 0; font-size:14px; font-weight:600; color:#90caf9;">
+            Time Out: ${m.time_out}<br>Time In: ${m.time_in}<br>Duration: ${m.duration}
+        </div>
+        <p style="text-align:center; color:#a5d6a7; margin-top:10px;">Return Logged Successfully</p>`;
+    document.getElementById('result').classList.add('show');
+    setTimeout(function(){ document.getElementById('result').classList.remove('show'); }, 4000);
+}
+
+function confirmPassOut() {
+    const reason = document.getElementById('passReason').value;
+    const authorizedBy = document.getElementById('passAuthorizedBy').value.trim();
+    if (!authorizedBy) { alert('Please enter who authorized this exit.'); return; }
+    const csrfToken = getCSRFToken();
+    fetch('/movement/api/pass-out/', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }, 
+        body: JSON.stringify({ student_id: currentStudentData.student.id, reason: reason, authorized_by: authorizedBy, location: document.getElementById('location').value }) 
+    })
+    .then(r => r.json()).then(data => {
+        if (data.success) { 
+            document.getElementById('passoutContainer').innerHTML = '<p style="text-align:center; color:#a5d6a7; padding:20px;">Exit Logged — Student may leave</p>'; 
+            setTimeout(function(){ document.getElementById('result').classList.remove('show'); }, 3000); 
+        }
+        else { alert(data.error || 'Failed to log exit'); }
+    }).catch(() => alert('Connection error'));
+}
+
+function showMealResult(data) {
+    const s = data.student, m = data.meal;
+    document.getElementById('feesContainer').style.display = 'none';
+    document.getElementById('passoutContainer').style.display = 'none';
+    document.getElementById('returnContainer').style.display = 'none';
+    document.getElementById('mealContainer').style.display = 'block';
+    setIcon('icon-success');
+    document.getElementById('resultName').textContent = s.name;
+    document.getElementById('resultName').style.color = '#4caf50';
+    document.getElementById('resultDetail').textContent = `${s.class} ${s.stream} | ${m.category.toUpperCase()}`;
+    setPhoto(s.photo || '', s.name);
+    document.getElementById('mealContainer').innerHTML = `
+        <div style="background:#1b5e20; border-radius:8px; padding:12px; text-align:center; margin:10px 0; font-size:16px; font-weight:600; color:#a5d6a7;">
+            ${m.type.toUpperCase()} SERVED<br><small>Time: ${m.time}</small><br><small>Category: ${m.category.toUpperCase()}</small>
+        </div>`;
+    document.getElementById('result').classList.add('show');
+}
+
+function showMealError(data) {
+    document.getElementById('feesContainer').style.display = 'none';
+    document.getElementById('passoutContainer').style.display = 'none';
+    document.getElementById('returnContainer').style.display = 'none';
+    document.getElementById('mealContainer').style.display = 'block';
+    setPhoto('', '');
+    if (data.error_code === 'ALREADY_SERVED') {
+        setIcon('icon-warning');
+        document.getElementById('resultName').style.color = '#ff9800';
+        document.getElementById('resultName').textContent = 'Already Served';
+    } else if (data.error_code === 'BALANCE_TOO_HIGH') {
+        setIcon('icon-error');
+        document.getElementById('resultName').style.color = '#f44336';
+        document.getElementById('resultName').textContent = 'Meal Denied — Balance Too High';
+    } else {
+        setIcon('icon-error');
+        document.getElementById('resultName').style.color = '#f44336';
+        document.getElementById('resultName').textContent = 'Access Denied';
+    }
+    document.getElementById('resultDetail').textContent = data.error;
+    document.getElementById('mealContainer').innerHTML = `<p style="text-align:center; color:#ffcc80; padding:20px;">${data.error}</p>`;
+    document.getElementById('result').classList.add('show');
+}
+
+function showError(message, errorCode) {
+    setIcon('icon-error');
+    document.getElementById('resultName').textContent = errorCode === 'CARD_REPLACED' ? 'Card Replaced' : 'Error';
+    document.getElementById('resultName').style.color = '#f44336';
+    document.getElementById('resultDetail').textContent = message;
+    document.getElementById('feesContainer').style.display = 'none';
+    document.getElementById('passoutContainer').style.display = 'none';
+    document.getElementById('returnContainer').style.display = 'none';
+    document.getElementById('mealContainer').style.display = 'none';
+    setPhoto('', '');
+    document.getElementById('result').classList.add('show');
+}
+
+function closeResult() { document.getElementById('result').classList.remove('show'); onModeChange(); }
+function manualLookup() { const id=document.getElementById('manualId').value.trim(); if(!id) { alert('Enter a Student ID'); return; } showLoading(); processScan(id); document.getElementById('manualId').value=''; document.getElementById('manualId').focus(); }
+function getCookie(name) { let v=document.cookie.match('(^|;) ?'+name+'=([^;]*)(;|$)'); return v?v[2]:null; }
+document.getElementById('manualId').addEventListener('keypress',function(e){if(e.key==='Enter')manualLookup();});
+</script>
+
 
 <script>
 console.log("╔══════════════════════════════════════╗");

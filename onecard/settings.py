@@ -131,8 +131,6 @@ handler500 = 'core.views.error_500'
 handler403 = 'core.views.error_403'
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://*.ngrok-free.app',
-    'https://*.ngrok-free.dev',
     'https://united-abstentiously-coretta.ngrok-free.dev',
     'https://*.onrender.com',
 ]
