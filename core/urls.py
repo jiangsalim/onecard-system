@@ -1,6 +1,10 @@
 from django.urls import path
 from . import views
 from . import api_views
+from django.shortcuts import render
+
+def simple_404(request, exception=None):
+    return render(request, 'errors/404.html', status=404)
 
 urlpatterns = [
     path('import-students/', views.import_students, name='import_students'),

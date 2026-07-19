@@ -135,7 +135,7 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
-handler404 = 'core.views.error_404'
+handler404 = 'core.urls.simple_404'
 handler500 = 'core.views.error_500'
 handler403 = 'core.views.error_403'
 
