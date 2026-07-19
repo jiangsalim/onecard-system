@@ -140,6 +140,7 @@ CSRF_TRUSTED_ORIGINS = [
     'https://united-abstentiously-coretta.ngrok-free.dev',
     'https://*.onrender.com',
     'https://onecard-jinja-sss.onrender.com'
+    'https://accounts.google.com',
 ]
 
 # Brevo Email Configuration
