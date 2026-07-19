@@ -5,6 +5,9 @@ from django.conf.urls.static import static
 from django.http import HttpResponse
 from django.core.management import call_command
 
+handler404 = 'core.views.error_404'
+handler500 = 'core.views.error_500'
+handler403 = 'core.views.error_403'
 
 def trigger_daily_reports(request):
     """Trigger daily email reports for all staff."""
