@@ -76,10 +76,7 @@ def edit_student(request, student_id):
 
 
 def error_404(request, exception=None):
-    try:
-        return render_mobile_or_desktop(request, 'errors/404.html', 'mobile/error_404.html', status=404)
-    except Exception:
-        return render(request, 'errors/404.html', status=404)
+    return render(request, 'errors/404.html', status=404)
 
 def error_500(request):
     try:
