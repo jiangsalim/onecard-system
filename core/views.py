@@ -1,11 +1,14 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.conf import settings
+from django.conf import settingss
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Student
 from .services import generate_qr_for_student, get_next_student_id, fetch_students_from_existing_db
 from core.mobile_utils import render_mobile_or_desktop
 import logging
+
+import os
+print(f"========== DEBUG = {os.environ.get('DEBUG', 'NOT SET')} ==========")
 
 logger = logging.getLogger('onecard')
 
