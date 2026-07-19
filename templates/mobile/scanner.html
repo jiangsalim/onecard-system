@@ -187,6 +187,11 @@
             background: rgba(198, 40, 40, 0.2); 
             color: #ef9a9a; 
         }
+
+        .badge-info {
+            background: rgba(37, 99, 235, 0.2);
+            color: #93c5fd;
+        }
         
         .manual-entry { 
             margin-top: 18px; 
@@ -287,6 +292,66 @@
             font-weight: 600;
             display: none;
         }
+
+        .passout-form label {
+            color: rgba(255,255,255,0.5);
+            font-size: 13px;
+            display: block;
+            margin-top: 10px;
+            margin-bottom: 4px;
+        }
+
+        .passout-form select,
+        .passout-form input {
+            width: 100%;
+            padding: 12px;
+            margin: 6px 0;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+        }
+
+        .btn-exit {
+            width: 100%;
+            padding: 14px;
+            margin-top: 12px;
+            border-radius: 12px;
+            border: none;
+            font-size: 15px;
+            font-weight: 700;
+            background: #ea580c;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+        }
+
+        .duration-box {
+            background: rgba(37, 99, 235, 0.2);
+            border-radius: 10px;
+            padding: 14px;
+            text-align: center;
+            margin: 10px 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: #93c5fd;
+            line-height: 1.8;
+        }
+
+        .meal-success-box {
+            background: rgba(5, 150, 105, 0.2);
+            border-radius: 10px;
+            padding: 14px;
+            text-align: center;
+            margin: 10px 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: #6ee7b7;
+            line-height: 1.8;
+        }
     </style>
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
@@ -347,9 +412,13 @@
         </div>
     </div>
 
+    <!-- Icon Templates -->
     <template id="icon-success"><svg viewBox="0 0 24 24" fill="none" stroke="#00C2BA" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="8,12 11,15 16,9"/></svg></template>
     <template id="icon-warning"><svg viewBox="0 0 24 24" fill="none" stroke="#ff9800" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="7" x2="12" y2="13"/><circle cx="12" cy="16" r="0.5" fill="#ff9800" stroke="none"/></svg></template>
     <template id="icon-error"><svg viewBox="0 0 24 24" fill="none" stroke="#f44336" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg></template>
+    <template id="icon-loading"><svg viewBox="0 0 24 24" fill="none" stroke="#00C2BA" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/></circle></svg></template>
+    <template id="icon-exit"><svg viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></template>
+    <template id="icon-return"><svg viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10,17 15,12 10,7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></template>
 
     <script>
 let cameraActive = false;
@@ -384,11 +453,18 @@ function getCSRFToken() {
     return '';
 }
 
-function onModeChange() { document.getElementById('statusText').textContent = 'Enter Student ID below'; }
+function onModeChange() {
+    const mode = document.getElementById('mode').value;
+    if (mode === 'pass_out') document.getElementById('statusText').textContent = 'Pass Out Mode — Scan to exit or return';
+    else if (mode === 'meal_tracking') document.getElementById('statusText').textContent = 'Meal Tracking Mode — Scan to serve meal';
+    else document.getElementById('statusText').textContent = cameraActive ? 'Position QR code in front of camera' : 'Enter Student ID below';
+}
+
 function toggleCamera() {
     if (cameraActive) { html5QrCode.stop().then(() => { cameraActive = false; document.getElementById('reader').style.display = 'none'; }).catch(()=>{}); }
     else { document.getElementById('reader').style.display = 'block'; html5QrCode.start({facingMode:"environment"},{fps:10,qrbox:{width:250,height:250}},onScanSuccess,onScanFailure).then(()=>{cameraActive=true;}).catch(()=>{document.getElementById('reader').style.display='none';alert('Camera unavailable');}); }
 }
+
 function onScanSuccess(decodedText) { 
     const now = Date.now();
     if (now - lastScanTime < 3000) return;
@@ -397,16 +473,19 @@ function onScanSuccess(decodedText) {
     showLoading(); 
     processScan(decodedText); 
 }
+
 function onScanFailure(err) {}
 
 function showLoading() { 
-    setIcon('icon-warning'); 
-    document.getElementById('resultName').textContent='Processing...'; 
-    document.getElementById('resultDetail').textContent=''; 
+    setIcon('icon-loading'); 
+    document.getElementById('resultName').textContent='Processing...';
+    document.getElementById('resultName').style.color = '#00C2BA';
+    document.getElementById('resultDetail').textContent='Fetching student data'; 
     document.getElementById('feesContainer').style.display='none'; 
     document.getElementById('passoutContainer').style.display='none'; 
     document.getElementById('returnContainer').style.display='none'; 
-    document.getElementById('mealContainer').style.display='none'; 
+    document.getElementById('mealContainer').style.display='none';
+    document.getElementById('attendanceConfirm').style.display='none';
     setPhoto('', ''); 
     document.getElementById('result').classList.add('show'); 
 }
@@ -414,7 +493,7 @@ function showLoading() {
 function processScan(studentId) {
     const mode = document.getElementById('mode').value, location = document.getElementById('location').value;
     const csrfToken = getCSRFToken();
-    fetch('https://onecard-jinja-sss.onrender.com/api/scan/',{
+    fetch('/api/scan/',{
         method:'POST',
         headers:{'Content-Type':'application/json','X-CSRFToken':csrfToken},
         body:JSON.stringify({student_id:studentId,location:location,mode:mode})
@@ -481,6 +560,7 @@ function showPassOutForm(data) {
     document.getElementById('returnContainer').style.display = 'none';
     document.getElementById('mealContainer').style.display = 'none';
     document.getElementById('passoutContainer').style.display = 'block';
+    document.getElementById('attendanceConfirm').style.display = 'none';
     setIcon('icon-exit');
     document.getElementById('resultName').textContent = s.name;
     document.getElementById('resultName').style.color = '#ff9800';
@@ -489,13 +569,13 @@ function showPassOutForm(data) {
     currentStudentData = data;
     document.getElementById('passoutContainer').innerHTML = `
         <div class="passout-form">
-            <label style="color:#8899aa; font-size:13px; display:block; margin-top:8px;">Reason for leaving</label>
-            <select id="passReason" style="width:100%; padding:10px; margin:6px 0; border-radius:6px; border:1px solid #333; background:#1a1a2e; color:#fff; font-size:14px;">
+            <label>Reason for leaving</label>
+            <select id="passReason">
                 <option value="sick">Sick</option><option value="home">Home</option><option value="emergency">Emergency</option><option value="other">Other</option>
             </select>
-            <label style="color:#8899aa; font-size:13px; display:block; margin-top:8px;">Authorized by</label>
-            <input type="text" id="passAuthorizedBy" placeholder="Name of authorizing staff" style="width:100%; padding:10px; margin:6px 0; border-radius:6px; border:1px solid #333; background:#1a1a2e; color:#fff; font-size:14px;">
-            <button onclick="confirmPassOut()" style="width:100%; padding:12px; margin-top:10px; border-radius:6px; border:none; font-size:15px; font-weight:600; background:#e65100; color:white;">Confirm Exit</button>
+            <label>Authorized by</label>
+            <input type="text" id="passAuthorizedBy" placeholder="Name of authorizing staff">
+            <button class="btn-exit" onclick="confirmPassOut()">Confirm Exit</button>
         </div>`;
     document.getElementById('result').classList.add('show');
 }
@@ -507,13 +587,14 @@ function showReturnConfirmation(data) {
     document.getElementById('passoutContainer').style.display = 'none';
     document.getElementById('mealContainer').style.display = 'none';
     document.getElementById('returnContainer').style.display = 'block';
+    document.getElementById('attendanceConfirm').style.display = 'none';
     setIcon('icon-return');
     document.getElementById('resultName').textContent = s.name;
     document.getElementById('resultName').style.color = '#4caf50';
     document.getElementById('resultDetail').textContent = 'Student has returned';
     setPhoto(s.photo || '', s.name);
     document.getElementById('returnContainer').innerHTML = `
-        <div style="background:#0d47a1; border-radius:8px; padding:12px; text-align:center; margin:10px 0; font-size:14px; font-weight:600; color:#90caf9;">
+        <div class="duration-box">
             Time Out: ${m.time_out}<br>Time In: ${m.time_in}<br>Duration: ${m.duration}
         </div>
         <p style="text-align:center; color:#a5d6a7; margin-top:10px;">Return Logged Successfully</p>`;
@@ -526,7 +607,7 @@ function confirmPassOut() {
     const authorizedBy = document.getElementById('passAuthorizedBy').value.trim();
     if (!authorizedBy) { alert('Please enter who authorized this exit.'); return; }
     const csrfToken = getCSRFToken();
-    fetch('https://onecard-jinja-sss.onrender.com/movement/api/pass-out/', { 
+    fetch('/movement/api/pass-out/', { 
         method: 'POST', 
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }, 
         body: JSON.stringify({ student_id: currentStudentData.student.id, reason: reason, authorized_by: authorizedBy, location: document.getElementById('location').value }) 
@@ -546,13 +627,14 @@ function showMealResult(data) {
     document.getElementById('passoutContainer').style.display = 'none';
     document.getElementById('returnContainer').style.display = 'none';
     document.getElementById('mealContainer').style.display = 'block';
+    document.getElementById('attendanceConfirm').style.display = 'none';
     setIcon('icon-success');
     document.getElementById('resultName').textContent = s.name;
     document.getElementById('resultName').style.color = '#4caf50';
     document.getElementById('resultDetail').textContent = `${s.class} ${s.stream} | ${m.category.toUpperCase()}`;
     setPhoto(s.photo || '', s.name);
     document.getElementById('mealContainer').innerHTML = `
-        <div style="background:#1b5e20; border-radius:8px; padding:12px; text-align:center; margin:10px 0; font-size:16px; font-weight:600; color:#a5d6a7;">
+        <div class="meal-success-box">
             ${m.type.toUpperCase()} SERVED<br><small>Time: ${m.time}</small><br><small>Category: ${m.category.toUpperCase()}</small>
         </div>`;
     document.getElementById('result').classList.add('show');
@@ -563,6 +645,7 @@ function showMealError(data) {
     document.getElementById('passoutContainer').style.display = 'none';
     document.getElementById('returnContainer').style.display = 'none';
     document.getElementById('mealContainer').style.display = 'block';
+    document.getElementById('attendanceConfirm').style.display = 'none';
     setPhoto('', '');
     if (data.error_code === 'ALREADY_SERVED') {
         setIcon('icon-warning');
@@ -591,6 +674,7 @@ function showError(message, errorCode) {
     document.getElementById('passoutContainer').style.display = 'none';
     document.getElementById('returnContainer').style.display = 'none';
     document.getElementById('mealContainer').style.display = 'none';
+    document.getElementById('attendanceConfirm').style.display = 'none';
     setPhoto('', '');
     document.getElementById('result').classList.add('show');
 }
@@ -601,16 +685,11 @@ function getCookie(name) { let v=document.cookie.match('(^|;) ?'+name+'=([^;]*)(
 document.getElementById('manualId').addEventListener('keypress',function(e){if(e.key==='Enter')manualLookup();});
 </script>
 
-
 <script>
 console.log("╔══════════════════════════════════════╗");
 console.log("║        ONECARD SYSTEM               ║");
 console.log("║   Smart Student Management          ║");
-console.log("║                                    ║");
-console.log("║   Welcome to Developer Console      ║");
-console.log("║                                    ║");
 console.log("║   (c) 2026 Herman Software Solutions║");
-console.log("║   All Rights Reserved               ║");
 console.log("╚══════════════════════════════════════╝");
 </script>
 </body>

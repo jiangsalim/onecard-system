@@ -69,6 +69,7 @@ class MealLog(models.Model):
     def __str__(self):
         return f"{self.student_id} - {self.meal_date} - {self.meal_type}"
 
+
 class MealAccessRule(models.Model):
     """Fee balance threshold for meal access per class and category."""
     class_name = models.CharField(max_length=20)
@@ -86,6 +87,7 @@ class MealAccessRule(models.Model):
     
     def __str__(self):
         return f"{self.class_name} ({self.get_category_display()}) - Max: {self.max_balance} UGX"
+
 
 class MealTimeSettings(models.Model):
     """Admin-configurable meal time windows."""
@@ -105,25 +107,37 @@ class MealTimeSettings(models.Model):
     
     def is_meal_time(self, meal_type):
         """Check if current time falls within a meal window."""
-        from datetime import datetime
+        from datetime import datetime, time as dt_time
         now = datetime.now().time()
+        
+        def to_time(val):
+            if isinstance(val, str):
+                return dt_time.fromisoformat(val)
+            return val
+        
         if meal_type == 'breakfast':
-            return self.breakfast_start <= now <= self.breakfast_end
+            return to_time(self.breakfast_start) <= now <= to_time(self.breakfast_end)
         elif meal_type == 'lunch':
-            return self.lunch_start <= now <= self.lunch_end
+            return to_time(self.lunch_start) <= now <= to_time(self.lunch_end)
         elif meal_type == 'supper':
-            return self.supper_start <= now <= self.supper_end
+            return to_time(self.supper_start) <= now <= to_time(self.supper_end)
         return False
-    
+
     def get_current_meal(self):
         """Get the meal type based on current time."""
-        from datetime import datetime
+        from datetime import datetime, time as dt_time
         now = datetime.now().time()
-        if self.breakfast_start <= now <= self.breakfast_end:
+        
+        def to_time(val):
+            if isinstance(val, str):
+                return dt_time.fromisoformat(val)
+            return val
+        
+        if to_time(self.breakfast_start) <= now <= to_time(self.breakfast_end):
             return 'breakfast'
-        elif self.lunch_start <= now <= self.lunch_end:
+        elif to_time(self.lunch_start) <= now <= to_time(self.lunch_end):
             return 'lunch'
-        elif self.supper_start <= now <= self.supper_end:
+        elif to_time(self.supper_start) <= now <= to_time(self.supper_end):
             return 'supper'
         return None
 
