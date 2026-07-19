@@ -26,6 +26,7 @@ urlpatterns = [
     path('reports/', include('reports.urls')),
     path('messaging/', include('messaging.urls')),
     path('send-daily-reports/', trigger_daily_reports, name='send_daily_reports'),
+    path('accounts/', include('allauth.urls')),
 ]
 
 if settings.DEBUG:

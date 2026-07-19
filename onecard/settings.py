@@ -6,6 +6,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-f@#bycjjcvmd5lc)e81@^*0p13^h2wq+0=-(_7-6zs8p2k028#')
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
+SOCIALACCOUNT_ADAPTER = 'users.adapters.StaffGoogleAdapter'
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -14,6 +15,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
     'core',
     'cards',
     'attendance',
@@ -37,6 +43,7 @@ MIDDLEWARE = [
     'core.middleware.AccountLockoutMiddleware',
     'core.middleware.IPRestrictionMiddleware',
     'core.middleware.SessionSecurityMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'onecard.urls'
@@ -147,3 +154,19 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+
+# Allauth settings
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+SITE_ID = 1
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': ['profile', 'email'],
+        'AUTH_PARAMS': {'access_type': 'online'},
+    }
+}
+SOCIALACCOUNT_AUTO_SIGNUP = False  # NO auto-creation
+LOGIN_REDIRECT_URL = '/dashboard/'
