@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Student
@@ -76,6 +77,7 @@ def edit_student(request, student_id):
 
 
 def error_404(request, exception=None):
+    print(f"DEBUG={settings.DEBUG}, Template exists, Handler called!")
     return render(request, 'errors/404.html', status=404)
 
 def error_500(request):
