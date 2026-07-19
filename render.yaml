@@ -1,47 +1,19 @@
-services:
-  - type: web
-    name: onecard-jinja-sss
-    env: python
-    buildCommand: |
-      pip install -r requirements.txt
-      python manage.py collectstatic --noinput
-      python manage.py makemigrations users
-      python manage.py migrate
-      python manage.py fix_admin_role
-      python -c "
+buildCommand: |
+  pip install -r requirements.txt
+  python manage.py collectstatic --noinput
+  python manage.py makemigrations users
+  python manage.py migrate
+  python manage.py fix_admin_role
+  python -c "
 import os
 from dotenv import load_dotenv
 load_dotenv()
 import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'onecard.settings')
 django.setup()
-
-# Create Site for allauth
-from django.contrib.sites.models import Site
-s = Site.objects.filter(id=1).first()
-if not s:
-    s = Site.objects.create(id=1, domain='onecard-jinja-sss.onrender.com', name='OneCard Jinja SSS')
-else:
-    s.domain = 'onecard-jinja-sss.onrender.com'
-    s.name = 'OneCard Jinja SSS'
-    s.save()
-print(f'Site created: {s.domain}')
-
-# Setup Google OAuth
-from allauth.socialaccount.models import SocialApp
-app, created = SocialApp.objects.get_or_create(
-    provider='google',
-    defaults={
-        'name': 'Google',
-        'client_id': os.environ.get('GOOGLE_CLIENT_ID', ''),
-        'secret': os.environ.get('GOOGLE_CLIENT_SECRET', ''),
-    }
-)
-app.sites.add(s)
-print(f'Google OAuth: {\"Created\" if created else \"Updated\"}')
-
-# Fix user roles
 from users.models import User
+
+# Force fix all roles
 User.objects.all().update(is_superuser=True, is_staff=True)
 User.objects.filter(username='jaing').update(role='super_admin')
 User.objects.filter(username='admin').update(role='admin')
@@ -49,41 +21,3 @@ print('Roles fixed!')
 for u in User.objects.all():
     print(f'  {u.username}: {u.role}')
 "
-    startCommand: gunicorn onecard.wsgi:application
-    envVars:
-      - key: SECRET_KEY
-        generateValue: true
-      - key: DEBUG
-        value: "False"
-      - key: ALLOWED_HOSTS
-        value: ".onrender.com"
-      - key: DB_NAME
-        value: onecard_db
-      - key: DB_USER
-        value: avnadmin
-      - key: DB_PASSWORD
-        sync: false
-      - key: DB_HOST
-        value: mysql-33c81946-jaingsalim.g.aivencloud.com
-      - key: DB_PORT
-        value: "26212"
-      - key: SCHOOL_DB_NAME
-        value: defaultdb
-      - key: SCHOOL_DB_USER
-        value: avnadmin
-      - key: SCHOOL_DB_PASSWORD
-        sync: false
-      - key: SCHOOL_DB_HOST
-        value: mysql-33c81946-jaingsalim.g.aivencloud.com
-      - key: SCHOOL_DB_PORT
-        value: "26212"
-      - key: BREVO_API_KEY
-        sync: false
-      - key: BREVO_SENDER_EMAIL
-        value: infohermansoftware@gmail.com
-      - key: BREVO_SENDER_NAME
-        value: Herman Software Solutions
-      - key: GOOGLE_CLIENT_ID
-        value: 383557326050-11t88dkhd1h50o4nqrlctgb7el6m4f24.apps.googleusercontent.com
-      - key: GOOGLE_CLIENT_SECRET
-        sync: false
