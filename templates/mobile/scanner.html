@@ -414,7 +414,7 @@ function showLoading() {
 function processScan(studentId) {
     const mode = document.getElementById('mode').value, location = document.getElementById('location').value;
     const csrfToken = getCSRFToken();
-    fetch('/api/scan/',{
+    fetch('https://onecard-jinja-sss.onrender.com/api/scan/',{
         method:'POST',
         headers:{'Content-Type':'application/json','X-CSRFToken':csrfToken},
         body:JSON.stringify({student_id:studentId,location:location,mode:mode})
@@ -526,7 +526,7 @@ function confirmPassOut() {
     const authorizedBy = document.getElementById('passAuthorizedBy').value.trim();
     if (!authorizedBy) { alert('Please enter who authorized this exit.'); return; }
     const csrfToken = getCSRFToken();
-    fetch('/movement/api/pass-out/', { 
+    fetch('https://onecard-jinja-sss.onrender.com/movement/api/pass-out/', { 
         method: 'POST', 
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }, 
         body: JSON.stringify({ student_id: currentStudentData.student.id, reason: reason, authorized_by: authorizedBy, location: document.getElementById('location').value }) 
