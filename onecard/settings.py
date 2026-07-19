@@ -9,6 +9,8 @@ ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 SOCIALACCOUNT_ADAPTER = 'users.adapters.StaffGoogleAdapter'
 
 INSTALLED_APPS = [
+    'admin_interface', 
+    'colorfield',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -140,6 +142,7 @@ handler403 = 'core.views.error_403'
 CSRF_TRUSTED_ORIGINS = [
     'https://united-abstentiously-coretta.ngrok-free.dev',
     'https://*.onrender.com',
+    'https://onecard-jinja-sss.onrender.com'
 ]
 
 # Brevo Email Configuration
@@ -164,8 +167,12 @@ AUTHENTICATION_BACKENDS = [
 SITE_ID = 1
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
-        'SCOPE': ['profile', 'email'],
+        'SCOPE': ['email', 'profile'],
         'AUTH_PARAMS': {'access_type': 'online'},
+        'APP': {
+            'client_id': os.environ.get('GOOGLE_CLIENT_ID'),
+            'secret': os.environ.get('GOOGLE_CLIENT_SECRET'),
+        }
     }
 }
 SOCIALACCOUNT_AUTO_SIGNUP = False  # NO auto-creation
