@@ -5,284 +5,164 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/lj8ucjmr/image/upload/v1784063633/onecard-jinja-sss/jinja-sss-badge.jpg">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <title>Students - OneCard | Jinja SS</title>
+    <title>Students — OneCard | Jinja SS</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --navy: #0A1F3F; --navy-light: #132D52;
+            --teal: #00C2BA; --text: #374151; --text-muted: #9CA3AF;
+            --border: #f0f0f0; --card-bg: #FFFFFF;
+        }
+        
         body { 
             font-family: 'Inter', 'Segoe UI', Arial, sans-serif; 
-            background: #F8F9FA; 
-            padding-bottom: 80px;
+            background: #F8F9FA; padding-bottom: 80px;
             -webkit-font-smoothing: antialiased;
         }
         
         .header { 
-            background: linear-gradient(135deg, #0A1F3F, #132D52); 
-            color: white; 
-            padding: 18px 20px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
+            background: linear-gradient(135deg, var(--navy), var(--navy-light)); 
+            color: white; padding: 16px 18px;
+            display: flex; justify-content: space-between; align-items: center; 
             box-shadow: 0 4px 20px rgba(10, 31, 63, 0.3);
         }
-        
         .header .title { 
-            font-size: 17px; 
-            font-weight: 700; 
-            letter-spacing: 0.3px;
             font-family: 'Playfair Display', serif;
+            font-size: 18px; font-weight: 700;
+            display: flex; align-items: center; gap: 8px;
         }
-        
-        .header .count {
-            color: #00C2BA;
-            font-size: 14px;
-            font-family: 'Inter', sans-serif;
-        }
-        
+        .header .title .hex-icon { width: 24px; height: 24px; }
+        .header .count { color: var(--teal); font-size: 13px; font-family: 'Inter', sans-serif; font-weight: 500; }
         .header a { 
-            color: #00C2BA; 
-            text-decoration: none; 
-            font-size: 13px; 
-            font-weight: 700;
-            padding: 8px 16px;
-            border-radius: 10px;
-            border: 1px solid rgba(0, 194, 186, 0.3);
-            transition: all 0.3s ease;
+            color: var(--teal); text-decoration: none; font-size: 12px; font-weight: 700; 
+            padding: 9px 16px; border-radius: 10px; border: 1.5px solid rgba(0, 194, 186, 0.3);
+            transition: all 0.2s ease;
+        }
+        .header a:hover { background: rgba(0, 194, 186, 0.1); }
+        
+        .filter-bar { 
+            padding: 12px 14px; background: white; display: flex; gap: 8px; flex-wrap: wrap; 
+            border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+        .filter-bar input, .filter-bar select { 
+            flex: 1; min-width: 90px; padding: 11px 14px; 
+            border: 1.5px solid #e5e7eb; border-radius: 12px; 
+            font-size: 13px; font-family: 'Inter', sans-serif; outline: none;
+            background: white; color: var(--text);
+            transition: border-color 0.2s ease;
+        }
+        .filter-bar input:focus, .filter-bar select:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(0,194,186,0.08); }
+        .filter-bar input::placeholder { color: #cbd5e1; }
+        .filter-bar select {
+            appearance: none; -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 12px center;
+            padding-right: 32px;
         }
         
-        .header a:hover {
-            background: rgba(0, 194, 186, 0.1);
-        }
-        
-        .search-bar { 
-            padding: 14px 16px; 
-            background: white; 
-            border-bottom: 1px solid #f0f0f0; 
-        }
-        
-        .search-bar .search-wrapper {
-            position: relative;
-        }
-        
-        .search-bar .search-icon {
-            position: absolute;
-            left: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #9CA3AF;
-        }
-        
-        .search-bar input { 
-            width: 100%; 
-            padding: 14px 16px 14px 46px; 
-            border: 1px solid #e0e0e0; 
-            border-radius: 14px; 
-            font-size: 14px; 
-            font-family: 'Inter', sans-serif;
-            outline: none;
-            transition: all 0.3s ease;
-        }
-        
-        .search-bar input:focus {
-            border-color: #00C2BA;
-            box-shadow: 0 0 0 3px rgba(0, 194, 186, 0.1);
-        }
-        
-        .student-list { 
-            padding: 12px 16px; 
-        }
-        
+        .student-list { padding: 10px 14px; }
         .student-card { 
-            background: white; 
-            border-radius: 14px; 
-            padding: 16px; 
-            margin-bottom: 8px; 
-            box-shadow: 0 2px 10px rgba(10, 31, 63, 0.04);
-            border: 1px solid #f0f0f0;
-            transition: transform 0.3s ease;
+            background: var(--card-bg); border-radius: 16px; padding: 16px; 
+            margin-bottom: 8px; box-shadow: 0 1px 4px rgba(10, 31, 63, 0.04); 
+            border: 1px solid var(--border); text-decoration: none; color: inherit; 
+            display: block; transition: all 0.2s ease;
         }
-        
-        .student-card:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(10, 31, 63, 0.08);
-        }
-        
-        .student-card .top { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-        }
-        
-        .student-card .id { 
-            font-weight: 700; 
-            color: #0A1F3F; 
-            font-size: 15px; 
-            font-family: 'Playfair Display', serif;
-        }
-        
-        .student-card .adm { 
-            font-size: 12px; 
-            color: #9CA3AF; 
-        }
-        
-        .student-card .row { 
-            display: flex; 
-            gap: 8px; 
-            margin-top: 8px; 
-            flex-wrap: wrap;
-        }
+        .student-card:active { transform: scale(0.98); background: #fafcfc; }
+        .student-card .name { font-weight: 700; color: var(--navy); font-size: 15px; margin-bottom: 5px; }
+        .student-card .info { font-size: 12px; color: #6b7280; margin-bottom: 8px; line-height: 1.5; }
+        .student-card .row { display: flex; gap: 6px; flex-wrap: wrap; }
         
         .badge { 
-            padding: 4px 10px; 
-            border-radius: 20px; 
-            font-size: 10px; 
-            font-weight: 700; 
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
+            padding: 5px 12px; border-radius: 50px; font-size: 10px; font-weight: 700; 
+            text-transform: uppercase; letter-spacing: 0.5px;
+            display: inline-flex; align-items: center; gap: 4px;
         }
+        .badge .dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+        .badge-day { background: #f3f4f6; color: #4b5563; }
+        .badge-hostel { background: rgba(217, 119, 6, 0.1); color: #d97706; }
+        .badge-printed { background: rgba(0, 194, 186, 0.1); color: #00A8A0; }
+        .badge-notprinted { background: rgba(234, 88, 12, 0.1); color: #ea580c; }
         
-        .badge-day { 
-            background: rgba(158, 158, 158, 0.1); 
-            color: #757575; 
-        }
-        
-        .badge-hostel { 
-            background: rgba(230, 81, 0, 0.1); 
-            color: #e65100; 
-        }
-        
-        .badge-printed { 
-            background: rgba(0, 194, 186, 0.1); 
-            color: #00A8A0; 
-        }
-        
-        .badge-notprinted { 
-            background: rgba(230, 81, 0, 0.1); 
-            color: #e65100; 
-        }
-        
-        .version-badge {
-            font-size: 11px;
-            color: #9CA3AF;
-            font-weight: 500;
-        }
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 14px; }
+        .empty-state svg { width: 48px; height: 48px; margin: 0 auto 12px; opacity: 0.2; display: block; }
         
         .bottom-nav { 
-            position: fixed; 
-            bottom: 0; 
-            left: 0; 
-            right: 0; 
-            background: white; 
-            display: flex; 
-            border-top: 1px solid #f0f0f0;
-            box-shadow: 0 -4px 20px rgba(10, 31, 63, 0.08);
-            z-index: 100;
+            position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; 
+            border-top: 1px solid var(--border); box-shadow: 0 -4px 20px rgba(10, 31, 63, 0.08); z-index: 100;
+            padding-bottom: env(safe-area-inset-bottom, 0);
         }
-        
         .bottom-nav a { 
-            flex: 1; 
-            text-align: center; 
-            padding: 10px 0 8px; 
-            color: #9CA3AF; 
-            text-decoration: none; 
-            font-size: 10px; 
-            font-weight: 500;
-            transition: all 0.3s ease;
+            flex: 1; text-align: center; padding: 8px 0 6px; color: var(--text-muted); 
+            text-decoration: none; font-size: 10px; font-weight: 500; transition: color 0.2s;
         }
-        
-        .bottom-nav a.active { 
-            color: #00C2BA; 
-        }
-        
-        .bottom-nav a svg { 
-            display: block; 
-            margin: 0 auto 4px; 
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #9CA3AF;
-            font-size: 14px;
-        }
+        .bottom-nav a.active { color: var(--teal); }
+        .bottom-nav a svg { display: block; margin: 0 auto 5px; width: 20px; height: 20px; }
     </style>
     <script>document.cookie="screen_width="+window.innerWidth+";path=/";</script>
 </head>
 <body>
     <div class="header">
-        <div class="title">Students <span class="count">({{ students|length }})</span></div>
+        <div class="title">
+            <svg class="hex-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+                <polygon points="50,5 90,28 90,72 50,95 10,72 10,28" fill="#0A1F3F" stroke="#00C2BA" stroke-width="3"/>
+                <line x1="35" y1="30" x2="35" y2="70" stroke="white" stroke-width="5" stroke-linecap="round"/>
+                <line x1="65" y1="30" x2="65" y2="70" stroke="white" stroke-width="5" stroke-linecap="round"/>
+                <line x1="35" y1="50" x2="65" y2="50" stroke="#00C2BA" stroke-width="5" stroke-linecap="round"/>
+            </svg>
+            Students <span class="count">({{ total }})</span>
+        </div>
         <a href="{% url 'import_students' %}">+ Import</a>
     </div>
     
-    <div class="search-bar">
-        <div class="search-wrapper">
-            <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8"/>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-            <input type="text" id="searchInput" placeholder="Search by ID or Admission Number..." onkeyup="filterList()">
-        </div>
-    </div>
+    <form class="filter-bar" method="get">
+        <input type="text" name="search" placeholder="Search name or ID..." value="{{ search }}">
+        <select name="class">
+            <option value="">All Classes</option>
+            {% for c in classes %}<option value="{{ c }}" {% if class_filter == c %}selected{% endif %}>{{ c }}</option>{% endfor %}
+        </select>
+        <select name="stream">
+            <option value="">All Streams</option>
+            {% for s in streams %}<option value="{{ s }}" {% if stream_filter == s %}selected{% endif %}>{{ s }}</option>{% endfor %}
+        </select>
+    </form>
     
-    <div class="student-list" id="studentList">
+    <div class="student-list">
         {% for s in students %}
-        <div class="student-card" data-search="{{ s.id }} {{ s.admission_number }}">
-            <div class="top">
-                <span class="id">{{ s.id }}</span>
-                <span class="adm">{{ s.admission_number }}</span>
-            </div>
+        <a href="{% url 'edit_student' s.id %}" class="student-card">
+            <div class="name">{{ s.school_name }}</div>
+            <div class="info">{{ s.id }} &bull; {{ s.school_class }} {{ s.school_stream }} &bull; {{ s.admission_number }}</div>
             <div class="row">
                 <span class="badge {% if s.category == 'hostel' %}badge-hostel{% else %}badge-day{% endif %}">
-                    {% if s.category == 'hostel' %}Hostel{% else %}Day{% endif %}
+                    <span class="dot"></span> {% if s.category == 'hostel' %}Hostel{% else %}Day{% endif %}
                 </span>
                 <span class="badge {% if s.card_printed %}badge-printed{% else %}badge-notprinted{% endif %}">
-                    {% if s.card_printed %}Printed{% else %}Not Printed{% endif %}
+                    <span class="dot"></span> {% if s.card_printed %}Printed v{{ s.card_version }}{% else %}Not Printed{% endif %}
                 </span>
-                <span class="version-badge">v{{ s.card_version }}</span>
             </div>
-        </div>
+        </a>
         {% empty %}
-        <div class="empty-state">No students imported yet.</div>
+        <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            No students found.
+        </div>
         {% endfor %}
     </div>
     
     <div class="bottom-nav">
-        <a href="#" class="active">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-            Home
-        </a>
-        <a href="{% url 'view_students' %}">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-            Students
-        </a>
-        <a href="{% url 'import_students' %}">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            Import
-        </a>
         <a href="{% url 'dashboard' %}">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-            Dashboard
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Home
+        </a>
+        <a href="{% url 'view_students' %}" class="active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Students
+        </a>
+        <a href="{% url 'scanner' %}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="18" height="7" rx="1"/></svg>Scanner
+        </a>
+        <a href="{% url 'inbox' %}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Messages
         </a>
     </div>
-    
-    <script>
-        function filterList() {
-            const q = document.getElementById('searchInput').value.toLowerCase();
-            document.querySelectorAll('.student-card').forEach(card => {
-                card.style.display = card.dataset.search.toLowerCase().includes(q) ? '' : 'none';
-            });
-        }
-    </script>
-
-<script>
-console.log("╔══════════════════════════════════════╗");
-console.log("║        ONECARD SYSTEM               ║");
-console.log("║   Smart Student Management          ║");
-console.log("║                                    ║");
-console.log("║   Welcome to Developer Console      ║");
-console.log("║                                    ║");
-console.log("║   (c) 2026 Herman Software Solutions║");
-console.log("║   All Rights Reserved               ║");
-console.log("╚══════════════════════════════════════╝");
-</script>
 </body>
 </html>
