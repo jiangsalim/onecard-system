@@ -165,7 +165,7 @@
     </style>
     <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
   
   const firebaseConfig = {
     apiKey: "AIzaSyARXe6kko2W-8nwAVHBLezmQdnFkDYZCXc",
@@ -180,53 +180,51 @@
   const auth = getAuth(app);
   const provider = new GoogleAuthProvider(app);
 
-  // Google Login
   window.googleLogin = function() {
-    signInWithRedirect(auth, provider);
-  };
-
-  // Handle redirect result
-  getRedirectResult(auth)
-    .then((result) => {
-        if (result) {
-            console.log('Google auth success!');
-            console.log('Email:', result.user.email);
-            
-            fetch('/api/google-login/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCSRFToken()
-                },
-                body: JSON.stringify({
-                    email: result.user.email,
-                    name: result.user.displayName,
-                    photo: result.user.photoURL
-                })
-            })
-            .then(r => {
-                console.log('API Response status:', r.status);
-                return r.json();
-            })
-            .then(data => {
-                console.log('API Response data:', data);
-                if (data.success) {
-                    window.location.href = data.redirect || '/dashboard/';
-                } else {
-                    alert(data.error || 'No staff account found.');
-                }
-            })
-            .catch(err => {
-                console.error('API Error:', err);
-                alert('Login failed. Check console.');
-            });
-        } else {
-            console.log('No redirect result yet — click Google button to login');
+    console.log('Starting Google login...');
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        console.log('Google auth success!');
+        console.log('Email:', result.user.email);
+        
+        fetch('/api/google-login/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+          },
+          body: JSON.stringify({
+            email: result.user.email,
+            name: result.user.displayName,
+            photo: result.user.photoURL
+          })
+        })
+        .then(r => {
+          console.log('API status:', r.status);
+          return r.json();
+        })
+        .then(data => {
+          console.log('API data:', data);
+          if (data.success) {
+            window.location.href = data.redirect || '/dashboard/';
+          } else {
+            alert(data.error || 'No staff account found.');
+          }
+        })
+        .catch(err => {
+          console.error('API error:', err);
+          alert('Connection failed. Try again.');
+        });
+      })
+      .catch((error) => {
+        console.error('Google error:', error.code, error.message);
+        if (error.code === 'auth/popup-blocked') {
+          alert('Please allow popups for this site to sign in with Google.');
+        } else if (error.code !== 'auth/popup-closed-by-user') {
+          alert('Google sign-in failed: ' + error.message);
         }
-    })
-    .catch((error) => {
-        console.error('Redirect error:', error);
-    });
+      });
+  };
 </script>
 </head>
 <body>
