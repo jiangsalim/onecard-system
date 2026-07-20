@@ -548,7 +548,7 @@ def reset_system_data(request):
         from notifications.models import Notification, NotificationSetting, DismissedAlert, TeacherNotificationSetting
         from messaging.models import Message, Conversation
         from fees.models import FeeStructure
-        from cards.models import CardTemplate, StudentCardAssignment
+        from cards.models import CardTemplate
         
         counts = {}
         
