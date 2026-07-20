@@ -12,14 +12,11 @@ import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'onecard.settings')
 django.setup()
 
-# --- Create Site for Google OAuth ---
+# --- Force Site with ID=1 for Google OAuth ---
 from django.contrib.sites.models import Site
-site, _ = Site.objects.get_or_create(
-    domain='onecard-jinja-sss.onrender.com',
-    defaults={'name': 'OneCard Jinja SSS'}
-)
-site.name = 'OneCard Jinja SSS'
-site.save()
+Site.objects.filter(domain='onecard-jinja-sss.onrender.com').delete()
+site = Site.objects.create(id=1, domain='onecard-jinja-sss.onrender.com', name='OneCard Jinja SSS')
+print(f'Site created with ID: {site.id}')
 
 from allauth.socialaccount.models import SocialApp
 SocialApp.objects.filter(provider='google').delete()
@@ -29,7 +26,7 @@ app = SocialApp.objects.create(
     secret=os.environ.get('GOOGLE_CLIENT_SECRET', ''),
 )
 app.sites.add(site)
-print(f'Google OAuth ready! Site ID: {site.id}, Domain: {site.domain}')
+print(f'Google OAuth ready!')
 
 # --- Fix user roles ---
 from users.models import User
