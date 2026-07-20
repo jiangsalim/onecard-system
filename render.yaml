@@ -23,8 +23,8 @@ from allauth.socialaccount.models import SocialApp
 SocialApp.objects.filter(provider='google').delete()
 app = SocialApp.objects.create(
     provider='google', name='Google',
-    client_id=os.environ.get('GOOGLE_CLIENT_ID', '383557326050-11t88dkhd1h50o4nqrlctgb7el6m4f24.apps.googleusercontent.com'),
-    secret=os.environ.get('GOOGLE_CLIENT_SECRET', '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'),
+    client_id=os.environ.get('GOOGLE_CLIENT_ID', ''),
+    secret=os.environ.get('GOOGLE_CLIENT_SECRET', ''),
 )
 app.sites.add(site)
 print(f'Google OAuth ready! Site: {site.domain}')
