@@ -51,18 +51,64 @@ def handle_import(request):
 
 @login_required
 def view_students(request):
-    if request.user.role not in ['super_admin', 'admin', 'bursar']:
+    if request.user.role not in ['super_admin', 'admin', 'bursar', 'class_teacher']:
         messages.error(request, 'Access denied.'); return redirect('dashboard')
     
+    from core.services import fetch_students_from_existing_db
+    
+    # Get students from OneCard
     students = list(Student.objects.select_related('template').all())
     
+    # Get school info for names/classes
+    all_school = fetch_students_from_existing_db()
+    school_dict = {s['admission_number']: s for s in all_school}
+    
+    # Enrich with school data
+    for student in students:
+        info = school_dict.get(student.admission_number, {})
+        student.school_name = info.get('full_name', '—')
+        student.school_class = info.get('current_class', '—')
+        student.school_stream = info.get('stream', '')
+    
+    # Sort by ID
     def sort_key(s):
         try: return int(s.id.replace('STU-', ''))
         except: return 0
     students.sort(key=sort_key)
     
-    return render_mobile_or_desktop(request, 'admin_dashboard/students.html', 'mobile/students.html', {'students': students})
-
+    # Get filters
+    class_filter = request.GET.get('class', '')
+    stream_filter = request.GET.get('stream', '')
+    category_filter = request.GET.get('category', '')
+    search = request.GET.get('search', '').lower()
+    
+    # Apply filters
+    if class_filter:
+        students = [s for s in students if s.school_class == class_filter]
+    if stream_filter:
+        students = [s for s in students if s.school_stream == stream_filter]
+    if category_filter:
+        students = [s for s in students if s.category == category_filter]
+    if search:
+        students = [s for s in students if 
+            search in s.id.lower() or 
+            search in s.admission_number.lower() or 
+            search in s.school_name.lower()]
+    
+    # Get unique classes and streams for filter dropdowns
+    all_classes = sorted(set(s.school_class for s in students if s.school_class != '—'))
+    all_streams = sorted(set(s.school_stream for s in students if s.school_stream))
+    
+    return render_mobile_or_desktop(request, 'admin_dashboard/students.html', 'mobile/students.html', {
+        'students': students,
+        'total': len(students),
+        'classes': all_classes,
+        'streams': all_streams,
+        'class_filter': class_filter,
+        'stream_filter': stream_filter,
+        'category_filter': category_filter,
+        'search': search,
+    })
 
 @login_required
 def edit_student(request, student_id):
