@@ -162,12 +162,7 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-# Auto-detect site ID from database
-try:
-    from django.contrib.sites.models import Site
-    SITE_ID = Site.objects.get(domain='onecard-jinja-sss.onrender.com').id
-except Exception:
-    SITE_ID = 1
+SITE_ID = 6
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'SCOPE': ['email', 'profile'],
