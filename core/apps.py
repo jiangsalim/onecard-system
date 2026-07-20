@@ -16,24 +16,17 @@ class CoreConfig(AppConfig):
                 defaults={'name': 'OneCard Jinja SSS'}
             )
 
-            # Only create Google Social App if NONE exists
-            existing = SocialApp.objects.filter(provider='google')
-            if existing.count() == 0:
-                app = SocialApp.objects.create(
-                    provider='google',
-                    name='Google',
-                    client_id=os.environ.get('GOOGLE_CLIENT_ID', ''),
-                    secret=os.environ.get('GOOGLE_CLIENT_SECRET', ''),
-                )
-                app.sites.add(site)
-                print(f"✅ Google Social App created")
-            else:
-                # Ensure existing app is linked to the site
-                for app in existing:
-                    app.sites.add(site)
-                print(f"✅ Google Social App already exists ({existing.count()} found)")
-
-            print(f"✅ Site (ID:{site.id}) ready")
+            # Delete ALL existing Google apps, then create ONE fresh one
+            SocialApp.objects.filter(provider='google').delete()
+            
+            app = SocialApp.objects.create(
+                provider='google',
+                name='Google',
+                client_id=os.environ.get('GOOGLE_CLIENT_ID', ''),
+                secret=os.environ.get('GOOGLE_CLIENT_SECRET', ''),
+            )
+            app.sites.add(site)
+            print(f"✅ Google Social App recreated fresh (ID:{app.id})")
 
         except Exception as e:
             print(f"⚠️ Auto-setup skipped: {e}")
