@@ -17,11 +17,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sites',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
     'core',
     'cards',
     'attendance',
@@ -45,7 +40,6 @@ MIDDLEWARE = [
     'core.middleware.AccountLockoutMiddleware',
     'core.middleware.IPRestrictionMiddleware',
     'core.middleware.SessionSecurityMiddleware',
-    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'onecard.urls'
@@ -155,23 +149,3 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-
-# Allauth settings
-AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
-]
-
-SITE_ID = 1
-SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'SCOPE': ['email', 'profile'],
-        'AUTH_PARAMS': {'access_type': 'online'},
-        'APP': {
-            'client_id': os.environ.get('GOOGLE_CLIENT_ID'),
-            'secret': os.environ.get('GOOGLE_CLIENT_SECRET'),
-        }
-    }
-}
-SOCIALACCOUNT_AUTO_SIGNUP = False  # NO auto-creation
-LOGIN_REDIRECT_URL = '/dashboard/'
