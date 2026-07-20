@@ -7,7 +7,6 @@ class CoreConfig(AppConfig):
     name = 'core'
 
     def ready(self):
-        # Only run on the actual server, not during collectstatic/migrate/check
         if 'gunicorn' not in sys.argv[0] and 'runserver' not in sys.argv[0]:
             return
 
@@ -15,24 +14,27 @@ class CoreConfig(AppConfig):
             from django.contrib.sites.models import Site
             from allauth.socialaccount.models import SocialApp
 
-            # Auto-create or update Site
+            # Create site if not exists
             site, _ = Site.objects.get_or_create(
                 domain='onecard-jinja-sss.onrender.com',
                 defaults={'name': 'OneCard Jinja SSS'}
             )
 
-            # Only create if none exist
-            if SocialApp.objects.filter(provider='google').count() == 0:
-                app = SocialApp.objects.create(
-                    provider='google',
-                    name='Google',
-                    client_id=os.environ.get('GOOGLE_CLIENT_ID', ''),
-                    secret=os.environ.get('GOOGLE_CLIENT_SECRET', ''),
-                )
-                app.sites.add(site)
+            # Create SocialApp if not exists
+            app, created = SocialApp.objects.get_or_create(
+                provider='google',
+                defaults={
+                    'name': 'Google',
+                    'client_id': os.environ.get('GOOGLE_CLIENT_ID', ''),
+                    'secret': os.environ.get('GOOGLE_CLIENT_SECRET', ''),
+                }
+            )
+            app.sites.add(site)
+            
+            if created:
                 print(f"✅ Google Social App created (ID:{app.id})")
             else:
-                print(f"✅ Google Social App already exists")
+                print(f"✅ Site (ID:{site.id}) linked to Google App (ID:{app.id})")
 
         except Exception as e:
-            print(f"⚠️ Auto-setup skipped: {e}")
+            print(f"⚠️ Auto-setup: {e}")
