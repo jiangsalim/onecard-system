@@ -179,14 +179,13 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const provider = new GoogleAuthProvider(app);
+  provider.setCustomParameters({
+    prompt: 'select_account'
+  });
 
   window.googleLogin = function() {
-    console.log('Starting Google login...');
     signInWithPopup(auth, provider)
       .then((result) => {
-        console.log('Google auth success!');
-        console.log('Email:', result.user.email);
-        
         fetch('/api/google-login/', {
           method: 'POST',
           headers: {
@@ -199,28 +198,18 @@
             photo: result.user.photoURL
           })
         })
-        .then(r => {
-          console.log('API status:', r.status);
-          return r.json();
-        })
+        .then(r => r.json())
         .then(data => {
-          console.log('API data:', data);
           if (data.success) {
             window.location.href = data.redirect || '/dashboard/';
           } else {
             alert(data.error || 'No staff account found.');
           }
         })
-        .catch(err => {
-          console.error('API error:', err);
-          alert('Connection failed. Try again.');
-        });
+        .catch(() => alert('Login failed.'));
       })
       .catch((error) => {
-        console.error('Google error:', error.code, error.message);
-        if (error.code === 'auth/popup-blocked') {
-          alert('Please allow popups for this site to sign in with Google.');
-        } else if (error.code !== 'auth/popup-closed-by-user') {
+        if (error.code !== 'auth/popup-closed-by-user') {
           alert('Google sign-in failed: ' + error.message);
         }
       });
