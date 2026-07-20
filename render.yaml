@@ -11,9 +11,26 @@ load_dotenv()
 import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'onecard.settings')
 django.setup()
-from users.models import User
 
-# Force fix all roles
+# --- Create Site for Google OAuth ---
+from django.contrib.sites.models import Site
+site, _ = Site.objects.get_or_create(id=1, defaults={'domain': 'onecard-jinja-sss.onrender.com', 'name': 'OneCard Jinja SSS'})
+site.domain = 'onecard-jinja-sss.onrender.com'
+site.name = 'OneCard Jinja SSS'
+site.save()
+
+from allauth.socialaccount.models import SocialApp
+SocialApp.objects.filter(provider='google').delete()
+app = SocialApp.objects.create(
+    provider='google', name='Google',
+    client_id=os.environ.get('GOOGLE_CLIENT_ID', '383557326050-11t88dkhd1h50o4nqrlctgb7el6m4f24.apps.googleusercontent.com'),
+    secret=os.environ.get('GOOGLE_CLIENT_SECRET', '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'),
+)
+app.sites.add(site)
+print(f'Google OAuth ready! Site: {site.domain}')
+
+# --- Fix user roles ---
+from users.models import User
 User.objects.all().update(is_superuser=True, is_staff=True)
 User.objects.filter(username='jaing').update(role='super_admin')
 User.objects.filter(username='admin').update(role='admin')
