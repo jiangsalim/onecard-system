@@ -779,3 +779,17 @@ def api_import_students(request):
         logger.error(f"Import batch error: {str(e)}", exc_info=True)
         cache.set('import_progress', {'running': False, 'message': f'Error: {str(e)}'}, 600)
         return JsonResponse({'success': False, 'message': str(e)})
+    
+@csrf_exempt
+def google_login_api(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False}, status=405)
+    try:
+        data = json.loads(request.body)
+        email = data.get('email', '').strip().lower()
+        from users.models import User
+        user = User.objects.get(email__iexact=email, is_active=True)
+        login(request, user)
+        return JsonResponse({'success': True, 'redirect': '/dashboard/'})
+    except User.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'No account found. Contact admin.'})
