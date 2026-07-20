@@ -162,15 +162,7 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-from django.contrib.sites.models import Site
-
-# Dynamically set SITE_ID from DB, with fallback
-try:
-    site = Site.objects.get(domain='onecard-jinja-sss.onrender.com')
-    SITE_ID = site.id
-except Site.DoesNotExist:
-    SITE_ID = 1
-
+SITE_ID = 1
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'SCOPE': ['email', 'profile'],
