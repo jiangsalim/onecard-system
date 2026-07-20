@@ -582,9 +582,6 @@ def reset_system_data(request):
         Student.objects.all().delete()
         
         # Cards
-        counts['card_assignments'] = StudentCardAssignment.objects.all().count()
-        StudentCardAssignment.objects.all().delete()
-        
         counts['card_templates'] = CardTemplate.objects.all().count()
         CardTemplate.objects.all().delete()
         
@@ -613,7 +610,7 @@ def reset_system_data(request):
         
         total = sum(counts.values())
         logger.warning(f"FULL SYSTEM RESET by {request.user.username}. {total} records deleted!")
-        messages.success(request, f'🔥 FULL SYSTEM RESET! {total} records deleted. Only Super Admin accounts remain.')
+        messages.success(request, f'FULL SYSTEM RESET! {total} records deleted. Only Super Admin accounts remain.')
         
         return redirect('dashboard')
     
