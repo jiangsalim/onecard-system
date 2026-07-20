@@ -261,7 +261,7 @@
 
     <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+  import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
   
   const firebaseConfig = {
     apiKey: "AIzaSyARXe6kko2W-8nwAVHBLezmQdnFkDYZCXc",
@@ -276,9 +276,15 @@
   const auth = getAuth(app);
   const provider = new GoogleAuthProvider(app);
 
+  // Google Login - Redirect method (works on all devices)
   window.googleLogin = function() {
-    signInWithPopup(auth, provider)
-      .then((result) => {
+    signInWithRedirect(auth, provider);
+  };
+
+  // Handle redirect result when user returns to page
+  getRedirectResult(auth)
+    .then((result) => {
+      if (result) {
         const email = result.user.email;
         const displayName = result.user.displayName;
         const photoURL = result.user.photoURL;
@@ -304,13 +310,11 @@
           }
         })
         .catch(() => alert('Login failed. Please try again.'));
-      })
-      .catch((error) => {
-        if (error.code !== 'auth/popup-closed-by-user') {
-          alert('Google sign-in failed. Please try again.');
-        }
-      });
-  };
+      }
+    })
+    .catch((error) => {
+      console.log('Auth redirect result:', error.message);
+    });
 </script>
 </head>
 <body>
