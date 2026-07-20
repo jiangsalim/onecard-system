@@ -9,8 +9,6 @@ ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 SOCIALACCOUNT_ADAPTER = 'users.adapters.StaffGoogleAdapter'
 
 INSTALLED_APPS = [
-    'admin_interface', 
-    'colorfield',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
