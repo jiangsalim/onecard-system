@@ -180,44 +180,52 @@
   const auth = getAuth(app);
   const provider = new GoogleAuthProvider(app);
 
-  // Google Login - Redirect method (works on all devices)
+  // Google Login
   window.googleLogin = function() {
     signInWithRedirect(auth, provider);
   };
 
-  // Handle redirect result when user returns to page
+  // Handle redirect result
   getRedirectResult(auth)
     .then((result) => {
-      if (result) {
-        const email = result.user.email;
-        const displayName = result.user.displayName;
-        const photoURL = result.user.photoURL;
-        
-        fetch('/api/google-login/', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCSRFToken()
-          },
-          body: JSON.stringify({
-            email: email,
-            name: displayName,
-            photo: photoURL
-          })
-        })
-        .then(r => r.json())
-        .then(data => {
-          if (data.success) {
-            window.location.href = data.redirect || '/dashboard/';
-          } else {
-            alert(data.error || 'No staff account found. Contact your administrator.');
-          }
-        })
-        .catch(() => alert('Login failed. Please try again.'));
-      }
+        if (result) {
+            console.log('Google auth success!');
+            console.log('Email:', result.user.email);
+            
+            fetch('/api/google-login/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: JSON.stringify({
+                    email: result.user.email,
+                    name: result.user.displayName,
+                    photo: result.user.photoURL
+                })
+            })
+            .then(r => {
+                console.log('API Response status:', r.status);
+                return r.json();
+            })
+            .then(data => {
+                console.log('API Response data:', data);
+                if (data.success) {
+                    window.location.href = data.redirect || '/dashboard/';
+                } else {
+                    alert(data.error || 'No staff account found.');
+                }
+            })
+            .catch(err => {
+                console.error('API Error:', err);
+                alert('Login failed. Check console.');
+            });
+        } else {
+            console.log('No redirect result yet — click Google button to login');
+        }
     })
     .catch((error) => {
-      console.log('Auth redirect result:', error.message);
+        console.error('Redirect error:', error);
     });
 </script>
 </head>
