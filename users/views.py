@@ -12,6 +12,7 @@ import random
 from datetime import timedelta
 from django.utils import timezone
 from django.core.cache import cache
+from django.http import JsonResponse
 
 
 logger = logging.getLogger('onecard')
@@ -638,3 +639,27 @@ def reset_system_data(request):
     return render_mobile_or_desktop(request, 'users/reset_confirm.html', 'mobile/users_reset_confirm.html', {
         'preview': preview,
     })
+
+from django.views.decorators.csrf import csrf_exempt
+import json
+
+@csrf_exempt
+def google_auth_receiver(request):
+    """Receive Google auth data and log user in."""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            email = data.get('email', '').strip().lower()
+            
+            from django.contrib.auth import login as django_login
+            user = User.objects.get(email__iexact=email, is_active=True)
+            django_login(request, user)
+            messages.success(request, f'Welcome, {user.get_full_name() or user.username}!')
+            return JsonResponse({'success': True, 'redirect': '/dashboard/'})
+            
+        except User.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'No staff account found.'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False}, status=405)

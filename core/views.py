@@ -247,27 +247,4 @@ def import_students_excel(request):
         return redirect('view_students')
     
     return render(request, 'core/import_excel.html', {})
-
-@csrf_exempt
-def google_auth_receiver(request):
-    """Receive Google auth data and log user in."""
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            email = data.get('email', '').strip().lower()
-            
-            user = User.objects.get(email__iexact=email, is_active=True)
-            
-            # Use Django's login
-            from django.contrib.auth import login as django_login
-            django_login(request, user)
-            
-            messages.success(request, f'Welcome, {user.get_full_name() or user.username}!')
-            return JsonResponse({'success': True, 'redirect': '/dashboard/'})
-            
-        except User.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'No account found'})
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
     
-    return JsonResponse({'success': False}, status=405)
