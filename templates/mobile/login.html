@@ -310,6 +310,16 @@
         }
       });
   };
+
+  function getCSRFToken() {
+    // Try cookie first
+    let token = document.cookie.match('(^|;) ?csrftoken=([^;]*)(;|$)');
+    if (token) return token[2];
+    // Try hidden input
+    const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    if (input) return input.value;
+    return '';
+}
 </script>
 </head>
 <body>
