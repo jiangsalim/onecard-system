@@ -790,6 +790,7 @@ def google_login_api(request):
         from users.models import User
         user = User.objects.get(email__iexact=email, is_active=True)
         login(request, user)
+        request.session.save()  # ← ADD THIS LINE
         return JsonResponse({'success': True, 'redirect': '/dashboard/'})
     except User.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'No account found. Contact admin.'})
