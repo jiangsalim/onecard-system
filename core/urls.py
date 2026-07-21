@@ -1,7 +1,6 @@
 from django.urls import path
 from . import views
 from . import api_views
-
 urlpatterns = [
     path('import-students/', views.import_students, name='import_students'),
     path('view-students/', views.view_students, name='view_students'),
@@ -15,5 +14,4 @@ urlpatterns = [
     path('api/public/balance-by-card/', api_views.public_balance_by_card, name='public_balance_by_card'),
     path('api/public/statement-by-card/', api_views.public_statement_by_card_pdf, name='public_statement_by_card'),
     path('backup/', views.backup_now, name='backup_now'),
-    path('api/google-login/', api_views.google_login_api, name='google_login_api'),
 ]

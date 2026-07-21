@@ -640,26 +640,17 @@ def reset_system_data(request):
         'preview': preview,
     })
 
-from django.views.decorators.csrf import csrf_exempt
-import json
 
-@csrf_exempt
-def google_auth_receiver(request):
-    """Receive Google auth data and log user in."""
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            email = data.get('email', '').strip().lower()
-            
-            from django.contrib.auth import login as django_login
-            user = User.objects.get(email__iexact=email, is_active=True)
-            django_login(request, user)
-            messages.success(request, f'Welcome, {user.get_full_name() or user.username}!')
-            return JsonResponse({'success': True, 'redirect': '/dashboard/'})
-            
-        except User.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'No staff account found.'})
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
+
+
     
-    return JsonResponse({'success': False}, status=405)
+    try:
+        user = User.objects.get(email__iexact=email, is_active=True)
+        from django.contrib.auth import login as django_login
+        django_login(request, user)
+        messages.success(request, f'Welcome, {user.get_full_name() or user.username}!')
+        return redirect('dashboard')
+    except User.DoesNotExist:
+        messages.error(request, 'No staff account found with this email.')
+        return redirect('login')
+
