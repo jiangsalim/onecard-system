@@ -186,7 +186,7 @@
   window.googleLogin = function() {
     signInWithPopup(auth, provider)
       .then((result) => {
-        fetch('/api/google-login/', {
+        fetch('/api/auth/google/', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

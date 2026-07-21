@@ -20,4 +20,5 @@ urlpatterns = [
     path('reset-system/', views.reset_system_data, name='reset_system_data'),
     path('change-password/', views.change_password_request, name='change_password'),
     path('change-password/verify/', views.change_password_verify, name='change_password_verify'),
+    path('api/auth/google/', views.google_auth_receiver, name='google_auth_receiver'),
 ]
