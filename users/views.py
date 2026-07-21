@@ -639,18 +639,3 @@ def reset_system_data(request):
     return render_mobile_or_desktop(request, 'users/reset_confirm.html', 'mobile/users_reset_confirm.html', {
         'preview': preview,
     })
-
-
-
-
-    
-    try:
-        user = User.objects.get(email__iexact=email, is_active=True)
-        from django.contrib.auth import login as django_login
-        django_login(request, user)
-        messages.success(request, f'Welcome, {user.get_full_name() or user.username}!')
-        return redirect('dashboard')
-    except User.DoesNotExist:
-        messages.error(request, 'No staff account found with this email.')
-        return redirect('login')
-

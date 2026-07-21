@@ -779,38 +779,3 @@ def api_import_students(request):
         logger.error(f"Import batch error: {str(e)}", exc_info=True)
         cache.set('import_progress', {'running': False, 'message': f'Error: {str(e)}'}, 600)
         return JsonResponse({'success': False, 'message': str(e)})
-    
-@csrf_exempt
-def google_login_api(request):
-    """Handle Google sign-in from Firebase."""
-    if request.method != 'POST':
-        return JsonResponse({'success': False, 'error': 'POST required'}, status=405)
-    
-    try:
-        data = json.loads(request.body)
-        email = data.get('email', '').strip().lower()
-        
-        if not email:
-            return JsonResponse({'success': False, 'error': 'Email required'})
-        
-        from users.models import User
-        from django.contrib.auth import login
-        
-        try:
-            user = User.objects.get(email__iexact=email, is_active=True)
-            
-            # Force session creation
-            login(request, user)
-            request.session.save()
-            
-            return JsonResponse({
-                'success': True, 
-                'redirect': '/dashboard/',
-                'username': user.username,
-                'message': f'Welcome, {user.get_full_name() or user.username}!'
-            })
-        except User.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'No staff account found with this email. Contact your administrator.'})
-    
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)})
